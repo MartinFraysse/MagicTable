@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Open Dev Terminal",
+      "type": "shell",
+      "command": "export NVM_DIR=\"$HOME/.nvm\" && source /usr/share/nvm/init-nvm.sh && nvm use --silent default",
+      "runOn": "folderOpen",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Claude Code",
+      "type": "shell",
+      "command": "export NVM_DIR=\"$HOME/.nvm\" && source /usr/share/nvm/init-nvm.sh && nvm use --silent default && claude",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      }
+    }
+  ]
+}
