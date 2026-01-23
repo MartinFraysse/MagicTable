@@ -15,6 +15,8 @@ class Tournament:
 
     players: list[Player] = field(default_factory=list)
     rounds: list[Round] = field(default_factory=list)
+    max_rounds: int = 3
+    archived: bool = False
 
     _next_player_id: int = 0
 
@@ -25,13 +27,14 @@ class Tournament:
 
     ### PLAYER
     @staticmethod
-    def create_tournament(*, tournament_id: int, name: str, format: str, date: str) -> "Tournament":
+    def create_tournament(*, tournament_id: int, name: str, format: str, date: str, max_rounds: int = 3) -> "Tournament":
         return Tournament(
             id=tournament_id,
             name=name.strip(),
             format=format.strip(),
             date=date,
             players=[],
+            max_rounds=max_rounds,
         )
 
     def add_player(self, name: str) -> Player | None:
@@ -147,7 +150,7 @@ class Tournament:
 
         else:
             if player_count < 4:
-                return None  
+                return None
 
             table_count = player_count // 2
             return [2] * table_count
@@ -167,10 +170,222 @@ class Tournament:
             reverse=True
         )
 
-    def update(self, *, name: str, format: str, date: str) -> None:
+    # =====================
+    # Adversaires rencontrés
+    # =====================
+    def get_opponents_map(self) -> dict[int, set[int]]:
+        """Retourne pour chaque joueur l'ensemble des IDs des adversaires déjà rencontrés."""
+        opponents: dict[int, set[int]] = {p.id: set() for p in self.players}
+
+        for rnd in self.rounds:
+            for table in rnd.tables:
+                player_ids = [p.id for p in table.players]
+                for pid in player_ids:
+                    for other_pid in player_ids:
+                        if pid != other_pid:
+                            opponents[pid].add(other_pid)
+
+        return opponents
+
+    def recalculate_robustness(self) -> None:
+        """
+        Recalcule la robustesse de tous les joueurs basée sur le classement actuel.
+        Appelée après chaque round terminé.
+        """
+        # Reset
+        for player in self.players:
+            player.robustness = 0
+
+        # Classement actuel par score puis nom
+        ranked_players = sorted(
+            self.players,
+            key=lambda p: (-p.score, p.name)
+        )
+        rank_by_id = {p.id: idx + 1 for idx, p in enumerate(ranked_players)}
+
+        N = len(self.players)
+
+        # Pour chaque round terminé, ajouter la robustesse
+        for rnd in self.rounds:
+            for table in rnd.tables:
+                if not table.finished:
+                    continue
+
+                player_ids = [p.id for p in table.players]
+
+                for player in table.players:
+                    for opponent_id in player_ids:
+                        if opponent_id != player.id:
+                            opponent_rank = rank_by_id[opponent_id]
+                            player.robustness += (N - opponent_rank)
+
+    def compute_repetition_rate(self, tables: list[Table]) -> float:
+        """
+        Calcule le taux de répétition pour une liste de tables données.
+        Retourne un pourcentage (0-100) des paires de joueurs qui se sont déjà affrontés.
+        """
+        opponents_map = self.get_opponents_map()
+
+        total_pairs = 0
+        repeated_pairs = 0
+
+        for table in tables:
+            player_ids = [p.id for p in table.players]
+            for i, pid in enumerate(player_ids):
+                for other_pid in player_ids[i + 1:]:
+                    total_pairs += 1
+                    if other_pid in opponents_map.get(pid, set()):
+                        repeated_pairs += 1
+
+        if total_pairs == 0:
+            return 0.0
+
+        return (repeated_pairs / total_pairs) * 100
+
+    def would_have_repetitions(self) -> tuple[bool, float]:
+        """
+        Vérifie si la prochaine génération de tables par score aurait des répétitions.
+        Retourne (has_repetitions, repetition_rate).
+        """
+        # Simuler la génération de tables par score
+        table_sizes = self.compute_table_sizes(len(self.players))
+        if table_sizes is None:
+            return False, 0.0
+
+        ordered_players = self.sort_players()
+
+        simulated_tables: list[Table] = []
+        index = 0
+        table_number = 1
+
+        for size in table_sizes:
+            table_players = ordered_players[index:index + size]
+            simulated_tables.append(
+                Table(number=table_number, players=table_players)
+            )
+            index += size
+            table_number += 1
+
+        rate = self.compute_repetition_rate(simulated_tables)
+        # Considérer comme répétitif si plus de 60% de répétitions
+        return rate > 50, rate
+
+    def create_round_by_opponents(self) -> Round:
+        """
+        Crée un round en minimisant les affrontements répétés.
+        Utilise un algorithme glouton pour assigner les joueurs aux tables.
+        """
+        round_number = len(self.rounds) + 1
+        tables = self._generate_tables_by_opponents()
+
+        new_round = Round(
+            number=round_number,
+            tables=tables
+        )
+
+        self.rounds.append(new_round)
+        return new_round
+
+    def _generate_tables_by_opponents(self) -> list[Table]:
+        """
+        Génère des tables en minimisant les répétitions et diversifiant la robustesse.
+        """
+        table_sizes = self.compute_table_sizes(len(self.players))
+        if table_sizes is None:
+            return []
+
+        opponents_map = self.get_opponents_map()
+        available_players = self.players[:]
+        random.shuffle(available_players)  # Mélanger pour ajouter de l'aléatoire
+
+        tables: list[Table] = []
+        table_number = 1
+
+        for size in table_sizes:
+            table_players: list[Player] = []
+
+            for _ in range(size):
+                if not available_players:
+                    break
+
+                # Trouver le meilleur joueur (celui qui a le moins de conflits avec la table actuelle)
+                best_player = None
+                best_score = float('inf')
+
+                for player in available_players:
+                    # Compter combien de joueurs de la table actuelle ont déjà été rencontrés
+                    conflicts = sum(
+                        1 for tp in table_players
+                        if tp.id in opponents_map.get(player.id, set())
+                    )
+
+                    # Bonus de diversité de robustesse (on veut des robustesses variées)
+                    if table_players:
+                        avg_rob = sum(tp.robustness for tp in table_players) / len(table_players)
+                        # Plus la différence est grande, plus le score diminue (meilleur)
+                        diversity_bonus = -abs(player.robustness - avg_rob) * 0.01
+                    else:
+                        diversity_bonus = 0
+
+                    total_score = conflicts + diversity_bonus
+
+                    if total_score < best_score:
+                        best_score = total_score
+                        best_player = player
+
+                if best_player:
+                    table_players.append(best_player)
+                    available_players.remove(best_player)
+
+            if table_players:
+                tables.append(
+                    Table(number=table_number, players=table_players)
+                )
+                table_number += 1
+
+        return tables
+
+    def update(self, *, name: str, format: str, date: str, max_rounds: int) -> None:
         self.name = name.strip()
         self.format = format.strip()
         self.date = date
+        self.max_rounds = max_rounds
+
+    def can_create_round(self) -> bool:
+        """Vérifie si on peut créer un nouveau round."""
+        return len(self.rounds) < self.max_rounds
+
+    def is_finished(self) -> bool:
+        """Vérifie si le tournoi est terminé."""
+        if not self.rounds:
+            return False
+        # Vérifier que tous les rounds sont complets
+        last_round = self.rounds[-1]
+        all_tables_finished = all(t.finished for t in last_round.tables)
+        return len(self.rounds) >= self.max_rounds and all_tables_finished
+
+    def archive(self) -> None:
+        """Archive le tournoi."""
+        self.archived = True
+        print(f"\n📦 Tournoi '{self.name}' archivé.\n")
+
+    def reset(self) -> None:
+        """Réinitialise le tournoi: supprime rounds, tables, résultats et scores."""
+        # Réinitialiser les scores des joueurs
+        for player in self.players:
+            player.score = 0
+            player.robustness = 0
+
+        # Supprimer tous les rounds (et donc les tables/résultats)
+        self.rounds.clear()
+
+        print(f"\n{'='*50}")
+        print(f"🔄 TOURNOI RÉINITIALISÉ - {self.name}")
+        print(f"{'='*50}")
+        print(f"  • {len(self.players)} joueurs conservés")
+        print(f"  • Scores remis à 0")
+        print(f"  • Rounds supprimés")
+        print(f"{'='*50}\n")
 
     @property
     def player_count(self) -> int:
@@ -214,6 +429,8 @@ class Tournament:
             "name": self.name,
             "format": self.format,
             "date": self.date,
+            "max_rounds": self.max_rounds,
+            "archived": self.archived,
             "players": [
                 {
                     "id": p.id,
@@ -223,6 +440,7 @@ class Tournament:
                 }
                 for p in self.players
             ],
+            "rounds": [r.to_dict() for r in self.rounds],
         }
 
     @classmethod
@@ -232,9 +450,12 @@ class Tournament:
             name=data["name"],
             format=data["format"],
             date=data["date"],
+            max_rounds=data.get("max_rounds", 3),
+            archived=data.get("archived", False),
             players=[],
         )
 
+        # Charger les joueurs
         for p in data.get("players", []):
             player = Player(
                 id=p["id"],
@@ -247,6 +468,12 @@ class Tournament:
                 tournament._next_player_id,
                 player.id + 1
             )
+
+        # Charger les rounds
+        players_by_id = {p.id: p for p in tournament.players}
+        for r in data.get("rounds", []):
+            round_obj = Round.from_dict(r, players_by_id)
+            tournament.rounds.append(round_obj)
 
         return tournament
 

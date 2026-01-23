@@ -130,6 +130,7 @@ class UpcomingView(QWidget):
             name=dialog.name_input.text(),
             format=dialog.format_input.currentText(),
             date=dialog.date_input.text(),
+            max_rounds=dialog.get_max_rounds(),
         )
 
 
@@ -227,6 +228,18 @@ class UpcomingView(QWidget):
         card.show()
         card._refresh()
 
+    def remove_archived_tournament(self, tournament_id: int):
+        """Retire la carte d'un tournoi archivé."""
+        card = self._cards_by_id.get(tournament_id)
+        if card:
+            self.cards_layout.removeWidget(card)
+            card.deleteLater()
+            self._cards_by_id.pop(tournament_id, None)
+            self._tournament_ids.pop(tournament_id, None)
+
+            if self._selected_card == card:
+                self._selected_card = None
+
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
         self._save_all()
@@ -251,7 +264,9 @@ class UpcomingView(QWidget):
         for data in raw:
             tournament = Tournament.from_dict(data)
             self._tournaments.append(tournament)
-            self._register_tournament(tournament)
+            # Ne créer une carte que pour les tournois non archivés
+            if not tournament.archived:
+                self._register_tournament(tournament)
 
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
@@ -267,6 +282,9 @@ class UpcomingView(QWidget):
             self.cards_layout.removeWidget(card)
 
         for tournament in self._tournaments:
+            # Ne pas afficher les tournois archivés
+            if tournament.archived:
+                continue
             card = self._cards_by_id.get(tournament.id)
             if card:
                 self.cards_layout.insertWidget(

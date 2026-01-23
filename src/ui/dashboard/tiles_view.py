@@ -74,12 +74,13 @@ class DashboardTilesView(QWidget):
         *,
         name: str,
         round_number: int,
+        max_rounds: int,
         player_count: int,
         table_count: int,
     ):
         self.set_active()
         self.tile_name.value_label.setText(name)
-        self.tile_round.value_label.setText(f"#{round_number}")
+        self.tile_round.value_label.setText(f"#{round_number}/{max_rounds}")
         self.tile_players.value_label.setText(str(player_count))
         self.tile_tables.value_label.setText(str(table_count))
 

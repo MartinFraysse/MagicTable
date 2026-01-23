@@ -152,6 +152,21 @@ L'application suit une architecture en couches :
 
 ---
 
+## Développement
+
+### Configuration VS Code
+
+Le projet inclut des tâches VS Code préconfigurées (`.vscode/tasks.json`) :
+
+| Tâche | Description | Raccourci |
+|-------|-------------|-----------|
+| **Open Dev Terminal** | Ouvre un terminal avec nvm configuré | Auto à l'ouverture du projet |
+| **Claude Code** | Lance Claude Code dans un nouveau terminal | `Ctrl+Shift+P` → "Run Task" |
+
+> **Note** : Ces tâches utilisent nvm installé via pacman sur Arch Linux (`/usr/share/nvm/init-nvm.sh`). Sur d'autres systèmes, adapter le chemin vers `~/.nvm/nvm.sh`.
+
+---
+
 ## Licence
 
 Non spécifiée.

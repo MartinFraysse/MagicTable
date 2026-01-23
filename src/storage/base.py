@@ -3,7 +3,7 @@ from pathlib import Path
 from json import JSONDecodeError
 
 
-DATA_DIR = Path("data")
+DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 class JsonStorage:

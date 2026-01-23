@@ -334,3 +334,119 @@ QPushButton#PrimaryButton:disabled {
 QPushButton#PrimaryButton:disabled:hover {
     background: rgba(255, 255, 255, 0.04);
 }
+
+/* =====================
+   DANGER BUTTON (Reset)
+===================== */
+
+QPushButton#DangerButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #8f3a3a,
+        stop:1 #5f2828
+    );
+    color: #ffe5e5;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 100, 100, 0.3);
+}
+
+QPushButton#DangerButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #a84a4a,
+        stop:1 #703232
+    );
+    border: 1px solid rgba(255, 100, 100, 0.6);
+}
+
+QPushButton#DangerButton:pressed {
+    background: #5f2828;
+}
+
+/* =====================
+   WARNING BUTTON (Round varié)
+===================== */
+
+QPushButton#WarningButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #b8860b,
+        stop:1 #8b6914
+    );
+    color: #fff8e7;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 200, 100, 0.4);
+}
+
+QPushButton#WarningButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #daa520,
+        stop:1 #b8860b
+    );
+    border: 1px solid rgba(255, 200, 100, 0.7);
+}
+
+QPushButton#WarningButton:pressed {
+    background: #8b6914;
+}
+
+QPushButton#WarningButton:disabled {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* =====================
+   REPETITION WARNING LABEL
+===================== */
+
+#RepetitionWarning {
+    color: #f5a623;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+}
+
+/* =====================
+   ARCHIVE BUTTON
+===================== */
+
+QPushButton#ArchiveButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #5b7a99,
+        stop:1 #3d5266
+    );
+    color: #e8f4ff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(150, 200, 255, 0.3);
+}
+
+QPushButton#ArchiveButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #6d8fb3,
+        stop:1 #4a6278
+    );
+    border: 1px solid rgba(150, 200, 255, 0.6);
+}
+
+QPushButton#ArchiveButton:pressed {
+    background: #3d5266;
+}

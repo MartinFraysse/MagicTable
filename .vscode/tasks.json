@@ -5,7 +5,6 @@
       "label": "Open Dev Terminal",
       "type": "shell",
       "command": "export NVM_DIR=\"$HOME/.nvm\" && source /usr/share/nvm/init-nvm.sh && nvm use --silent default",
-      "runOn": "folderOpen",
       "presentation": {
         "reveal": "always",
         "panel": "new"

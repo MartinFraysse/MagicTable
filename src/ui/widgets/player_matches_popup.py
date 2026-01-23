@@ -32,17 +32,23 @@ class PlayerMatchesPopup(QFrame):
 
         self.hide()
 
-    def set_player(self, name: str, matches: list):
+    def set_player(self, name: str, matches: list, robustness: int = 0):
         self.title.setText(f"👤 {name}")
 
         lines = []
         for m in matches:
+            points = m.get('points', 0)
             lines.append(
                 f"<b>Round {m['round']}</b> — Table {m['table']}<br>"
-                f"Résultat : <b>{m['position']}</b>"
+                f"{m['position']} → <span style='color: #3fd27d;'>+{points} pts</span>"
             )
 
-        self.content.setText("<hr>".join(lines))
+        content_text = "<hr>".join(lines) if lines else "Aucun résultat"
+
+        # Ajouter la robustesse
+        content_text += f"<hr><b>Robustesse:</b> <span style='color: #f1c40f;'>{robustness}</span>"
+
+        self.content.setText(content_text)
 
         self.adjustSize()  # 🔑 CRUCIAL
 

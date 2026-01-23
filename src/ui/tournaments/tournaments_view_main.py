@@ -28,6 +28,7 @@ class TournamentViewMain(QWidget):
 
         self._build_ui()
         self._connect_views()
+        self._init_historic()
 
     # ======================================================
     # UI
@@ -159,6 +160,22 @@ class TournamentViewMain(QWidget):
         self.launch_view._load_tournament(tournament)
 
     def _start_tournament(self, tournament: Tournament):
-        tournament.create_round()
+        # Ne créer un round que si le tournoi n'en a pas encore
+        if not tournament.rounds:
+            tournament.create_round()
         self.round_started.emit(tournament)
+
+    def save_tournaments(self):
+        """Sauvegarde tous les tournois (appelé depuis le dashboard)."""
+        self.upcoming_view._save_all()
+
+    def _init_historic(self):
+        """Initialise la vue historique avec les tournois archivés."""
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+
+    def on_tournament_archived(self, tournament_id: int):
+        """Appelé quand un tournoi est archivé depuis le dashboard."""
+        self.upcoming_view.remove_archived_tournament(tournament_id)
+        self.launch_view._clear_tournament()
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
  

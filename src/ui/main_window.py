@@ -54,6 +54,16 @@ class MainWindow(QMainWindow):
             self.start_tournament
         )
 
+        # Sauvegarder quand le dashboard modifie le tournoi
+        self.dashboard_view.tournament_changed.connect(
+            self.tournaments_view.save_tournaments
+        )
+
+        # Archiver un tournoi
+        self.dashboard_view.tournament_archived.connect(
+            self.tournaments_view.on_tournament_archived
+        )
+
     # ========================
     # Sidebar
     # ========================

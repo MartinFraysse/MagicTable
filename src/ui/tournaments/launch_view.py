@@ -268,6 +268,11 @@ class LaunchView(QWidget):
             return
 
         tid = self._current_tournament.id
+        self._clear_tournament()
+        self.tournament_cancelled.emit(tid)
+
+    def _clear_tournament(self):
+        """Nettoie l'affichage du tournoi actuel (sans émettre de signal)."""
         self._current_tournament = None
 
         self.card_container.hide()
@@ -276,8 +281,6 @@ class LaunchView(QWidget):
         self.players_list.clear()
         self.player_input.clear()
         self.tables_info.setText("🪑 0 joueur → 0 table")
-
-        self.tournament_cancelled.emit(tid)
 
     # ======================================================
     # Players

@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton,
-    QLabel, QComboBox,
+    QLabel, QComboBox, QSpinBox, QAbstractSpinBox,
     QStyledItemDelegate,
 )
 from PySide6.QtCore import Qt, QSize
@@ -23,7 +23,7 @@ class CreateTournamentDialog(QDialog):
 
         self.setWindowTitle("Tournoi")
         self.setModal(True)
-        self.setFixedSize(400, 480)
+        self.setFixedSize(400, 540)
         self.setObjectName("CreateTournamentDialog")
 
         root = QVBoxLayout(self)
@@ -85,6 +85,30 @@ class CreateTournamentDialog(QDialog):
         root.addWidget(self.date_input)
 
         # =====================
+        # Nombre de rounds
+        # =====================
+        rounds_layout = QHBoxLayout()
+        rounds_layout.setSpacing(12)
+
+        rounds_label = QLabel("Nombre de rounds")
+        rounds_layout.addWidget(rounds_label)
+
+        rounds_layout.addStretch()
+
+        self.rounds_input = QSpinBox()
+        self.rounds_input.setObjectName("RoundsSpinBox")
+        self.rounds_input.setButtonSymbols(QAbstractSpinBox.PlusMinus)
+        self.rounds_input.setMinimum(1)
+        self.rounds_input.setMaximum(10)
+        self.rounds_input.setValue(3)
+        self.rounds_input.setFixedSize(120, 42)
+        self.rounds_input.setAlignment(Qt.AlignCenter)
+        self.rounds_input.valueChanged.connect(self._update_state)
+        rounds_layout.addWidget(self.rounds_input)
+
+        root.addLayout(rounds_layout)
+
+        # =====================
         # Preview
         # =====================
         self.preview = QLabel()
@@ -138,10 +162,12 @@ class CreateTournamentDialog(QDialog):
         self.name_input.setText(t.name)
         self.format_input.setCurrentText(t.format)
         self.date_input.setText(t.date)
+        self.rounds_input.setValue(t.max_rounds)
 
     def _update_state(self):
         name = self.name_input.text().strip()
         date = self.date_input.text()
+        rounds = self.rounds_input.value()
 
         format_valid = self.format_input.currentIndex() > 0
         valid = bool(name and format_valid and "_" not in date)
@@ -151,7 +177,7 @@ class CreateTournamentDialog(QDialog):
         fmt = self.format_input.currentText() if format_valid else "Format"
         self.preview.setText(
             f"<b>{name or 'Nom du tournoi'}</b><br>"
-            f"{fmt} • {date or 'Date'}"
+            f"{fmt} • {date or 'Date'} • {rounds} rounds"
         )
 
     def _validate(self):
@@ -168,7 +194,11 @@ class CreateTournamentDialog(QDialog):
             name=self.name_input.text(),
             format=self.format_input.currentText(),
             date=self.date_input.text(),
+            max_rounds=self.rounds_input.value(),
         )
+
+    def get_max_rounds(self) -> int:
+        return self.rounds_input.value()
 
 
 class ComboBoxItemDelegate(QStyledItemDelegate):

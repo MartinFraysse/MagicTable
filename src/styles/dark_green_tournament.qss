@@ -46,6 +46,69 @@
     letter-spacing: 1px;
 }
 
+/* Rounds SpinBox (mode PlusMinus) */
+#RoundsSpinBox {
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+    color: #eafff6;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0 4px;
+}
+
+#RoundsSpinBox:focus {
+    border-color: #3ad68a;
+}
+
+/* Bouton + (up) */
+#RoundsSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: right center;
+    width: 28px;
+    height: 28px;
+    margin-right: 4px;
+    background-color: #1c4a3a;
+    border: 1px solid #2f6b56;
+    border-radius: 6px;
+}
+
+/* Bouton - (down) */
+#RoundsSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: left center;
+    width: 28px;
+    height: 28px;
+    margin-left: 4px;
+    background-color: #1c4a3a;
+    border: 1px solid #2f6b56;
+    border-radius: 6px;
+}
+
+#RoundsSpinBox::up-button:hover,
+#RoundsSpinBox::down-button:hover {
+    background-color: #2f6b56;
+    border-color: #3ad68a;
+}
+
+#RoundsSpinBox::up-button:pressed,
+#RoundsSpinBox::down-button:pressed {
+    background-color: #3ad68a;
+}
+
+/* Symboles + et - */
+#RoundsSpinBox::plus {
+    image: none;
+    width: 14px;
+    height: 14px;
+}
+
+#RoundsSpinBox::minus {
+    image: none;
+    width: 14px;
+    height: 14px;
+}
+
 /* ComboBox popup */
 #CreateTournamentDialog QComboBox::drop-down {
     width: 0px;
@@ -199,6 +262,97 @@
 }
 #HistoricPrimaryButton:pressed {
     background: #1a2f29;
+}
+
+#HistoricCountLabel {
+    color: #7fd9bb;
+    font-size: 13px;
+    font-weight: 600;
+    padding-left: 8px;
+}
+
+/* =======================================================================
+   HISTORIC DIALOG
+   ======================================================================= */
+
+#HistoricDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 16px;
+}
+
+#HistoricDialog QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#HistoricDialog QScrollArea QWidget {
+    background-color: transparent;
+}
+
+#HistoricDialog QScrollArea QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#HistoricDialog QScrollArea QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#HistoricDialog QScrollArea QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+#HistoricDialog QScrollArea QScrollBar::add-line:vertical,
+#HistoricDialog QScrollArea QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#HistoricDialog QScrollArea QScrollBar::add-page:vertical,
+#HistoricDialog QScrollArea QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+#HistoricCard {
+    background-color: #153a2e;
+    border: 1px solid #2f6f55;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+#HistoricCard:hover {
+    border-color: #3ad68a;
+}
+
+#HistoricCardTitle {
+    color: #eafff6;
+    font-size: 15px;
+}
+
+#HistoricCardFormat {
+    color: #7de2a8;
+    font-size: 13px;
+    padding-left: 12px;
+}
+
+#HistoricCardDate {
+    color: #b6dcd0;
+    font-size: 12px;
+}
+
+#HistoricCardRanking {
+    color: #cfeee2;
+    font-size: 13px;
+    padding-right: 16px;
+}
+
+#HistoricCardStats {
+    color: #8fcfb5;
+    font-size: 11px;
 }
 
 /* =======================================================================
