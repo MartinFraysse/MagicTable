@@ -1,0 +1,336 @@
+/* =====================
+   DASHBOARD – TILES
+===================== */
+
+#DashboardTile {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #184a39,
+        stop:1 #0f2f25
+    );
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+#DashboardTile:hover {
+    border: 1px solid rgba(63, 210, 125, 0.6);
+}
+
+#DashboardTileIcon {
+    font-size: 20px;
+    color: #9fe3c4;
+}
+
+#DashboardTileValue {
+    font-size: 24px;
+    font-weight: 800;
+    color: #eafff5;
+}
+
+#DashboardTileTitle {
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    color: #8fcfb5;
+    text-transform: uppercase;
+}
+
+/* =====================
+   DASHBOARD – CARDS
+===================== */
+
+#DashboardCard {
+    background-color: #0b2f23;
+    border-radius: 18px;
+    padding: 20px;
+}
+
+/* Titres de sections */
+#DashboardSectionTitle {
+    color: #eafff5;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+/* =====================
+   DASHBOARD – RANKING TABLE
+===================== */
+
+#DashboardTable {
+    background-color: rgba(255, 255, 255, 0.035);
+    color: #f1fff9;
+    font-size: 13px;
+    border-radius: 14px;
+}
+
+/* Viewport */
+#DashboardTable QAbstractItemView::viewport {
+    background-color: transparent;
+}
+
+/* Header */
+#DashboardTable QHeaderView {
+    background-color: transparent;
+}
+
+#DashboardTable QHeaderView::section {
+    background-color: rgba(22, 68, 52, 0.95);
+    color: #b8f2d6;
+    padding: 10px 8px;
+    border: none;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+}
+
+/* Lignes */
+#DashboardTable::item {
+    padding: 9px;
+    background-color: transparent;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Hover */
+#DashboardTable::item:hover {
+    background-color: rgba(63, 210, 125, 0.14);
+}
+
+/* Sélection */
+#DashboardTable::item:selected {
+    background-color: rgba(63, 210, 125, 0.28);
+    color: #ffffff;
+}
+
+/* Coins arrondis du header */
+#DashboardTable QHeaderView::section:first {
+    border-top-left-radius: 14px;
+}
+
+#DashboardTable QHeaderView::section:last {
+    border-top-right-radius: 14px;
+}
+
+#DashboardTable QHeaderView::section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+/* =====================
+   DASHBOARD – TABLES EN COURS
+===================== */
+
+#TablesScrollArea {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 rgba(15, 47, 37, 0.0),
+        stop:0.5 rgba(15, 47, 37, 0.55),
+        stop:1 rgba(15, 47, 37, 0.0)
+    );
+    border-radius: 18px;
+    padding: 2px 0;
+}
+
+#TablesScrollArea QAbstractScrollArea::viewport {
+    background-color: transparent;
+}
+
+#TablesScrollContent {
+    background-color: transparent;
+}
+
+/* =====================
+   DASHBOARD – TABLE CARDS
+===================== */
+
+#TableCard {
+    background-color: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #1f6b4f,
+        stop:1 #123b2e
+    );
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#TableCard:hover {
+    border: 1px solid rgba(63, 210, 125, 0.6);
+}
+
+#TableCardTitle {
+    font-size: 14px;
+    font-weight: 800;
+    color: #eafff5;
+}
+
+#TableCardPlayers {
+    font-size: 13px;
+    color: #cfeee2;
+}
+
+#TableCardRunning {
+    color: #f5d76e;
+    font-weight: 600;
+}
+
+#TableCardFinished {
+    color: #8fdcc0;
+    font-weight: 600;
+}
+
+#TableCardWinner {
+    color: #3fd27d;
+    font-weight: 700;
+}
+
+/* =====================
+   DASHBOARD – PLAYER MATCHES POPUP
+===================== */
+
+#PlayerMatchesPopup {
+    background-color: #1f2a24;
+    border: 1px solid #3fd27d;
+    border-radius: 3px;
+}
+
+#PopupTitle {
+    font-weight: bold;
+    color: #3fd27d;
+}
+
+#PopupContent {
+    color: #e0e0e0;
+    font-size: 12px;
+}
+
+/* =====================
+   Dashboard tile accent
+===================== */
+
+QFrame#DashboardTileAccent {
+    background-color: #3fd27d;
+    border-radius: 2px;
+}
+
+/* =====================
+   COMBOBOX – DARK THEME
+===================== */
+
+QComboBox#FormatComboBox {
+    background-color: #0f2d25;
+    color: #eafff5;
+    border: 1px solid rgba(63, 210, 125, 0.55);
+    border-radius: 10px;
+    padding: 6px 36px 6px 12px;
+    min-height: 42px;
+    font-size: 13px;
+}
+
+QComboBox#FormatComboBox:hover {
+    border-color: rgba(63, 210, 125, 0.85);
+}
+
+QComboBox#FormatComboBox:focus {
+    border-color: #3fd27d;
+    background-color: #123a30;
+}
+
+QComboBox#FormatComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 32px;
+    border-left: 1px solid rgba(63, 210, 125, 0.35);
+}
+
+QComboBox#FormatComboBox::down-arrow {
+    image: none; /* on garde un style clean */
+}
+
+QComboBox#FormatComboBox QAbstractItemView {
+    background-color: #0f2d25;
+    color: #eafff5;
+    border: 1px solid rgba(63, 210, 125, 0.6);
+    border-radius: 10px;
+    outline: 0;
+    selection-background-color: #3fd27d;
+    selection-color: #0b1f19;
+}
+
+QComboBox#FormatComboBox QAbstractItemView::item {
+    padding: 8px 12px;
+    min-height: 42px;
+    border-radius: 6px;
+}
+
+QComboBox#FormatComboBox QAbstractItemView::item:selected {
+    background-color: #3fd27d;
+    color: #0b1f19;
+}
+
+QComboBox#FormatComboBox:disabled {
+    background-color: #0c241d;
+    color: #7fae9b;
+    border-color: rgba(63, 210, 125, 0.25);
+}
+
+QPushButton#PrimaryButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #2b8f68,
+        stop:1 #1e5f47
+    );
+    color: #eafff5;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+QPushButton#PrimaryButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #35a87b,
+        stop:1 #26775a
+    );
+    border: 1px solid rgba(63, 210, 125, 0.7);
+}
+
+QPushButton#PrimaryButton:pressed {
+    background: #1e5f47;
+}
+
+QPushButton#SecondaryButton {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #cfeee2;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+QPushButton#SecondaryButton:hover {
+    background-color: rgba(63, 210, 125, 0.18);
+    border: 1px solid rgba(63, 210, 125, 0.5);
+    color: #eafff5;
+}
+
+QPushButton#SecondaryButton:disabled {
+    background-color: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+QPushButton#PrimaryButton:disabled {
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+QPushButton#PrimaryButton:disabled:hover {
+    background: rgba(255, 255, 255, 0.04);
+}

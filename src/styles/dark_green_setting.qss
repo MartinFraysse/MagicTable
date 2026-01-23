@@ -1,0 +1,14 @@
+/* =====================
+   SETTINGS VIEW
+===================== */
+
+#SettingsView {
+    background-color: transparent;
+}
+
+/* Titre principal */
+#SettingsView QLabel {
+    color: #eafff5;
+    font-size: 18px;
+    font-weight: 800;
+}

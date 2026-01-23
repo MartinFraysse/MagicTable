@@ -1,0 +1,605 @@
+/* =======================================================================
+   MAGIC TABLE — TOURNAMENT UI (CLEANED & STRUCTURED)
+   ======================================================================= */
+
+/* =======================================================================
+   CREATE TOURNAMENT — DIALOG
+   ======================================================================= */
+
+/* Dialog container */
+#CreateTournamentDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 16px;
+}
+
+/* Title */
+#DialogTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: #e8fff4;
+    padding-bottom: 8px;
+}
+
+/* Inputs */
+#CreateTournamentDialog QLineEdit,
+#CreateTournamentDialog QComboBox {
+    min-height: 42px;
+    padding: 10px 14px;
+
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+
+    color: #eafff6;
+    font-size: 15px;
+}
+
+#CreateTournamentDialog QLineEdit:focus,
+#CreateTournamentDialog QComboBox:focus {
+    border-color: #3ad68a;
+    background-color: #153a2e;
+}
+
+#CreateTournamentDialog QLineEdit[alignment="AlignCenter"] {
+    min-width: 130px;
+    letter-spacing: 1px;
+}
+
+/* ComboBox popup */
+#CreateTournamentDialog QComboBox::drop-down {
+    width: 0px;
+    border: none;
+}
+#CreateTournamentDialog QComboBox::down-arrow {
+    image: none;
+}
+
+#CreateTournamentDialog QComboBox QAbstractItemView {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 8px;
+    outline: none;
+}
+
+#CreateTournamentDialog QComboBox QAbstractItemView::item {
+    padding: 25px 14px;
+    line-height: 18px;
+    font-size: 15px;
+    color: #eafff6;
+}
+
+#CreateTournamentDialog QComboBox QAbstractItemView::item:hover {
+    background-color: #153a2e;
+}
+#CreateTournamentDialog QComboBox QAbstractItemView::item:selected {
+    background-color: #2f6b56;
+}
+
+/* Preview */
+#TournamentPreview {
+    background-color: #0c1d18;
+    border: 1px dashed #2e7d5a;
+    border-radius: 10px;
+    color: #c9f3dd;
+    font-size: 13px;
+    padding: 10px;
+}
+
+/* Dialog buttons (shared) */
+#CreateTournamentDialog QPushButton {
+    min-height: 40px;
+    min-width: 110px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Secondary — Cancel */
+#CancelButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+}
+#CancelButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+}
+#CancelButton:pressed {
+    background: #1a2f29;
+}
+
+/* Primary — Create / Modify */
+#CreateButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #34cfa1, stop:1 #1f7a5a);
+    color: #eafff7;
+    border: 1px solid #55e0b6;
+    font-weight: 700;
+}
+#CreateButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #55e0b6, stop:1 #2fb38a);
+}
+#CreateButton:pressed {
+    background: #17664a;
+}
+#CreateButton:disabled {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2a3f38, stop:1 #1e2d28);
+    border: 1px solid #2f4a40;
+    color: #6f8f84;
+}
+
+/* =======================================================================
+   UPCOMING VIEW
+   ======================================================================= */
+
+#UpcomingTitle {
+    color: #eafff6;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 4px 0;
+}
+
+#UpcomingScrollContainer {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 14px;
+    border-top-color: #2f6b56;
+}
+
+#UpcomingScrollArea,
+#UpcomingContent {
+    background-color: transparent;
+}
+
+#UpcomingScrollArea QScrollBar {
+    width: 0;
+    height: 0;
+}
+
+#UpcomingPrimaryButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    padding: 0 18px;
+    min-height: 36px;
+    min-width: 180px;
+    font-size: 14px;
+    font-weight: 600;
+}
+#UpcomingPrimaryButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    border-color: #7fd9bb;
+}
+#UpcomingPrimaryButton:pressed {
+    background: #1a2f29;
+}
+
+/* =======================================================================
+   HISTORIC VIEW
+   ======================================================================= */
+
+#HistoricContainerInner {
+    background-color: transparent;
+}
+
+#HistoricPrimaryButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    padding: 0 20px;
+    min-height: 34px;
+    min-width: 220px;
+    font-size: 14px;
+    font-weight: 600;
+}
+#HistoricPrimaryButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    border-color: #7fd9bb;
+}
+#HistoricPrimaryButton:pressed {
+    background: #1a2f29;
+}
+
+/* =======================================================================
+   LAUNCH VIEW — PLACEHOLDER (no tournament loaded)
+   ======================================================================= */
+
+#LaunchContainerInner {
+    background-color: #0c1f19;
+    border: 3px dashed #2f6b56;
+    border-radius: 18px;
+    padding: 32px;
+}
+
+#LaunchTitle {
+    color: #eafff6;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+#LaunchSubtitle {
+    color: #cfe8dc;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* =======================================================================
+   LAUNCH VIEW — CARD
+   ======================================================================= */
+
+#LaunchCardContainer {
+    background-color: transparent;
+}
+
+#LaunchHeaderContainer {
+    background-color: #153a2e;
+    border: 1px solid #2f6f55;
+    border-bottom: none;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 16px 20px;
+}
+
+#LaunchPreparationContainer {
+    background-color: rgba(40, 100, 80, 0.55);
+    border: 1px solid rgba(100, 220, 170, 0.5);
+    border-top: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 20px;
+}
+
+/* Header text */
+#LaunchHeaderTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: #eafff6;
+}
+#LaunchHeaderFormat {
+    font-size: 14px;
+    font-weight: 500;
+    color: #7de2a8;
+}
+#LaunchHeaderMeta {
+    font-size: 13px;
+    color: #b6dcd0;
+}
+
+/* Header buttons */
+#LaunchPrimaryButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    padding: 0 12px;
+    min-height: 32px;
+    min-width: 88px;
+    font-size: 13px;
+    font-weight: 600;
+}
+#LaunchPrimaryButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    border-color: #7fd9bb;
+}
+#LaunchPrimaryButton:pressed {
+    background: #1a2f29;
+}
+
+/* Player input */
+#LaunchPlayerInput {
+    min-height: 32px;
+    padding: 6px 12px;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #132f26, stop:1 #0f241d);
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 500;
+}
+#LaunchPlayerInput::placeholder {
+    color: #9fcab8;
+}
+#LaunchPlayerInput:focus {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #153a2e, stop:1 #132f26);
+    border-color: #7fd9bb;
+}
+
+/* Section title */
+#LaunchSectionTitle {
+    color: #eafff6;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(120, 220, 180, 0.25);
+    padding-bottom: 2px;
+}
+
+/* Info text */
+#LaunchInfoText {
+    color: #eafff6;
+    font-size: 14px;
+    font-weight: 600;
+    padding-top: 6px;
+    padding-left: 2px;
+}
+
+/* =======================================================================
+   TOURNAMENT CARD
+   ======================================================================= */
+
+#TournamentCard {
+    background-color: #153a2e;
+    border: 1px solid #2f6f55;
+    border-radius: 14px;
+}
+#TournamentCard:hover {
+    background-color: #1c4a3a;
+    border-color: #3ad68a;
+}
+
+#TournamentCardTitle {
+    color: #eafff6;
+    font-size: 15px;
+    font-weight: 600;
+}
+#TournamentCardFormat {
+    color: #7de2a8;
+    font-size: 13px;
+    font-weight: 500;
+}
+#TournamentCardMeta {
+    color: #b6dcd0;
+    font-size: 12px;
+}
+
+/* =======================================================================
+   CONTEXT MENU & MESSAGE BOX
+   ======================================================================= */
+
+QMenu {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 3px;
+    padding: 6px;
+}
+QMenu::item {
+    color: #eafff6;
+    padding: 6px 14px;
+}
+QMenu::item:selected {
+    background-color: #2f6b56;
+}
+
+QMessageBox {
+    background-color: #0f241d;
+    color: #eafff6;
+    font-size: 13px;
+}
+QMessageBox QPushButton {
+    min-height: 32px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    background-color: #1c4a3a;
+    border: 1px solid #2f6f55;
+    color: #eafff6;
+}
+QMessageBox QPushButton:hover {
+    background-color: #245f4a;
+    border-color: #3ad68a;
+}
+QMessageBox QPushButton:default {
+    border: 2px solid #3ad68a;
+}
+
+
+/* =======================================================================
+   LAUNCH VIEW — PLAYERS LIST
+   ======================================================================= */
+
+#LaunchPlayersList {
+    background-color: rgba(15, 36, 29, 0.85);
+    border: 1px solid rgba(120, 220, 180, 0.35);
+    border-radius: 10px;
+    padding: 0px;
+    outline: none;
+}
+
+/* Player item */
+#LaunchPlayersList::item {
+    background-color: rgba(30, 80, 60, 0.45);
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin: 0px 0;
+
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Hover */
+#LaunchPlayersList::item:hover {
+    background-color: rgba(60, 140, 110, 0.55);
+}
+
+/* Selected (si tu actives la sélection plus tard) */
+#LaunchPlayersList::item:selected {
+    background-color: rgba(80, 200, 150, 0.6);
+    color: #0f241d;
+}
+
+/* =======================================================================
+   LAUNCH VIEW — PLAYERS LIST — SCROLLBAR
+   ======================================================================= */
+
+#LaunchPlayersList QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#LaunchPlayersList QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#LaunchPlayersList QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+#LaunchPlayersList QScrollBar::handle:vertical:pressed {
+    background-color: rgba(100, 200, 160, 0.9);
+}
+
+/* Supprimer les flèches */
+#LaunchPlayersList QScrollBar::add-line:vertical,
+#LaunchPlayersList QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+/* Fond invisible */
+#LaunchPlayersList QScrollBar::add-page:vertical,
+#LaunchPlayersList QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+
+
+/* =======================================================================
+   TOURNAMENT CARD — SELECTED STATE
+   ======================================================================= */
+
+#TournamentCard[selected="true"] {
+    background-color: #1c4a3a;              /* plus lumineux */
+    border: 2px solid #3ad68a;              /* vert accent */
+}
+
+/* Renforcer le texte quand sélectionné */
+#TournamentCard[selected="true"] #TournamentCardTitle {
+    color: #ffffff;
+}
+
+#TournamentCard[selected="true"] #TournamentCardFormat {
+    color: #9ff0c8;
+}
+
+#TournamentCard[selected="true"] #TournamentCardMeta {
+    color: #d7f7eb;
+}
+
+
+/* =======================================================================
+   MESSAGE BOX — TEXT & BUTTONS
+   ======================================================================= */
+
+QMessageBox {
+    background-color: #0f241d;
+    color: #eafff6;
+    font-size: 14px; /* fallback */
+}
+
+/* 🔑 TEXTE PRINCIPAL */
+QMessageBox QLabel {
+    color: #ffffff;          /* blanc pur */
+    font-size: 11px;         /* plus gros */
+    font-weight: 600;
+}
+
+/* Icône (le ? à gauche) */
+QMessageBox QLabel#qt_msgboxex_icon_label {
+    padding-right: 12px;
+}
+
+/* Boutons */
+QMessageBox QPushButton {
+    min-height: 34px;
+    min-width: 90px;
+    padding: 6px 16px;
+    border-radius: 10px;
+
+    background-color: #1c4a3a;
+    border: 1px solid #2f6f55;
+    color: #eafff6;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+QMessageBox QPushButton:hover {
+    background-color: #245f4a;
+    border-color: #3ad68a;
+}
+
+QMessageBox QPushButton:default {
+    border: 2px solid #3ad68a;
+}
+
+
+/* =======================================================================
+   EDIT PLAYER DIALOG
+   ======================================================================= */
+
+QDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 14px;
+}
+
+/* Texte du label */
+QDialog QLabel {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Champ de saisie */
+QDialog QLineEdit {
+    min-height: 36px;
+    padding: 8px 12px;
+
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+
+    color: #eafff6;
+    font-size: 14px;
+}
+
+QDialog QLineEdit:focus {
+    border-color: #3ad68a;
+    background-color: #153a2e;
+}
+
+/* Boutons */
+QDialog QPushButton {
+    min-height: 34px;
+    min-width: 88px;
+    padding: 6px 14px;
+
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+
+    background: qlineargradient(
+        x1:0,y1:0,x2:0,y2:1,
+        stop:0 #2f4f46,
+        stop:1 #1f352f
+    );
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+}
+
+QDialog QPushButton:hover {
+    background: qlineargradient(
+        x1:0,y1:0,x2:0,y2:1,
+        stop:0 #3b6b5f,
+        stop:1 #26443d
+    );
+    border-color: #7fd9bb;
+}
+
+/* Bouton principal */
+QDialog QPushButton:default {
+    border: 2px solid #3ad68a;
+}

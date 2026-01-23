@@ -1,0 +1,14 @@
+/* =====================
+   PLAYERS VIEW
+===================== */
+
+#PlayersView {
+    background-color: transparent;
+}
+
+/* Titre principal */
+#PlayersView QLabel {
+    color: #eafff5;
+    font-size: 18px;
+    font-weight: 800;
+}

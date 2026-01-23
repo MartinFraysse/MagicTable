@@ -1,0 +1,23 @@
+QListView {
+    background-color: #0b2f23;
+    border: 1px solid #3fd27d;
+    padding: 2px;
+    color: #eafff5;
+    outline: none;
+}
+
+QListView::item {
+    padding: 10px 14px;
+    background-color: transparent;
+    color: #eafff5;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+QListView::item:hover {
+    background-color: rgba(63, 210, 125, 0.18);
+}
+
+QListView::item:selected {
+    background-color: rgba(63, 210, 125, 0.35);
+    color: #ffffff;
+}
