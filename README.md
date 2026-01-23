@@ -1,134 +1,157 @@
-# <PROJECT_NAME>
+# MagicTable
 
-## 🧭 Overview
+## Overview
 
-Short description of the project.
-Explain `what problem it solves` and `why it exists`.
-
-Example:
-This project provides a lightweight tool to manage X in an Arch Linux environment.
+Application desktop de gestion de tournois **Magic: The Gathering**.
+Permet d'organiser des tournois, gérer les joueurs, générer les tables automatiquement et suivre les scores en temps réel.
 
 ---
 
-## 🎯 Goals
+## Fonctionnalités
 
-- Primary goal of the project
-- Secondary goals
-- Non-goals (what this project intentionally does NOT do)
-
----
-
-## 🧱 Project Structure
-
-Project layout:
-
-```
-./
-├── src/        # Source code
-├── docs/       # Project documentation
-├── .claude/    # Claude Code rules (AI behavior)
-├── .vscode/    # VS Code configuration
-├── README.md   # Project entry point
-└── INIT.md     # Project initialization guide
-```
+- Création et gestion de tournois (nom, format, date)
+- Gestion des joueurs (ajout, suppression, renommage avec détection des doublons)
+- Génération automatique des tables selon le format :
+  - **Commander** : tables de 4 ou 3 joueurs (minimum 6 joueurs)
+  - **Duel** : tables de 2 joueurs (minimum 4 joueurs)
+- Système de rounds avec timer de 50 minutes
+- Classement des joueurs par score et robustesse
+- Interface drag & drop pour lancer les tournois
+- Thème sombre vert personnalisé
+- Persistance des données en JSON
 
 ---
 
-## 🛠️ Stack & Environment
-
-- OS: `Arch Linux`
-- Shell: `bash`
-- Editor: `Visual Studio Code`
-- Version control: `git`
-- AI assistant: `Claude Code (CLI)`
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- `git`
-- `node.js` (installed via `nvm`)
-- `claude-code` installed
-
-### Initialization
-
-Initialize the repository:
+## Structure du projet
 
 ```
-git init
-git add .
-git commit -m "chore: initial project structure"
-```
-
-Open the project in VS Code:
-
-```
-code .
+src/
+├── app.py                 # Point d'entrée de l'application
+├── core/                  # Logique métier
+│   ├── player.py          # Entité joueur
+│   ├── tournament.py      # Entité tournoi + algorithmes
+│   ├── round.py           # Gestion des rounds
+│   └── table.py           # Entité table
+├── storage/               # Persistance des données
+│   ├── base.py            # Stockage JSON générique
+│   └── tournaments.py     # Stockage des tournois
+├── ui/                    # Interface utilisateur (PySide6)
+│   ├── main_window.py     # Fenêtre principale
+│   ├── dashboard/         # Vue tableau de bord
+│   ├── tournaments/       # Gestion des tournois
+│   └── widgets/           # Composants réutilisables
+├── styles/                # Feuilles de style QSS
+├── assets/                # Images et ressources
+└── data/                  # Données persistées
+    └── tournaments.json
 ```
 
 ---
 
-## 🤖 Claude Code Usage
+## Stack technique
 
-This project uses `Claude Code` as a development assistant.
+| Composant | Technologie |
+|-----------|-------------|
+| Langage | Python 3.14 |
+| Framework UI | PySide6 (Qt for Python) |
+| Persistance | JSON |
+| Style | QSS (Qt Style Sheets) |
+| OS | Linux (Arch) |
 
-Rules defining Claude behavior are located in:
+---
 
-`.claude/rules.md`
+## Installation
 
-Key principles:
+### Prérequis
 
-- Claude is an `assistant`, not an autonomous agent
-- Default mode is `read-only`
-- All code changes require explicit confirmation
+- Python 3.10+
+- pip
 
-Start Claude manually:
+### Installation des dépendances
+
+```bash
+cd src
+python -m venv .venv
+source .venv/bin/activate
+pip install PySide6
+```
+
+---
+
+## Lancement
+
+```bash
+cd src
+python app.py
+```
+
+Ou depuis n'importe quel répertoire :
+
+```bash
+python /chemin/vers/MagicTable/src/app.py
+```
+
+---
+
+## Utilisation
+
+### Créer un tournoi
+
+1. Aller dans l'onglet **Tournois**
+2. Cliquer sur **Créer un tournoi**
+3. Remplir le nom, format et date
+4. Le tournoi apparaît dans la liste "À venir"
+
+### Lancer un tournoi
+
+1. Glisser-déposer une carte tournoi vers la zone de lancement
+2. Ou clic droit → **Lancer**
+3. Ajouter les joueurs dans la section de préparation
+4. Cliquer sur **Démarrer le tournoi**
+
+### Gérer les rounds
+
+1. Les tables sont générées automatiquement
+2. Le timer de 50 minutes démarre
+3. Entrer les résultats de chaque table (clic droit → Modifier)
+4. Cliquer sur **Round suivant** pour continuer
+
+---
+
+## Architecture
+
+L'application suit une architecture en couches :
 
 ```
-claude
+┌─────────────────────────────────────┐
+│              UI Layer               │
+│  (PySide6 Views, Widgets, Dialogs)  │
+├─────────────────────────────────────┤
+│           Storage Layer             │
+│      (JSON File Persistence)        │
+├─────────────────────────────────────┤
+│            Core Layer               │
+│   (Tournament, Player, Round, Table)│
+└─────────────────────────────────────┘
 ```
 
-Or via VS Code task:
-
-`Run Task → Claude Code`
-
----
-
-## 📚 Documentation
-
-Detailed documentation lives in:
-
-`docs/`
-
-Start with:
-
-`docs/README.md`
+**Patterns utilisés :**
+- Signal/Slot (Qt) pour la communication entre composants
+- Dataclasses pour les entités
+- State Machine pour les états des rounds
+- Factory Pattern pour la création de tournois
 
 ---
 
-## 🔐 Git & Workflow
+## Formats supportés
 
-- Clean commit history is expected
-- Conventional commit messages are recommended
-- Documentation updates should accompany behavior changes
-
-If present, see:
-
-`docs/COMMITS.md`
+| Format | Joueurs/table | Min. joueurs |
+|--------|---------------|--------------|
+| Commander | 3-4 | 6 |
+| Duel | 2 | 4 |
 
 ---
 
-## 📝 Notes
+## Licence
 
-- Design decisions
-- Constraints
-- Known limitations
-- Future improvements
-
----
-
-## 📄 License
-
-Specify the license here if applicable.
+Non spécifiée.
