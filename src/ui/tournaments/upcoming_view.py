@@ -133,6 +133,8 @@ class UpcomingView(QWidget):
             max_rounds=dialog.get_max_rounds(),
         )
 
+        # Définir le système d'appariement (Swiss pour 1v1)
+        tournament.pairing_system = dialog.get_pairing_system()
 
         self._tournaments.append(tournament)
         self._register_tournament(tournament)

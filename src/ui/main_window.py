@@ -8,9 +8,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStackedWidget
 from PySide6.QtGui import QPixmap
 
+from core.tournament import Tournament
 from ui.tournaments.tournaments_view_main import TournamentViewMain
-from ui.players_view import PlayersView
-from ui.matches_view import MatchesView
+from ui.players.players_view_main import PlayersViewMain
+from ui.stats.stats_view_main import StatsViewMain
 from ui.settings_view import SettingsView
 from ui.dashboard.dashboard_view_main import DashboardViewMain
 
@@ -23,8 +24,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("MagicTable — Tournament Manager")
 
-        self.resize(1380, 840)
-        self.setMinimumSize(1380, 920)
+        self.resize(1380, 920)
+        self.setMinimumSize(1024, 710)
         self.setMaximumSize(1380, 920)
 
         # === CENTRAL ROOT ===
@@ -47,7 +48,7 @@ class MainWindow(QMainWindow):
         # === CONNECT NAVIGATION ===
         for index, btn in enumerate(self.nav_buttons):
             btn.clicked.connect(
-                lambda checked, i=index: self.stack.setCurrentIndex(i)
+                lambda checked, i=index: self._navigate_to(i)
             )
 
         self.tournaments_view.round_started.connect(
@@ -120,7 +121,7 @@ class MainWindow(QMainWindow):
             ("📊", "Dashboard"),
             ("🏆", "Tournois"),
             ("👥", "Joueurs"),
-            ("⚔️", "Matchs"),
+            ("📈", "Stats"),
             ("⚙️", "Paramètres"),
         ]:
             btn = QPushButton(f"{icon}  {name}")
@@ -141,6 +142,8 @@ class MainWindow(QMainWindow):
         quit_btn = QPushButton("⏻  Quitter")
         quit_btn.setObjectName("QuitButton")
         quit_btn.setMinimumHeight(44)
+        quit_btn.setCursor(Qt.PointingHandCursor)
+        quit_btn.clicked.connect(self.close)
 
         layout.addWidget(quit_btn)
 
@@ -170,22 +173,34 @@ class MainWindow(QMainWindow):
 
         self.dashboard_view = DashboardViewMain()
         self.tournaments_view = TournamentViewMain()
-        self.players_view = PlayersView()
-        self.matches_view = MatchesView()
+        self.players_view = PlayersViewMain()
+        self.stats_view = StatsViewMain()
         self.settings_view = SettingsView()
 
-        self.stack.addWidget(self.dashboard_view)
-        self.stack.addWidget(self.tournaments_view)
-        self.stack.addWidget(self.players_view)
-        self.stack.addWidget(self.matches_view)
-        self.stack.addWidget(self.settings_view)
+        self.stack.addWidget(self.dashboard_view)      # Index 0
+        self.stack.addWidget(self.tournaments_view)    # Index 1
+        self.stack.addWidget(self.players_view)        # Index 2
+        self.stack.addWidget(self.stats_view)          # Index 3
+        self.stack.addWidget(self.settings_view)       # Index 4
 
         layout.addWidget(self.stack)
 
         return container
 
+    def _navigate_to(self, index: int):
+        """Navigue vers une vue et rafraîchit les données si nécessaire."""
+        self.stack.setCurrentIndex(index)
+
+        # Rafraîchir la vue des joueurs quand on y accède
+        if index == 2:  # Joueurs
+            self.players_view.refresh()
+        elif index == 3:  # Stats
+            self.stats_view.refresh()
+
     def start_tournament(self, tournament: Tournament):
         self.stack.setCurrentIndex(0)
         self.nav_buttons[0].setChecked(True)
-        
-        self.dashboard_view.set_current_round(tournament)
+
+        # Récupérer la durée du timer depuis les paramètres
+        timer_duration = self.settings_view.get_timer_duration()
+        self.dashboard_view.set_current_round(tournament, timer_duration)

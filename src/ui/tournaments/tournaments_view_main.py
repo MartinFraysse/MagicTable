@@ -96,7 +96,7 @@ class TournamentViewMain(QWidget):
         frame = QFrame()
         frame.setObjectName("HistoricContainer")
         frame.setAttribute(Qt.WA_StyledBackground, True)
-        frame.setMaximumHeight(72)
+        frame.setMinimumHeight(72)
 
         layout = QVBoxLayout(frame)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -162,7 +162,11 @@ class TournamentViewMain(QWidget):
     def _start_tournament(self, tournament: Tournament):
         # Ne créer un round que si le tournoi n'en a pas encore
         if not tournament.rounds:
-            tournament.create_round()
+            # Utiliser l'algorithme approprié selon le système d'appariement
+            if tournament.is_swiss_format():
+                tournament.create_round_swiss()
+            else:
+                tournament.create_round()
         self.round_started.emit(tournament)
 
     def save_tournaments(self):
@@ -172,6 +176,19 @@ class TournamentViewMain(QWidget):
     def _init_historic(self):
         """Initialise la vue historique avec les tournois archivés."""
         self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+        self.historic_view.tournament_deleted.connect(self._on_historic_tournament_deleted)
+        self.historic_view.tournaments_changed.connect(self._on_historic_tournaments_changed)
+
+    def _on_historic_tournaments_changed(self):
+        """Appelé quand les données d'un tournoi archivé sont modifiées."""
+        self.upcoming_view._save_all()
+
+    def _on_historic_tournament_deleted(self, tournament_id: int):
+        """Appelé quand un tournoi archivé est supprimé depuis l'historique."""
+        self.upcoming_view._tournaments = [
+            t for t in self.upcoming_view._tournaments if t.id != tournament_id
+        ]
+        self.upcoming_view._save_all()
 
     def on_tournament_archived(self, tournament_id: int):
         """Appelé quand un tournoi est archivé depuis le dashboard."""

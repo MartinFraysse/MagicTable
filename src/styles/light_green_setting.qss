@@ -1,5 +1,5 @@
 /* =======================================================================
-   MAGIC TABLE — SETTINGS VIEW
+   MAGIC TABLE — SETTINGS VIEW (LIGHT)
    ======================================================================= */
 
 #SettingsView {
@@ -22,13 +22,13 @@
 }
 
 #SettingsScroll QScrollBar::handle:vertical {
-    background-color: rgba(120, 220, 180, 0.45);
+    background-color: rgba(46, 170, 110, 0.4);
     border-radius: 4px;
     min-height: 32px;
 }
 
 #SettingsScroll QScrollBar::handle:vertical:hover {
-    background-color: rgba(150, 240, 200, 0.75);
+    background-color: rgba(46, 170, 110, 0.6);
 }
 
 #SettingsScroll QScrollBar::add-line:vertical,
@@ -42,107 +42,87 @@
     background: none;
 }
 
-/* =======================================================================
-   TITLE
-   ======================================================================= */
-
 #SettingsTitle {
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 22px;
     font-weight: bold;
 }
 
-/* =======================================================================
-   SECTIONS
-   ======================================================================= */
-
 #SettingsSection {
-    background-color: #132f26;
-    border: 1px solid #2f6f55;
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
     border-radius: 12px;
     padding: 16px;
 }
 
 #SettingsSectionTitle {
-    color: #7fd9bb;
+    color: #2d8a5e;
     font-size: 16px;
     font-weight: 600;
     padding-bottom: 4px;
 }
 
 #SettingsLabel {
-    color: #b6dcd0;
+    color: #3d6b5e;
     font-size: 14px;
 }
 
 #SettingsHint {
-    color: #6b9d8a;
+    color: #7a9f92;
     font-size: 12px;
     font-style: italic;
 }
 
-/* =======================================================================
-   SPINBOX
-   ======================================================================= */
-
 #SettingsSpinBox {
-    background-color: #1a3d32;
-    border: 1px solid #2f6f55;
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
     border-radius: 8px;
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 14px;
     padding: 8px 12px;
     min-height: 36px;
 }
 
 #SettingsSpinBox:focus {
-    border-color: #3ad68a;
+    border-color: #2eaa6e;
 }
 
 #SettingsSpinBox::up-button,
 #SettingsSpinBox::down-button {
     width: 24px;
-    background-color: #1c4a3a;
-    border: 1px solid #2f6b56;
+    background-color: #e8f5f0;
+    border: 1px solid #c0e0d5;
     border-radius: 4px;
 }
 
 #SettingsSpinBox::up-button:hover,
 #SettingsSpinBox::down-button:hover {
-    background-color: #256b52;
+    background-color: #d0ebe2;
 }
 
 #SettingsSpinBox::up-arrow {
     image: none;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-bottom: 6px solid #7fd9bb;
+    border-bottom: 6px solid #2d8a5e;
 }
 
 #SettingsSpinBox::down-arrow {
     image: none;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 6px solid #7fd9bb;
+    border-top: 6px solid #2d8a5e;
 }
 
-/* =======================================================================
-   STATS
-   ======================================================================= */
-
 #SettingsStats {
-    color: #8fcfb5;
+    color: #5a8a7a;
     font-size: 13px;
     padding-right: 20px;
 }
 
-/* =======================================================================
-   DANGER BUTTON
-   ======================================================================= */
-
 #DangerButton {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #c0392b, stop:1 #922b21);
-    color: #fff5f5;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #e74c3c, stop:1 #c0392b);
+    color: #ffffff;
     border: 1px solid #e74c3c;
     border-radius: 8px;
     padding: 0 16px;
@@ -152,30 +132,85 @@
 }
 
 #DangerButton:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #e74c3c, stop:1 #c0392b);
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #ff6b5b, stop:1 #e74c3c);
 }
 
 #DangerButton:pressed {
-    background: #7b241c;
+    background: #c0392b;
 }
 
-/* =======================================================================
-   ABOUT SECTION
-   ======================================================================= */
-
 #SettingsAppName {
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 16px;
     font-weight: bold;
 }
 
 #SettingsVersion {
-    color: #7fd9bb;
+    color: #2d8a5e;
     font-size: 13px;
 }
 
 #SettingsDescription {
-    color: #8fcfb5;
+    color: #5a8a7a;
     font-size: 13px;
     line-height: 1.4;
+}
+
+/* Theme ComboBox */
+#ThemeComboBox {
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
+    border-radius: 8px;
+    color: #1a3d33;
+    font-size: 14px;
+    padding: 8px 12px;
+    min-height: 36px;
+    min-width: 150px;
+}
+
+#ThemeComboBox:hover {
+    border-color: #2eaa6e;
+}
+
+#ThemeComboBox:focus {
+    border-color: #2eaa6e;
+    background-color: #ffffff;
+}
+
+#ThemeComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+#ThemeComboBox::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #2d8a5e;
+    margin-right: 8px;
+}
+
+#ThemeComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    selection-background-color: #2eaa6e;
+    selection-color: #ffffff;
+}
+
+#ThemeComboBox QAbstractItemView::item {
+    color: #1a3d33;
+    padding: 8px 12px;
+    min-height: 28px;
+}
+
+#ThemeComboBox QAbstractItemView::item:hover {
+    background-color: #e8f5f0;
+}
+
+#ThemeComboBox QAbstractItemView::item:selected {
+    background-color: #2eaa6e;
+    color: #ffffff;
 }

@@ -1,0 +1,89 @@
+/* =====================
+   MAIN WINDOW – GLOBAL (LIGHT)
+===================== */
+
+QMainWindow {
+    background-color: #f0faf7;
+    color: #1a3d33;
+}
+
+/* =====================
+   SIDEBAR
+===================== */
+
+#Sidebar {
+    background-color: #e0f2ec;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* =====================
+   LOGO
+===================== */
+
+#Logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a3d33;
+}
+
+#LogoIcon {
+    background: transparent;
+}
+
+/* =====================
+   NAVIGATION BUTTONS
+===================== */
+
+QPushButton#NavButton {
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+
+    color: #3d6b5e;
+    font-size: 14px;
+    font-weight: 500;
+
+    padding: 12px 16px;
+    text-align: left;
+}
+
+QPushButton#NavButton:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+QPushButton#NavButton:checked {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #2ecc71,
+        stop:1 #1e8f55
+    );
+    color: #ffffff;
+    font-weight: 700;
+}
+
+QPushButton#NavButton:checked:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #36d278,
+        stop:1 #28a366
+    );
+}
+
+/* =====================
+   QUIT BUTTON
+===================== */
+
+QPushButton#QuitButton {
+    background-color: #c0392b;
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px;
+}
+
+QPushButton#QuitButton:hover {
+    background-color: #e74c3c;
+}

@@ -1,9 +1,5 @@
 /* =======================================================================
-   MAGIC TABLE — PLAYERS VIEW
-   ======================================================================= */
-
-/* =======================================================================
-   MAIN VIEW
+   MAGIC TABLE — PLAYERS VIEW (LIGHT)
    ======================================================================= */
 
 #PlayersViewMain {
@@ -14,31 +10,23 @@
     background-color: transparent;
 }
 
-/* =======================================================================
-   SECTION TITLE
-   ======================================================================= */
-
 #SectionTitle {
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 20px;
     font-weight: bold;
 }
 
 #CountLabel {
-    color: #7fd9bb;
+    color: #2d8a5e;
     font-size: 14px;
     font-weight: 600;
     padding-left: 8px;
 }
 
-/* =======================================================================
-   PRIMARY BUTTON
-   ======================================================================= */
-
 #PrimaryButton {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #34cfa1, stop:1 #1f7a5a);
-    color: #eafff7;
-    border: 1px solid #55e0b6;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2eaa6e, stop:1 #1e8f55);
+    color: #ffffff;
+    border: 1px solid #3bc87a;
     border-radius: 10px;
     padding: 0 20px;
     min-height: 40px;
@@ -48,20 +36,16 @@
 }
 
 #PrimaryButton:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #55e0b6, stop:1 #2fb38a);
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3bc87a, stop:1 #2eaa6e);
 }
 
 #PrimaryButton:pressed {
-    background: #17664a;
+    background: #1e8f55;
 }
 
-/* =======================================================================
-   PLAYERS TABLE
-   ======================================================================= */
-
 #PlayersTable {
-    background-color: #0f241d;
-    border: 1px solid #2f6f55;
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
     border-radius: 10px;
     gridline-color: transparent;
     outline: none;
@@ -70,13 +54,13 @@
 
 #PlayersTable QTableWidget,
 #PlayersTable QWidget {
-    background-color: #0f241d;
+    background-color: #ffffff;
 }
 
 #PlayersTable::item {
     background-color: transparent;
     padding: 10px 14px;
-    color: #ffffff;
+    color: #1a3d33;
     font-size: 14px;
     font-weight: 500;
     border: none;
@@ -88,31 +72,28 @@
 
 #PlayersTable::item:selected {
     background-color: transparent;
-    color: #ffffff;
+    color: #1a3d33;
 }
 
-/* Header */
 #PlayersTable QHeaderView {
-    background-color: #0f241d;
+    background-color: #ffffff;
 }
 
 #PlayersTable QHeaderView::section {
-    background-color: #0f241d;
-    color: #7fd9bb;
+    background-color: #f5fcfa;
+    color: #2d8a5e;
     font-size: 13px;
     font-weight: 600;
     padding: 10px 12px;
     border: none;
-    border-bottom: 1px solid rgba(63, 210, 125, 0.25);
+    border-bottom: 1px solid rgba(46, 170, 110, 0.25);
 }
 
-/* Corner widget (entre les headers) */
 #PlayersTable QTableCornerButton::section {
-    background-color: #0f241d;
+    background-color: #ffffff;
     border: none;
 }
 
-/* Scrollbar */
 #PlayersTable QScrollBar:vertical {
     background: transparent;
     width: 8px;
@@ -120,13 +101,13 @@
 }
 
 #PlayersTable QScrollBar::handle:vertical {
-    background-color: rgba(120, 220, 180, 0.45);
+    background-color: rgba(46, 170, 110, 0.4);
     border-radius: 4px;
     min-height: 32px;
 }
 
 #PlayersTable QScrollBar::handle:vertical:hover {
-    background-color: rgba(150, 240, 200, 0.75);
+    background-color: rgba(46, 170, 110, 0.6);
 }
 
 #PlayersTable QScrollBar::add-line:vertical,
@@ -140,25 +121,22 @@
     background: none;
 }
 
-/* =======================================================================
-   CREATE PLAYER DIALOG
-   ======================================================================= */
-
+/* Dialog styles */
 #CreatePlayerDialog {
-    background-color: #0f241d;
-    border: 1px solid #1f4d3a;
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
     border-radius: 14px;
 }
 
 #CreatePlayerDialog #DialogTitle {
     font-size: 18px;
     font-weight: bold;
-    color: #e8fff4;
+    color: #1a3d33;
     padding-bottom: 4px;
 }
 
 #CreatePlayerDialog QLabel {
-    color: #b6dcd0;
+    color: #3d6b5e;
     font-size: 13px;
     font-weight: 500;
 }
@@ -166,16 +144,16 @@
 #CreatePlayerDialog #DialogInput {
     min-height: 38px;
     padding: 8px 12px;
-    background-color: #132f26;
-    border: 1px solid #1f4d3a;
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
     border-radius: 10px;
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 14px;
 }
 
 #CreatePlayerDialog #DialogInput:focus {
-    border-color: #3ad68a;
-    background-color: #153a2e;
+    border-color: #2eaa6e;
+    background-color: #ffffff;
 }
 
 #CreatePlayerDialog #DialogInput[error="true"] {
@@ -191,9 +169,9 @@
 }
 
 #CreatePlayerDialog #CancelButton {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
-    color: #d3e6df;
-    border: 1px solid #5fa693;
+    background: #ffffff;
+    color: #3d6b5e;
+    border: 1px solid #c0e0d5;
     border-radius: 8px;
     padding: 0 16px;
     min-height: 36px;
@@ -203,13 +181,14 @@
 }
 
 #CreatePlayerDialog #CancelButton:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    background: #f5fcfa;
+    border-color: #2eaa6e;
 }
 
 #CreatePlayerDialog #PrimaryButton {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #34cfa1, stop:1 #1f7a5a);
-    color: #eafff7;
-    border: 1px solid #55e0b6;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2eaa6e, stop:1 #1e8f55);
+    color: #ffffff;
+    border: 1px solid #3bc87a;
     border-radius: 8px;
     padding: 0 16px;
     min-height: 36px;
@@ -219,39 +198,36 @@
 }
 
 #CreatePlayerDialog #PrimaryButton:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #55e0b6, stop:1 #2fb38a);
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3bc87a, stop:1 #2eaa6e);
 }
 
 #CreatePlayerDialog #PrimaryButton:pressed {
-    background: #17664a;
+    background: #1e8f55;
 }
 
-/* =======================================================================
-   PLAYER STATS DIALOG
-   ======================================================================= */
-
+/* Player Stats Dialog */
 #PlayerStatsDialog {
-    background-color: #0f241d;
-    border: 1px solid #1f4d3a;
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
     border-radius: 16px;
 }
 
 #PlayerStatsDialog #DialogTitle {
     font-size: 22px;
     font-weight: bold;
-    color: #e8fff4;
+    color: #1a3d33;
 }
 
 #PlayerStatsDialog #DialogSubtitle {
-    color: #8fcfb5;
+    color: #5a8a7a;
     font-size: 14px;
     padding-bottom: 8px;
 }
 
 #PlayerStatsDialog #CancelButton {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
-    color: #d3e6df;
-    border: 1px solid #5fa693;
+    background: #ffffff;
+    color: #3d6b5e;
+    border: 1px solid #c0e0d5;
     border-radius: 8px;
     padding: 0 16px;
     min-height: 36px;
@@ -261,35 +237,34 @@
 }
 
 #PlayerStatsDialog #CancelButton:hover {
-    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    background: #f5fcfa;
+    border-color: #2eaa6e;
 }
 
-/* Stats Section */
 #StatsSection {
-    background-color: #132f26;
-    border: 1px solid #2f6f55;
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
     border-radius: 12px;
     padding: 16px;
 }
 
 #StatsSectionTitle {
-    color: #7fd9bb;
+    color: #2d8a5e;
     font-size: 14px;
     font-weight: 600;
     padding-bottom: 8px;
 }
 
-/* Podium Cards */
 #PodiumCard {
-    background-color: #1a3d32;
-    border: 1px solid #2f6f55;
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
     border-radius: 10px;
     padding: 12px 16px;
     min-width: 80px;
 }
 
 #PodiumCard:hover {
-    border-color: #3ad68a;
+    border-color: #2eaa6e;
 }
 
 #PodiumEmoji {
@@ -297,37 +272,35 @@
 }
 
 #PodiumCount {
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 24px;
     font-weight: bold;
 }
 
 #PodiumLabel {
-    color: #8fcfb5;
+    color: #5a8a7a;
     font-size: 11px;
 }
 
-/* Stats Total */
 #StatsTotalLabel {
-    color: #b6dcd0;
+    color: #3d6b5e;
     font-size: 14px;
     font-weight: 500;
 }
 
 #StatsTotalValue {
-    color: #3ad68a;
+    color: #1e8f55;
     font-size: 18px;
     font-weight: bold;
 }
 
-/* Stats Grid */
 #StatsLabel {
-    color: #8fcfb5;
+    color: #5a8a7a;
     font-size: 13px;
 }
 
 #StatsValue {
-    color: #eafff6;
+    color: #1a3d33;
     font-size: 14px;
     font-weight: 500;
 }

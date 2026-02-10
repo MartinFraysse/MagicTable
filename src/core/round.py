@@ -38,7 +38,7 @@ class Round:
         return {
             "number": self.number,
             "state": self.state.value,
-            "tables": [t.to_dict() for t in self.tables],
+            "tables": [t.to_dict() for t in self.tables] if self.tables else [],
         }
 
     @classmethod

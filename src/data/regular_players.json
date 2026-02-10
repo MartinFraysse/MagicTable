@@ -1,0 +1,68 @@
+[
+  {
+    "id": 2,
+    "pseudo": "Gael",
+    "full_name": "Gael Machin",
+    "phone": "05 75 45 85 45",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 1
+  },
+  {
+    "id": 4,
+    "pseudo": "Lou",
+    "full_name": "Louana",
+    "phone": "06 54 54 84 54",
+    "top_1": 1,
+    "top_2": 0,
+    "top_3": 1,
+    "points": 5,
+    "tournaments_played": 2
+  },
+  {
+    "id": 1,
+    "pseudo": "Marfin",
+    "full_name": "Martin Fraysse",
+    "phone": "07 68 88 76 90",
+    "top_1": 1,
+    "top_2": 2,
+    "top_3": 2,
+    "points": 9,
+    "tournaments_played": 3
+  },
+  {
+    "id": 3,
+    "pseudo": "Sebito",
+    "full_name": "Sebastien Bonmalé",
+    "phone": "0121545544",
+    "top_1": 1,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 1
+  },
+  {
+    "id": 5,
+    "pseudo": "Seb",
+    "full_name": "",
+    "phone": "",
+    "top_1": 1,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 8,
+    "tournaments_played": 3
+  },
+  {
+    "id": 6,
+    "pseudo": "Francois",
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
+  }
+]

@@ -20,7 +20,7 @@ def main():
         "styles/dark_green_dashboard.qss",
         "styles/dark_green_tournament.qss",
         "styles/dark_green_player.qss",
-        "styles/dark_green_matche.qss",
+        "styles/dark_green_stats.qss",
         "styles/dark_green_setting.qss",
         "styles/dark_green_main.qss",
         "styles/dark_green_widget.qss",

@@ -1,37 +1,37 @@
 /* =====================
-   DASHBOARD – TILES
+   DASHBOARD – TILES (LIGHT)
 ===================== */
 
 #DashboardTile {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #184a39,
-        stop:1 #0f2f25
+        stop:0 #ffffff,
+        stop:1 #f0faf7
     );
     border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 #DashboardTile:hover {
-    border: 1px solid rgba(63, 210, 125, 0.6);
+    border: 1px solid rgba(46, 170, 110, 0.6);
 }
 
 #DashboardTileIcon {
     font-size: 20px;
-    color: #9fe3c4;
+    color: #2d8a5e;
 }
 
 #DashboardTileValue {
     font-size: 24px;
     font-weight: 800;
-    color: #eafff5;
+    color: #1a3d33;
 }
 
 #DashboardTileTitle {
     font-size: 11px;
     letter-spacing: 1.4px;
-    color: #8fcfb5;
+    color: #5a8a7a;
     text-transform: uppercase;
 }
 
@@ -40,14 +40,15 @@
 ===================== */
 
 #DashboardCard {
-    background-color: #0b2f23;
+    background-color: #ffffff;
     border-radius: 18px;
     padding: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* Titres de sections */
 #DashboardSectionTitle {
-    color: #eafff5;
+    color: #1a3d33;
     font-size: 16px;
     font-weight: 800;
 }
@@ -57,10 +58,11 @@
 ===================== */
 
 #DashboardTable {
-    background-color: rgba(255, 255, 255, 0.035);
-    color: #f1fff9;
+    background-color: #ffffff;
+    color: #1a3d33;
     font-size: 13px;
     border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* Viewport */
@@ -74,8 +76,8 @@
 }
 
 #DashboardTable QHeaderView::section {
-    background-color: rgba(22, 68, 52, 0.95);
-    color: #b8f2d6;
+    background-color: #e8f5f0;
+    color: #2d5a4a;
     padding: 10px 8px;
     border: none;
     font-size: 12px;
@@ -87,18 +89,18 @@
 #DashboardTable::item {
     padding: 9px;
     background-color: transparent;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* Hover */
 #DashboardTable::item:hover {
-    background-color: rgba(63, 210, 125, 0.14);
+    background-color: rgba(46, 170, 110, 0.12);
 }
 
 /* Sélection */
 #DashboardTable::item:selected {
-    background-color: rgba(63, 210, 125, 0.28);
-    color: #ffffff;
+    background-color: rgba(46, 170, 110, 0.25);
+    color: #1a3d33;
 }
 
 /* Coins arrondis du header */
@@ -111,7 +113,7 @@
 }
 
 #DashboardTable QHeaderView::section {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.10);
 }
 
 /* =====================
@@ -119,24 +121,24 @@
 ===================== */
 
 #DashboardTable QScrollBar:vertical {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
     width: 10px;
     border-radius: 5px;
     margin: 4px 2px;
 }
 
 #DashboardTable QScrollBar::handle:vertical {
-    background-color: rgba(63, 210, 125, 0.4);
+    background-color: rgba(46, 170, 110, 0.4);
     border-radius: 4px;
     min-height: 30px;
 }
 
 #DashboardTable QScrollBar::handle:vertical:hover {
-    background-color: rgba(63, 210, 125, 0.6);
+    background-color: rgba(46, 170, 110, 0.6);
 }
 
 #DashboardTable QScrollBar::handle:vertical:pressed {
-    background-color: rgba(63, 210, 125, 0.8);
+    background-color: rgba(46, 170, 110, 0.8);
 }
 
 #DashboardTable QScrollBar::add-line:vertical,
@@ -157,9 +159,9 @@
     background: qlineargradient(
         x1:0, y1:0,
         x2:1, y2:0,
-        stop:0 rgba(15, 47, 37, 0.0),
-        stop:0.5 rgba(15, 47, 37, 0.55),
-        stop:1 rgba(15, 47, 37, 0.0)
+        stop:0 rgba(240, 250, 247, 0.0),
+        stop:0.5 rgba(232, 245, 240, 0.8),
+        stop:1 rgba(240, 250, 247, 0.0)
     );
     border-radius: 18px;
     padding: 2px 0;
@@ -181,41 +183,41 @@
     background-color: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #1f6b4f,
-        stop:1 #123b2e
+        stop:0 #ffffff,
+        stop:1 #f5fcfa
     );
     border-radius: 16px;
     padding: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.10);
 }
 
 #TableCard:hover {
-    border: 1px solid rgba(63, 210, 125, 0.6);
+    border: 1px solid rgba(46, 170, 110, 0.6);
 }
 
 #TableCardTitle {
     font-size: 14px;
     font-weight: 800;
-    color: #eafff5;
+    color: #1a3d33;
 }
 
 #TableCardPlayers {
     font-size: 13px;
-    color: #cfeee2;
+    color: #3d6b5e;
 }
 
 #TableCardRunning {
-    color: #f5d76e;
+    color: #b8860b;
     font-weight: 600;
 }
 
 #TableCardFinished {
-    color: #8fdcc0;
+    color: #2d8a5e;
     font-weight: 600;
 }
 
 #TableCardWinner {
-    color: #3fd27d;
+    color: #1e8f55;
     font-weight: 700;
 }
 
@@ -224,18 +226,18 @@
 ===================== */
 
 #PlayerMatchesPopup {
-    background-color: #1f2a24;
-    border: 1px solid #3fd27d;
+    background-color: #ffffff;
+    border: 1px solid #2eaa6e;
     border-radius: 3px;
 }
 
 #PopupTitle {
     font-weight: bold;
-    color: #3fd27d;
+    color: #1e8f55;
 }
 
 #PopupContent {
-    color: #e0e0e0;
+    color: #3d6b5e;
     font-size: 12px;
 }
 
@@ -244,18 +246,18 @@
 ===================== */
 
 QFrame#DashboardTileAccent {
-    background-color: #3fd27d;
+    background-color: #2eaa6e;
     border-radius: 2px;
 }
 
 /* =====================
-   COMBOBOX – DARK THEME
+   COMBOBOX – LIGHT THEME
 ===================== */
 
 QComboBox#FormatComboBox {
-    background-color: #0f2d25;
-    color: #eafff5;
-    border: 1px solid rgba(63, 210, 125, 0.55);
+    background-color: #ffffff;
+    color: #1a3d33;
+    border: 1px solid rgba(46, 170, 110, 0.55);
     border-radius: 10px;
     padding: 6px 36px 6px 12px;
     min-height: 42px;
@@ -263,33 +265,33 @@ QComboBox#FormatComboBox {
 }
 
 QComboBox#FormatComboBox:hover {
-    border-color: rgba(63, 210, 125, 0.85);
+    border-color: rgba(46, 170, 110, 0.85);
 }
 
 QComboBox#FormatComboBox:focus {
-    border-color: #3fd27d;
-    background-color: #123a30;
+    border-color: #2eaa6e;
+    background-color: #f5fcfa;
 }
 
 QComboBox#FormatComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
     width: 32px;
-    border-left: 1px solid rgba(63, 210, 125, 0.35);
+    border-left: 1px solid rgba(46, 170, 110, 0.35);
 }
 
 QComboBox#FormatComboBox::down-arrow {
-    image: none; /* on garde un style clean */
+    image: none;
 }
 
 QComboBox#FormatComboBox QAbstractItemView {
-    background-color: #0f2d25;
-    color: #eafff5;
-    border: 1px solid rgba(63, 210, 125, 0.6);
+    background-color: #ffffff;
+    color: #1a3d33;
+    border: 1px solid rgba(46, 170, 110, 0.6);
     border-radius: 10px;
     outline: 0;
-    selection-background-color: #3fd27d;
-    selection-color: #0b1f19;
+    selection-background-color: #2eaa6e;
+    selection-color: #ffffff;
 }
 
 QComboBox#FormatComboBox QAbstractItemView::item {
@@ -299,75 +301,75 @@ QComboBox#FormatComboBox QAbstractItemView::item {
 }
 
 QComboBox#FormatComboBox QAbstractItemView::item:selected {
-    background-color: #3fd27d;
-    color: #0b1f19;
+    background-color: #2eaa6e;
+    color: #ffffff;
 }
 
 QComboBox#FormatComboBox:disabled {
-    background-color: #0c241d;
-    color: #7fae9b;
-    border-color: rgba(63, 210, 125, 0.25);
+    background-color: #f0f0f0;
+    color: #999999;
+    border-color: rgba(46, 170, 110, 0.25);
 }
 
 QPushButton#PrimaryButton {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #2b8f68,
-        stop:1 #1e5f47
+        stop:0 #2eaa6e,
+        stop:1 #1e8f55
     );
-    color: #eafff5;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 800;
     padding: 12px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 QPushButton#PrimaryButton:hover {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #35a87b,
-        stop:1 #26775a
+        stop:0 #36c07a,
+        stop:1 #28a366
     );
-    border: 1px solid rgba(63, 210, 125, 0.7);
+    border: 1px solid rgba(46, 170, 110, 0.7);
 }
 
 QPushButton#PrimaryButton:pressed {
-    background: #1e5f47;
+    background: #1e8f55;
 }
 
 QPushButton#SecondaryButton {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #cfeee2;
+    background-color: #ffffff;
+    color: #3d6b5e;
     font-size: 13px;
     font-weight: 700;
     padding: 12px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 QPushButton#SecondaryButton:hover {
-    background-color: rgba(63, 210, 125, 0.18);
-    border: 1px solid rgba(63, 210, 125, 0.5);
-    color: #eafff5;
+    background-color: rgba(46, 170, 110, 0.12);
+    border: 1px solid rgba(46, 170, 110, 0.5);
+    color: #1a3d33;
 }
 
 QPushButton#SecondaryButton:disabled {
-    background-color: rgba(255, 255, 255, 0.02);
-    color: rgba(255, 255, 255, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: #f5f5f5;
+    color: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 QPushButton#PrimaryButton:disabled {
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #e0e0e0;
+    color: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 QPushButton#PrimaryButton:disabled:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: #e0e0e0;
 }
 
 /* =====================
@@ -378,29 +380,29 @@ QPushButton#DangerButton {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #8f3a3a,
-        stop:1 #5f2828
+        stop:0 #e74c3c,
+        stop:1 #c0392b
     );
-    color: #ffe5e5;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 700;
     padding: 12px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 100, 100, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 QPushButton#DangerButton:hover {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #a84a4a,
-        stop:1 #703232
+        stop:0 #ff6b5b,
+        stop:1 #e74c3c
     );
     border: 1px solid rgba(255, 100, 100, 0.6);
 }
 
 QPushButton#DangerButton:pressed {
-    background: #5f2828;
+    background: #c0392b;
 }
 
 /* =====================
@@ -411,35 +413,35 @@ QPushButton#WarningButton {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #b8860b,
-        stop:1 #8b6914
+        stop:0 #f5a623,
+        stop:1 #d4920d
     );
-    color: #fff8e7;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 700;
     padding: 12px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 200, 100, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 QPushButton#WarningButton:hover {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #daa520,
-        stop:1 #b8860b
+        stop:0 #ffc04d,
+        stop:1 #f5a623
     );
     border: 1px solid rgba(255, 200, 100, 0.7);
 }
 
 QPushButton#WarningButton:pressed {
-    background: #8b6914;
+    background: #d4920d;
 }
 
 QPushButton#WarningButton:disabled {
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: #e0e0e0;
+    color: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* =====================
@@ -447,7 +449,7 @@ QPushButton#WarningButton:disabled {
 ===================== */
 
 #RepetitionWarning {
-    color: #f5a623;
+    color: #d4920d;
     font-size: 12px;
     font-weight: 600;
     padding: 4px 8px;
@@ -461,27 +463,27 @@ QPushButton#ArchiveButton {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #5b7a99,
-        stop:1 #3d5266
+        stop:0 #5b9bd5,
+        stop:1 #4a7fb8
     );
-    color: #e8f4ff;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 700;
     padding: 12px 22px;
     border-radius: 14px;
-    border: 1px solid rgba(150, 200, 255, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 QPushButton#ArchiveButton:hover {
     background: qlineargradient(
         x1:0, y1:0,
         x2:0, y2:1,
-        stop:0 #6d8fb3,
-        stop:1 #4a6278
+        stop:0 #6db3f2,
+        stop:1 #5b9bd5
     );
     border: 1px solid rgba(150, 200, 255, 0.6);
 }
 
 QPushButton#ArchiveButton:pressed {
-    background: #3d5266;
+    background: #4a7fb8;
 }

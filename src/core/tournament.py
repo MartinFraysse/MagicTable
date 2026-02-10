@@ -4,6 +4,7 @@ from typing import Dict
 from core.player import Player
 from core.round import Round
 from core.table import Table
+from core.swiss_pairing import generate_swiss_pairings, compute_recommended_rounds
 import random
 
 @dataclass
@@ -17,6 +18,11 @@ class Tournament:
     rounds: list[Round] = field(default_factory=list)
     max_rounds: int = 3
     archived: bool = False
+    podiums_recorded: bool = False
+
+    # Swiss pairing system
+    pairing_system: str = "standard"  # "standard" ou "swiss"
+    bye_history: set[int] = field(default_factory=set)
 
     _next_player_id: int = 0
 
@@ -52,12 +58,28 @@ class Tournament:
         )
         self.players.append(player)
         self._next_player_id += 1
+
+        # Invalider les rounds non commencés
+        self._invalidate_preparation_rounds()
+
         return player
 
     def remove_player(self, player_id: int) -> None:
         self.players = [
             p for p in self.players
             if p.id != player_id
+        ]
+
+        # Invalider les rounds non commencés
+        self._invalidate_preparation_rounds()
+
+    def _invalidate_preparation_rounds(self) -> None:
+        """Supprime les rounds en préparation (tables pas encore jouées)."""
+        from core.round import RoundState
+
+        self.rounds = [
+            r for r in self.rounds
+            if r.state != RoundState.PREPARATION
         ]
 
     def rename_player(self, player_id: int, new_name: str) -> bool:
@@ -129,22 +151,23 @@ class Tournament:
             if player_count < 6:
                 return None
 
-            sizes: list[int] = []
+            # Cas prioritaire: si divisible par 3, faire des tables de 3
+            if player_count % 3 == 0:
+                return [3] * (player_count // 3)
 
+            # Sinon chercher la meilleure combinaison 4+3
             max_fours = player_count // 4
 
             for fours in range(max_fours, -1, -1):
                 remaining = player_count - 4 * fours
 
                 if remaining == 0:
-                    sizes = [4] * fours
-                    return sizes
+                    return [4] * fours
 
                 if remaining % 3 == 0:
                     threes = remaining // 3
                     if threes > 0:
-                        sizes = [4] * fours + [3] * threes
-                        return sizes
+                        return [4] * fours + [3] * threes
 
             return None
 
@@ -345,6 +368,87 @@ class Tournament:
 
         return tables
 
+    # =====================
+    # Swiss Pairing System
+    # =====================
+
+    def create_round_swiss(self) -> Round:
+        """
+        Crée un round avec appariement Swiss officiel.
+        Uniquement valide pour les formats 1v1.
+        """
+        round_number = len(self.rounds) + 1
+        opponents_map = self.get_opponents_map()
+
+        result = generate_swiss_pairings(
+            self.players,
+            opponents_map,
+            self.bye_history
+        )
+
+        tables: list[Table] = []
+        for i, (p1, p2) in enumerate(result.pairings, 1):
+            tables.append(Table(number=i, players=[p1, p2]))
+
+        # Gérer le bye
+        if result.bye_player:
+            self.bye_history.add(result.bye_player.id)
+            result.bye_player.had_bye = True
+            result.bye_player.add_score(3)  # Victoire automatique
+            tables.append(Table(
+                number=len(tables) + 1,
+                players=[result.bye_player],
+                finished=True,
+                results={result.bye_player.id: 1}
+            ))
+
+        new_round = Round(number=round_number, tables=tables)
+        self.rounds.append(new_round)
+        return new_round
+
+    def calculate_swiss_tiebreakers(self) -> None:
+        """
+        Calcule les départages Swiss pour tous les joueurs.
+        - Buchholz: Somme des scores de tous les adversaires rencontrés
+        - SOS: Moyenne des scores des adversaires (Strength of Schedule)
+
+        Doit être appelé après chaque round terminé.
+        """
+        opponents_map = self.get_opponents_map()
+
+        for player in self.players:
+            opponent_ids = opponents_map.get(player.id, set())
+            opponent_scores = []
+
+            for opp_id in opponent_ids:
+                opp = next((p for p in self.players if p.id == opp_id), None)
+                if opp:
+                    opponent_scores.append(opp.score)
+
+            player.buchholz = float(sum(opponent_scores))
+            player.sos = sum(opponent_scores) / len(opponent_scores) if opponent_scores else 0.0
+
+    def sort_players_swiss(self) -> list[Player]:
+        """
+        Tri Swiss officiel:
+        1. Score (décroissant)
+        2. Buchholz (décroissant)
+        3. SOS (décroissant)
+        4. Nom (alphabétique)
+        """
+        return sorted(
+            self.players,
+            key=lambda p: (-p.score, -p.buchholz, -p.sos, p.name)
+        )
+
+    def is_swiss_format(self) -> bool:
+        """Vérifie si le tournoi utilise l'appariement Swiss."""
+        return self.pairing_system == "swiss"
+
+    def get_recommended_rounds(self) -> int:
+        """Nombre de rounds recommandé pour Swiss: ceil(log2(n))."""
+        return compute_recommended_rounds(len(self.players))
+
     def update(self, *, name: str, format: str, date: str, max_rounds: int) -> None:
         self.name = name.strip()
         self.format = format.strip()
@@ -375,9 +479,16 @@ class Tournament:
         for player in self.players:
             player.score = 0
             player.robustness = 0
+            # Reset des champs Swiss
+            player.buchholz = 0.0
+            player.sos = 0.0
+            player.had_bye = False
 
         # Supprimer tous les rounds (et donc les tables/résultats)
         self.rounds.clear()
+
+        # Réinitialiser l'historique des byes
+        self.bye_history.clear()
 
         print(f"\n{'='*50}")
         print(f"🔄 TOURNOI RÉINITIALISÉ - {self.name}")
@@ -431,12 +542,19 @@ class Tournament:
             "date": self.date,
             "max_rounds": self.max_rounds,
             "archived": self.archived,
+            "podiums_recorded": self.podiums_recorded,
+            "pairing_system": self.pairing_system,
+            "bye_history": list(self.bye_history),
             "players": [
                 {
                     "id": p.id,
                     "name": p.name,
                     "score": p.score,
                     "robustness": p.robustness,
+                    "reward_claimed": p.reward_claimed,
+                    "buchholz": p.buchholz,
+                    "sos": p.sos,
+                    "had_bye": p.had_bye,
                 }
                 for p in self.players
             ],
@@ -452,8 +570,13 @@ class Tournament:
             date=data["date"],
             max_rounds=data.get("max_rounds", 3),
             archived=data.get("archived", False),
+            podiums_recorded=data.get("podiums_recorded", False),
+            pairing_system=data.get("pairing_system", "standard"),
             players=[],
         )
+
+        # Charger l'historique des byes
+        tournament.bye_history = set(data.get("bye_history", []))
 
         # Charger les joueurs
         for p in data.get("players", []):
@@ -462,6 +585,10 @@ class Tournament:
                 name=p["name"],
                 score=p.get("score", 0),
                 robustness=p.get("robustness", 0),
+                reward_claimed=p.get("reward_claimed", False),
+                buchholz=p.get("buchholz", 0.0),
+                sos=p.get("sos", 0.0),
+                had_bye=p.get("had_bye", False),
             )
             tournament.players.append(player)
             tournament._next_player_id = max(

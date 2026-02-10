@@ -356,6 +356,91 @@
 }
 
 /* =======================================================================
+   REWARDS DIALOG
+   ======================================================================= */
+
+#RewardsDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 16px;
+}
+
+#RewardsDialog QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#RewardsDialog QScrollArea QWidget {
+    background-color: transparent;
+}
+
+#RewardsDialog QScrollArea QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#RewardsDialog QScrollArea QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#RewardsDialog QScrollArea QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+#RewardsDialog QScrollArea QScrollBar::add-line:vertical,
+#RewardsDialog QScrollArea QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#RewardsDialog QScrollArea QScrollBar::add-page:vertical,
+#RewardsDialog QScrollArea QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+#DialogSubtitle {
+    color: #8fcfb5;
+    font-size: 13px;
+    padding-bottom: 8px;
+}
+
+#RewardRow {
+    background-color: #153a2e;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+}
+
+#RewardRow:hover {
+    border-color: #3ad68a;
+}
+
+#RewardCheckbox {
+    color: #eafff6;
+    font-size: 14px;
+    spacing: 10px;
+}
+
+#RewardCheckbox::indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #3f8d6a;
+    background-color: #132f26;
+}
+
+#RewardCheckbox::indicator:checked {
+    background-color: #3ad68a;
+    border-color: #3ad68a;
+}
+
+#RewardCheckbox::indicator:hover {
+    border-color: #4ee89c;
+}
+
+/* =======================================================================
    LAUNCH VIEW — PLACEHOLDER (no tournament loaded)
    ======================================================================= */
 
@@ -551,34 +636,30 @@ QMessageBox QPushButton:default {
    ======================================================================= */
 
 #LaunchPlayersList {
-    background-color: rgba(15, 36, 29, 0.85);
-    border: 1px solid rgba(120, 220, 180, 0.35);
+    background-color: #0f241d;
+    border: 1px solid #2f6f55;
     border-radius: 10px;
-    padding: 0px;
+    padding: 4px;
     outline: none;
 }
 
 /* Player item */
 #LaunchPlayersList::item {
-    background-color: rgba(30, 80, 60, 0.45);
-    border-radius: 8px;
-    padding: 6px 12px;
-    margin: 0px 0;
-
-    color: #eafff6;
-    font-size: 13px;
+    background-color: transparent;
+    padding: 10px 14px;
+    color: #ffffff;
+    font-size: 14px;
     font-weight: 500;
 }
 
-/* Hover */
+/* Hover et Selected gérés par le delegate */
 #LaunchPlayersList::item:hover {
-    background-color: rgba(60, 140, 110, 0.55);
+    background-color: transparent;
 }
 
-/* Selected (si tu actives la sélection plus tard) */
 #LaunchPlayersList::item:selected {
-    background-color: rgba(80, 200, 150, 0.6);
-    color: #0f241d;
+    background-color: transparent;
+    color: #ffffff;
 }
 
 /* =======================================================================
@@ -756,4 +837,286 @@ QDialog QPushButton:hover {
 /* Bouton principal */
 QDialog QPushButton:default {
     border: 2px solid #3ad68a;
+}
+
+/* =======================================================================
+   AUTOCOMPLETE / COMPLETER
+   ======================================================================= */
+
+QCompleter QAbstractItemView {
+    background-color: #0f241d;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+}
+
+QCompleter QAbstractItemView::item {
+    color: #eafff6;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+QCompleter QAbstractItemView::item:hover {
+    background-color: rgba(63, 210, 125, 0.2);
+}
+
+QCompleter QAbstractItemView::item:selected {
+    background-color: rgba(63, 210, 125, 0.35);
+    color: #ffffff;
+}
+
+/* =======================================================================
+   FILE DIALOG (Export PDF, etc.)
+   ======================================================================= */
+
+QFileDialog {
+    background-color: #0f241d;
+    color: #eafff6;
+}
+
+QFileDialog QWidget {
+    background-color: #0f241d;
+    color: #eafff6;
+}
+
+QFileDialog QLabel {
+    color: #eafff6;
+    font-size: 13px;
+}
+
+QFileDialog QLineEdit {
+    min-height: 32px;
+    padding: 6px 12px;
+    background-color: #132f26;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 13px;
+}
+
+QFileDialog QLineEdit:focus {
+    border-color: #3ad68a;
+    background-color: #153a2e;
+}
+
+/* Bouton secondaire (Annuler, Ouvrir dossier) */
+QFileDialog QPushButton {
+    min-height: 32px;
+    min-width: 80px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+}
+
+QFileDialog QPushButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    border-color: #7fd9bb;
+}
+
+QFileDialog QPushButton:pressed {
+    background: #1a2f29;
+}
+
+/* Bouton principal (Enregistrer / Save) - vert accent */
+QFileDialog QPushButton#fileNameEdit + QPushButton,
+QFileDialog QDialogButtonBox QPushButton:first-child {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #34cfa1, stop:1 #1f7a5a);
+    color: #eafff7;
+    border: 1px solid #55e0b6;
+    font-weight: 700;
+}
+
+QFileDialog QPushButton#fileNameEdit + QPushButton:hover,
+QFileDialog QDialogButtonBox QPushButton:first-child:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #55e0b6, stop:1 #2fb38a);
+}
+
+QFileDialog QPushButton#fileNameEdit + QPushButton:pressed,
+QFileDialog QDialogButtonBox QPushButton:first-child:pressed {
+    background: #17664a;
+}
+
+QFileDialog QComboBox {
+    min-height: 32px;
+    padding: 6px 12px;
+    background-color: #132f26;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 13px;
+}
+
+QFileDialog QComboBox:hover {
+    border-color: #3ad68a;
+}
+
+QFileDialog QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+QFileDialog QComboBox::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #7fd9bb;
+    margin-right: 8px;
+}
+
+QFileDialog QComboBox QAbstractItemView {
+    background-color: #0f241d;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    selection-background-color: #2f6b56;
+}
+
+QFileDialog QComboBox QAbstractItemView::item {
+    color: #eafff6;
+    padding: 8px 12px;
+    min-height: 24px;
+}
+
+QFileDialog QComboBox QAbstractItemView::item:hover {
+    background-color: #1c4a3a;
+}
+
+QFileDialog QComboBox QAbstractItemView::item:selected {
+    background-color: #2f6b56;
+}
+
+/* Tree view (liste des fichiers) */
+QFileDialog QTreeView,
+QFileDialog QListView {
+    background-color: #132f26;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 13px;
+    outline: none;
+}
+
+QFileDialog QTreeView::item,
+QFileDialog QListView::item {
+    padding: 6px 8px;
+    color: #eafff6;
+}
+
+QFileDialog QTreeView::item:hover,
+QFileDialog QListView::item:hover {
+    background-color: #1c4a3a;
+}
+
+QFileDialog QTreeView::item:selected,
+QFileDialog QListView::item:selected {
+    background-color: #2f6b56;
+    color: #ffffff;
+}
+
+/* Header du tree view */
+QFileDialog QHeaderView::section {
+    background-color: #1c4a3a;
+    color: #eafff6;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 1px solid #2f6f55;
+    font-weight: 600;
+}
+
+QFileDialog QHeaderView::section:hover {
+    background-color: #245f4a;
+}
+
+/* Scrollbars */
+QFileDialog QScrollBar:vertical {
+    background: #0f241d;
+    width: 10px;
+    margin: 0;
+    border-radius: 5px;
+}
+
+QFileDialog QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 5px;
+    min-height: 32px;
+}
+
+QFileDialog QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+QFileDialog QScrollBar::add-line:vertical,
+QFileDialog QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+QFileDialog QScrollBar::add-page:vertical,
+QFileDialog QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QFileDialog QScrollBar:horizontal {
+    background: #0f241d;
+    height: 10px;
+    margin: 0;
+    border-radius: 5px;
+}
+
+QFileDialog QScrollBar::handle:horizontal {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 5px;
+    min-width: 32px;
+}
+
+QFileDialog QScrollBar::handle:horizontal:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+QFileDialog QScrollBar::add-line:horizontal,
+QFileDialog QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: none;
+}
+
+QFileDialog QScrollBar::add-page:horizontal,
+QFileDialog QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+/* Toolbar et sidebar */
+QFileDialog QToolButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 4px;
+    color: #eafff6;
+}
+
+QFileDialog QToolButton:hover {
+    background-color: #1c4a3a;
+    border-color: #2f6f55;
+}
+
+QFileDialog QToolButton:pressed {
+    background-color: #2f6b56;
+}
+
+QFileDialog QSplitter::handle {
+    background-color: #2f6f55;
+}
+
+QFileDialog #sidebar {
+    background-color: #0c1f19;
+}
+
+QFileDialog QFrame {
+    background-color: #0f241d;
+    border: none;
 }

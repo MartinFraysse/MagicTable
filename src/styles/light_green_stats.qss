@@ -1,0 +1,420 @@
+/* =======================================================================
+   MAGIC TABLE — STATS VIEW STYLES (LIGHT)
+   ======================================================================= */
+
+#StatsViewMain {
+    background-color: #f0faf7;
+}
+
+#StatsTabs {
+    background-color: #f0faf7;
+    border: none;
+}
+
+#StatsTabs::pane {
+    background-color: #f0faf7;
+    border: none;
+    border-top: none;
+}
+
+#StatsTabBar {
+    background-color: #f0faf7;
+    border: none;
+}
+
+#StatsViewMain QTabWidget {
+    background-color: #f0faf7;
+    border: none;
+}
+
+#StatsViewMain QTabWidget::pane {
+    background-color: #f0faf7;
+    border: none;
+}
+
+#StatsViewMain QTabBar {
+    background-color: #f0faf7;
+    border: none;
+}
+
+#StatsViewMain QTabBar::tab {
+    background-color: #e8f5f0;
+    color: #3d6b5e;
+    padding: 12px 24px;
+    margin-right: 4px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#StatsViewMain QTabBar::tab:selected {
+    background-color: #ffffff;
+    color: #1a3d33;
+    border-bottom: 3px solid #2eaa6e;
+}
+
+#StatsViewMain QTabBar::tab:hover:!selected {
+    background-color: #d8ede5;
+}
+
+/* Global Stats View */
+#GlobalStatsView {
+    background-color: #f0faf7;
+}
+
+#GlobalStatsView QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#GlobalStatsView QScrollArea QWidget {
+    background-color: transparent;
+}
+
+#StatsTile {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #ffffff, stop:1 #f5fcfa);
+    border: 1px solid #c0e0d5;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 140px;
+}
+
+#StatsTile:hover {
+    border-color: #2eaa6e;
+}
+
+#StatsTileValue {
+    color: #1e8f55;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+#StatsTileLabel {
+    color: #5a8a7a;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#StatsSectionTitle {
+    color: #1a3d33;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 8px 0;
+    border-bottom: 2px solid #c0e0d5;
+    margin-bottom: 12px;
+}
+
+#ChartContainer {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+#ChartTitle {
+    color: #1a3d33;
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: 12px;
+}
+
+/* Head to Head View */
+#HeadToHeadView {
+    background-color: #f0faf7;
+}
+
+#HeadToHeadView QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#HeadToHeadView QScrollArea QWidget {
+    background-color: transparent;
+}
+
+#PlayerSelector {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+#PlayerSelectorLabel {
+    color: #3d6b5e;
+    font-size: 13px;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+#PlayerSelectorCombo {
+    min-height: 36px;
+    padding: 8px 14px;
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
+    border-radius: 8px;
+    color: #1a3d33;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 200px;
+}
+
+#PlayerSelectorCombo:hover {
+    border-color: #2eaa6e;
+}
+
+#PlayerSelectorCombo::drop-down {
+    border: none;
+    width: 24px;
+}
+
+#PlayerSelectorCombo::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #2d8a5e;
+    margin-right: 8px;
+}
+
+#PlayerSelectorCombo QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    selection-background-color: #2eaa6e;
+}
+
+#PlayerSelectorCombo QAbstractItemView::item {
+    color: #1a3d33;
+    padding: 10px 14px;
+    min-height: 24px;
+}
+
+#PlayerSelectorCombo QAbstractItemView::item:hover {
+    background-color: #e8f5f0;
+}
+
+#PlayerSelectorCombo QAbstractItemView::item:selected {
+    background-color: #2eaa6e;
+    color: #ffffff;
+}
+
+/* Matchups Table */
+#MatchupsTable {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 10px;
+    gridline-color: #e8f5f0;
+    color: #1a3d33;
+    font-size: 13px;
+    outline: none;
+}
+
+#MatchupsTable::item {
+    padding: 10px 12px;
+}
+
+#MatchupsTable::item:selected {
+    background-color: rgba(46, 170, 110, 0.2);
+    color: #1a3d33;
+}
+
+#MatchupsTable::item:hover {
+    background-color: #f5fcfa;
+}
+
+#MatchupsTable QHeaderView::section {
+    background-color: #e8f5f0;
+    color: #1a3d33;
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 2px solid #2eaa6e;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+#MatchupsTable QHeaderView::section:hover {
+    background-color: #d8ede5;
+}
+
+#MatchupsTable QScrollBar:vertical {
+    background: #f5fcfa;
+    width: 10px;
+    margin: 0;
+    border-radius: 5px;
+}
+
+#MatchupsTable QScrollBar::handle:vertical {
+    background-color: rgba(46, 170, 110, 0.4);
+    border-radius: 5px;
+    min-height: 32px;
+}
+
+#MatchupsTable QScrollBar::handle:vertical:hover {
+    background-color: rgba(46, 170, 110, 0.6);
+}
+
+#MatchupsTable QScrollBar::add-line:vertical,
+#MatchupsTable QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#MatchupsTable QScrollBar::add-page:vertical,
+#MatchupsTable QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Winrate colors */
+#WinrateHigh {
+    color: #1e8f55;
+    font-weight: 700;
+}
+
+#WinrateMedium {
+    color: #d4920d;
+    font-weight: 600;
+}
+
+#WinrateLow {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+/* Matchup History Dialog */
+#MatchupHistoryDialog {
+    background-color: #ffffff;
+    border: 1px solid #c0e0d5;
+    border-radius: 16px;
+}
+
+#MatchupHistoryDialog QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#MatchupHistoryDialog QScrollArea QWidget {
+    background-color: transparent;
+}
+
+#MatchupHistoryTitle {
+    color: #1a3d33;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+#MatchupHistorySubtitle {
+    color: #5a8a7a;
+    font-size: 13px;
+}
+
+#MatchupSummaryCard {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #ffffff, stop:1 #f5fcfa);
+    border: 1px solid #c0e0d5;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+#MatchupSummaryValue {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+#MatchupSummaryLabel {
+    color: #5a8a7a;
+    font-size: 12px;
+}
+
+#HistoryCard {
+    background-color: #f5fcfa;
+    border: 1px solid #c0e0d5;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+#HistoryCard:hover {
+    border-color: #2eaa6e;
+}
+
+#HistoryTournamentName {
+    color: #1a3d33;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#HistoryDate {
+    color: #5a8a7a;
+    font-size: 12px;
+}
+
+#HistoryResult {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#HistoryResultWin {
+    color: #1e8f55;
+}
+
+#HistoryResultLoss {
+    color: #c0392b;
+}
+
+#HistoryResultDraw {
+    color: #d4920d;
+}
+
+/* Empty State */
+#EmptyState {
+    color: #7a9f92;
+    font-size: 14px;
+    padding: 40px;
+}
+
+#EmptyStateIcon {
+    font-size: 48px;
+    padding-bottom: 16px;
+}
+
+/* Scrollbars */
+#GlobalStatsView QScrollBar:vertical,
+#HeadToHeadView QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#GlobalStatsView QScrollBar::handle:vertical,
+#HeadToHeadView QScrollBar::handle:vertical {
+    background-color: rgba(46, 170, 110, 0.4);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#GlobalStatsView QScrollBar::handle:vertical:hover,
+#HeadToHeadView QScrollBar::handle:vertical:hover {
+    background-color: rgba(46, 170, 110, 0.6);
+}
+
+#GlobalStatsView QScrollBar::add-line:vertical,
+#GlobalStatsView QScrollBar::sub-line:vertical,
+#HeadToHeadView QScrollBar::add-line:vertical,
+#HeadToHeadView QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#GlobalStatsView QScrollBar::add-page:vertical,
+#GlobalStatsView QScrollBar::sub-page:vertical,
+#HeadToHeadView QScrollBar::add-page:vertical,
+#HeadToHeadView QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Rankings View */
+#RankingsView {
+    background-color: #f0faf7;
+}

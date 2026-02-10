@@ -6,7 +6,7 @@ class DashboardTilesView(QWidget):
         super().__init__(parent)
 
         layout = QHBoxLayout(self)
-        layout.setSpacing(20)
+        layout.setSpacing(12)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.tile_active = self._tile("🔴", "Tournoi", "Inactif")
@@ -32,10 +32,11 @@ class DashboardTilesView(QWidget):
         frame = QFrame()
         frame.setObjectName("DashboardTile")
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        frame.setMinimumWidth(100)
 
         layout = QVBoxLayout(frame)
         layout.setSpacing(4)
-        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setContentsMargins(12, 12, 12, 12)
 
         # === ACCENT VISUEL ===
         accent = QFrame()
@@ -87,3 +88,13 @@ class DashboardTilesView(QWidget):
     def set_active(self):
         self.tile_active.value_label.setText("Active")
         self.tile_active.icon_label.setText("🟢")
+
+    def reset(self):
+        """Réinitialise les tiles à leur état initial."""
+        self.tile_active.value_label.setText("Inactif")
+        self.tile_active.icon_label.setText("🔴")
+        self.tile_name.value_label.setText("-")
+        self.tile_players.value_label.setText("-")
+        self.tile_tables.value_label.setText("-")
+        self.tile_round.value_label.setText("-")
+        self.tile_timer.value_label.setText("--:--")

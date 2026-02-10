@@ -1,4 +1,5 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QRect, QModelIndex, QEvent
+from PySide6.QtGui import QPainter, QBrush, QColor
 from PySide6.QtWidgets import (
     QWidget,
     QListWidgetItem,
@@ -12,12 +13,55 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMessageBox,
     QMenu,
+    QCompleter,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QStyle,
 )
 import json
 
 from core.tournament import Tournament
+from core.regular_player import RegularPlayer
 from storage.tournaments import TournamentStorage
+from storage.regular_players import RegularPlayerStorage
 from ui.tournaments.dialogs.edit_player import EditPlayerDialog
+
+
+class PlayerListDelegate(QStyledItemDelegate):
+    """Delegate pour dessiner un fond arrondi sur les items de la liste."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._hover_color = QColor(63, 210, 125, 38)
+        self._selected_color = QColor(63, 210, 125, 77)
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        is_selected = bool(option.state & QStyle.State_Selected)
+        is_hovered = bool(option.state & QStyle.State_MouseOver)
+
+        if is_selected or is_hovered:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setPen(Qt.NoPen)
+
+            # Rectangle avec marges
+            item_rect = QRect(
+                option.rect.left() + 4,
+                option.rect.top() + 2,
+                option.rect.width() - 8,
+                option.rect.height() - 4
+            )
+
+            if is_selected:
+                painter.setBrush(QBrush(self._selected_color))
+            else:
+                painter.setBrush(QBrush(self._hover_color))
+
+            painter.drawRoundedRect(item_rect, 6, 6)
+            painter.restore()
+
+        # Dessiner le contenu normal
+        super().paint(painter, option, index)
 
 
 class LaunchView(QWidget):
@@ -37,12 +81,40 @@ class LaunchView(QWidget):
         super().__init__(parent)
 
         self._current_tournament: Tournament | None = None
+        self._regular_players: list[RegularPlayer] = []
+        self._completer_search_text: str = ""  # Texte original pour l'autocomplétion
 
         self.setObjectName("LaunchView")
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.setAcceptDrops(True)
 
+        self._load_regular_players()
         self._build_ui()
+
+    # ======================================================
+    # Regular Players (autocomplétion)
+    # ======================================================
+    def _load_regular_players(self):
+        """Charge les joueurs réguliers pour l'autocomplétion."""
+        raw = RegularPlayerStorage.load()
+        self._regular_players = [RegularPlayer.from_dict(d) for d in raw]
+
+    def _get_regular_player_pseudos(self) -> list[str]:
+        """Retourne la liste des pseudos des joueurs réguliers."""
+        return [p.pseudo for p in self._regular_players]
+
+    def _setup_completer(self):
+        """Configure l'autocomplétion sur le champ joueur."""
+        pseudos = self._get_regular_player_pseudos()
+        completer = QCompleter(pseudos, self)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchContains)
+        self.player_input.setCompleter(completer)
+
+    def refresh_regular_players(self):
+        """Rafraîchit la liste des joueurs réguliers (appelé après ajout)."""
+        self._load_regular_players()
+        self._setup_completer()
 
     # ======================================================
     # 🔑 HELPER — retrouver UpcomingView dans l'arbre Qt
@@ -169,13 +241,23 @@ class LaunchView(QWidget):
             self._show_player_context_menu
         )
 
+        # Delegate pour fond arrondi unifié
+        player_delegate = PlayerListDelegate(self.players_list)
+        self.players_list.setItemDelegate(player_delegate)
+        self.players_list.setMouseTracking(True)
+        self.players_list.viewport().setMouseTracking(True)
+
         prep_layout.addWidget(self.players_list)
 
         row = QHBoxLayout()
         self.player_input = QLineEdit()
         self.player_input.setObjectName("LaunchPlayerInput")
-        self.player_input.setPlaceholderText("Nom du joueur")
+        self.player_input.setPlaceholderText("Nom du joueur (autocomplétion disponible)")
         self.player_input.returnPressed.connect(self._add_player_manual)
+
+        # Configurer l'autocomplétion et la rafraîchir au focus
+        self._setup_completer()
+        self.player_input.installEventFilter(self)
 
         add_btn = QPushButton("➕ Ajouter")
         add_btn.setObjectName("LaunchPrimaryButton")
@@ -315,11 +397,12 @@ class LaunchView(QWidget):
             return
 
         player_id = item.data(Qt.UserRole)
+        player_name = item.data(Qt.UserRole + 1) or item.text()
 
         reply = QMessageBox.question(
             self,
             "Supprimer le joueur",
-            f"Supprimer définitivement « {item.text()} » ?",
+            f"Supprimer définitivement « {player_name} » ?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -339,6 +422,51 @@ class LaunchView(QWidget):
 
         super().keyPressEvent(event)
 
+    def eventFilter(self, obj, event):
+        """Gère le focus et la touche Tab pour l'autocomplétion."""
+        if obj == self.player_input:
+            if event.type() == QEvent.FocusIn:
+                self._load_regular_players()
+                self._setup_completer()
+            elif event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
+                # Bloquer Tab si le champ a du texte (pour l'autocomplétion)
+                if self.player_input.text().strip():
+                    completer = self.player_input.completer()
+                    if completer:
+                        popup = completer.popup()
+
+                        # Première pression de Tab : stocker le texte original
+                        if not popup.isVisible():
+                            self._completer_search_text = self.player_input.text()
+
+                        # Utiliser le texte original pour filtrer
+                        completer.setCompletionPrefix(self._completer_search_text)
+                        row_count = completer.completionCount()
+
+                        if row_count > 0:
+                            # Afficher le popup si pas encore visible
+                            if not popup.isVisible():
+                                completer.complete()
+
+                            current_index = popup.currentIndex()
+
+                            if current_index.isValid():
+                                next_row = (current_index.row() + 1) % row_count
+                            else:
+                                next_row = 0
+
+                            next_index = completer.completionModel().index(next_row, 0)
+                            popup.setCurrentIndex(next_index)
+
+                            # Mettre à jour le texte avec la suggestion sélectionnée
+                            completion = completer.completionModel().data(next_index)
+                            if completion:
+                                self.player_input.setText(completion)
+                                self.player_input.selectAll()
+
+                    return True  # Toujours consommer Tab si le champ a du texte
+        return super().eventFilter(obj, event)
+
     def _show_player_context_menu(self, pos):
         if not self._current_tournament:
             return
@@ -347,7 +475,20 @@ class LaunchView(QWidget):
         if not item:
             return
 
+        # Récupérer le nom original du joueur
+        player_name = item.data(Qt.UserRole + 1) or item.text()
+        is_regular = self._is_regular_player(player_name)
+
         menu = QMenu(self)
+
+        # Option joueur permanent
+        if is_regular:
+            regular_action = menu.addAction("⭐ Joueur permanent")
+            regular_action.setEnabled(False)
+        else:
+            add_regular_action = menu.addAction("➕ Ajouter aux joueurs permanents")
+
+        menu.addSeparator()
         edit_action = menu.addAction("✏️ Modifier")
         menu.addSeparator()
         delete_action = menu.addAction("🗑️ Supprimer")
@@ -359,13 +500,53 @@ class LaunchView(QWidget):
         elif action == delete_action:
             self.players_list.setCurrentItem(item)
             self._delete_selected_player()
+        elif not is_regular and action and action.text().startswith("➕"):
+            self._add_to_regular_players(player_name)
+
+    def _add_to_regular_players(self, name: str):
+        """Ajoute un joueur à la liste des joueurs permanents."""
+        # Charger les joueurs existants
+        raw = RegularPlayerStorage.load()
+        regular_players = [RegularPlayer.from_dict(d) for d in raw]
+
+        # Vérifier si le joueur existe déjà
+        name_lower = name.lower().strip()
+        if any(p.pseudo.lower().strip() == name_lower for p in regular_players):
+            QMessageBox.information(
+                self,
+                "Joueur existant",
+                f"« {name} » est déjà dans la liste des joueurs permanents."
+            )
+            return
+
+        # Créer le nouveau joueur
+        next_id = max((p.id for p in regular_players), default=0) + 1
+        new_player = RegularPlayer(
+            id=next_id,
+            pseudo=name,
+        )
+
+        regular_players.append(new_player)
+
+        # Sauvegarder
+        RegularPlayerStorage.save([p.to_dict() for p in regular_players])
+
+        # Rafraîchir l'affichage pour montrer l'étoile
+        self._refresh_players_ui()
+
+        QMessageBox.information(
+            self,
+            "Joueur ajouté",
+            f"« {name} » a été ajouté aux joueurs permanents."
+        )
 
     def _edit_player(self, item: QListWidgetItem):
         if not self._current_tournament:
             return
 
         player_id = item.data(Qt.UserRole)
-        old_name = item.text()
+        # Utiliser le nom original (sans la pastille)
+        old_name = item.data(Qt.UserRole + 1) or item.text()
 
         dialog = EditPlayerDialog(self, name=old_name)
         if dialog.exec() != 1:
@@ -411,14 +592,37 @@ class LaunchView(QWidget):
         t = self._current_tournament
         self.header_meta.setText(f"{t.date} • {t.player_count} joueurs")
 
+    def _is_regular_player(self, name: str) -> bool:
+        """Vérifie si le nom correspond à un joueur régulier."""
+        # Rafraîchir la liste pour avoir les derniers joueurs ajoutés
+        self._load_regular_players()
+        name_lower = name.lower().strip()
+        return any(p.pseudo.lower().strip() == name_lower for p in self._regular_players)
+
     def _refresh_players_ui(self):
         if not self._current_tournament:
             return
 
+        # Rafraîchir la liste des joueurs réguliers
+        self._load_regular_players()
+        self._setup_completer()
+
+        # Créer un set des pseudos réguliers pour une recherche rapide
+        regular_pseudos = {p.pseudo.lower().strip() for p in self._regular_players}
+
         self.players_list.clear()
         for player in self._current_tournament.players:
-            item = QListWidgetItem(player.name)
+            # Ajouter une pastille si c'est un joueur régulier
+            player_name_lower = player.name.lower().strip()
+            if player_name_lower in regular_pseudos:
+                display_name = f"⭐ {player.name}"
+            else:
+                display_name = player.name
+
+            item = QListWidgetItem(display_name)
             item.setData(Qt.UserRole, player.id)
+            # Stocker le nom original pour l'édition
+            item.setData(Qt.UserRole + 1, player.name)
             self.players_list.addItem(item)
 
         self._refresh_meta()
