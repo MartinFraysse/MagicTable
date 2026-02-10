@@ -109,6 +109,32 @@ class CreateTournamentDialog(QDialog):
         root.addLayout(rounds_layout)
 
         # =====================
+        # Système d'appariement (pour formats 1v1)
+        # =====================
+        pairing_layout = QHBoxLayout()
+        pairing_layout.setSpacing(12)
+
+        self.pairing_label = QLabel("Système d'appariement")
+        pairing_layout.addWidget(self.pairing_label)
+
+        pairing_layout.addStretch()
+
+        self.pairing_combo = QComboBox()
+        self.pairing_combo.setObjectName("PairingComboBox")
+        self.pairing_combo.setFixedSize(150, 42)
+        self.pairing_combo.addItems(["Standard", "Swiss"])
+        pairing_layout.addWidget(self.pairing_combo)
+
+        root.addLayout(pairing_layout)
+
+        # Cacher par défaut, affiché selon le format
+        self.pairing_label.setVisible(False)
+        self.pairing_combo.setVisible(False)
+
+        # Connecter le changement de format
+        self.format_input.currentIndexChanged.connect(self._on_format_changed)
+
+        # =====================
         # Preview
         # =====================
         self.preview = QLabel()
@@ -164,6 +190,22 @@ class CreateTournamentDialog(QDialog):
         self.date_input.setText(t.date)
         self.rounds_input.setValue(t.max_rounds)
 
+        # Charger le système d'appariement
+        if t.pairing_system == "swiss":
+            self.pairing_combo.setCurrentIndex(1)
+        else:
+            self.pairing_combo.setCurrentIndex(0)
+
+        self._on_format_changed()
+
+    def _on_format_changed(self):
+        """Affiche les options d'appariement pour les formats 1v1."""
+        current = self.format_input.currentText()
+        # Commander et Draft sont multi-joueurs, pas de Swiss
+        is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
+        self.pairing_label.setVisible(is_1v1)
+        self.pairing_combo.setVisible(is_1v1)
+
     def _update_state(self):
         name = self.name_input.text().strip()
         date = self.date_input.text()
@@ -197,8 +239,17 @@ class CreateTournamentDialog(QDialog):
             max_rounds=self.rounds_input.value(),
         )
 
+        # Mettre à jour le système d'appariement
+        self._tournament.pairing_system = self.get_pairing_system()
+
     def get_max_rounds(self) -> int:
         return self.rounds_input.value()
+
+    def get_pairing_system(self) -> str:
+        """Retourne 'swiss' ou 'standard' selon la sélection."""
+        if self.pairing_combo.isVisible() and self.pairing_combo.currentIndex() == 1:
+            return "swiss"
+        return "standard"
 
 
 class ComboBoxItemDelegate(QStyledItemDelegate):
