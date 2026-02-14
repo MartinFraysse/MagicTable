@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCursor, QColor
 from ui.widgets.player_matches_popup import PlayerMatchesPopup
 from core.regular_player import RegularPlayer
+from core.standings import build_standings
 from storage.regular_players import RegularPlayerStorage
 
 
@@ -24,6 +25,7 @@ class DashboardRankingView(QFrame):
         self._player_results = {}  # player_id -> list of round results
         self._previous_ranks = {}  # player_id -> rank at previous round
         self._swiss_mode = False
+        self._1v1_mode = False
 
         # =====================
         # Layout
@@ -91,11 +93,37 @@ class DashboardRankingView(QFrame):
     # Public API
     # =================================================
     def set_swiss_mode(self, enabled: bool):
-        """Configure l'affichage pour le mode Swiss."""
+        """Configure l'affichage pour le mode Swiss (Commander multiplayer)."""
         self._swiss_mode = enabled
+        if self._1v1_mode:
+            return  # Le mode 1v1 prend le dessus
+        self._apply_column_layout()
+
+    def set_1v1_mode(self, enabled: bool):
+        """Configure l'affichage pour les formats 1v1 (avec OMW%)."""
+        self._1v1_mode = enabled
+        self._apply_column_layout()
+
+    def _apply_column_layout(self):
+        """Applique la configuration de colonnes selon le mode actif."""
         table = self.ranking_table
 
-        if enabled:
+        # Vider les lignes AVANT de changer les colonnes pour éviter
+        # que Qt accède à des cellules inexistantes (segfault)
+        table.setRowCount(0)
+        self._player_ids_by_row = {}
+
+        if self._1v1_mode:
+            table.setColumnCount(5)
+            table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "OMW%", "W-D-L"])
+
+            header = table.horizontalHeader()
+            header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.Stretch)
+            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        elif self._swiss_mode:
             table.setColumnCount(5)
             table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "Buchholz", "SOS"])
 
@@ -134,7 +162,80 @@ class DashboardRankingView(QFrame):
         # Calculer le classement précédent pour l'évolution
         previous_ranks = self._compute_previous_ranks(tournament)
 
-        # Trier selon le mode (Swiss ou standard)
+        if self._1v1_mode:
+            self._fill_table_1v1(tournament, previous_ranks)
+        else:
+            self._fill_table_standard(tournament, previous_ranks)
+
+        # Le tableau s'adapte à l'espace disponible avec scroll si nécessaire
+        if table.rowCount():
+            row_h = table.rowHeight(0)
+            header_h = table.horizontalHeader().height()
+            frame = table.frameWidth() * 2
+            min_rows = min(3, table.rowCount())
+            table_min_h = header_h + row_h * min_rows + frame + 2
+            table.setMinimumHeight(table_min_h)
+
+    def _fill_table_1v1(self, tournament, previous_ranks):
+        """Remplit le tableau avec les standings 1v1 (OMW%, W-D-L)."""
+        table = self.ranking_table
+        standings = build_standings(tournament)
+
+        table.blockSignals(True)
+        table.setRowCount(len(standings))
+        self._player_ids_by_row = {}
+
+        for row, entry in enumerate(standings):
+            current_rank = row + 1
+            self._player_ids_by_row[row] = entry.player_id
+
+            # --- Position (#)
+            item_pos = QTableWidgetItem(str(current_rank))
+            item_pos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            table.setItem(row, 0, item_pos)
+
+            # --- Nom joueur
+            item_name = QTableWidgetItem(entry.player_name)
+            item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            table.setItem(row, 1, item_name)
+
+            # --- Score avec évolution colorée
+            score_text = f"{entry.match_points} pts"
+            item_score = QTableWidgetItem(score_text)
+            item_score.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+            prev_rank = previous_ranks.get(entry.player_id)
+            if prev_rank is None or len(tournament.rounds) <= 1:
+                item_score.setForeground(QColor("#aaaaaa"))
+            elif current_rank < prev_rank:
+                item_score.setForeground(QColor("#3fd27d"))
+            elif current_rank > prev_rank:
+                item_score.setForeground(QColor("#e74c3c"))
+            else:
+                item_score.setForeground(QColor("#aaaaaa"))
+
+            table.setItem(row, 2, item_score)
+
+            # --- OMW%
+            omw_text = f"{entry.omw_pct * 100:.1f}%"
+            item_omw = QTableWidgetItem(omw_text)
+            item_omw.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            item_omw.setForeground(QColor("#aaaaaa"))
+            table.setItem(row, 3, item_omw)
+
+            # --- W-D-L
+            wdl_text = f"{entry.wins}-{entry.draws}-{entry.losses}"
+            item_wdl = QTableWidgetItem(wdl_text)
+            item_wdl.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            item_wdl.setForeground(QColor("#aaaaaa"))
+            table.setItem(row, 4, item_wdl)
+
+        table.blockSignals(False)
+
+    def _fill_table_standard(self, tournament, previous_ranks):
+        """Remplit le tableau avec le classement standard (Commander/autres)."""
+        table = self.ranking_table
+
         if self._swiss_mode:
             players = tournament.sort_players_swiss()
         else:
@@ -143,6 +244,7 @@ class DashboardRankingView(QFrame):
                 key=lambda p: (-p.score, -p.robustness, p.name)
             )
 
+        table.blockSignals(True)
         table.setRowCount(len(players))
         self._player_ids_by_row = {}
 
@@ -155,7 +257,7 @@ class DashboardRankingView(QFrame):
             item_pos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 0, item_pos)
 
-            # --- Nom joueur (CENTRÉ)
+            # --- Nom joueur
             item_name = QTableWidgetItem(player.name)
             item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 1, item_name)
@@ -165,19 +267,14 @@ class DashboardRankingView(QFrame):
             item_score = QTableWidgetItem(score_text)
             item_score.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
-            # Déterminer la couleur selon l'évolution
             prev_rank = previous_ranks.get(player.id)
             if prev_rank is None or len(tournament.rounds) <= 1:
-                # Pas de round précédent, gris
                 item_score.setForeground(QColor("#aaaaaa"))
             elif current_rank < prev_rank:
-                # Gagné des places, vert
                 item_score.setForeground(QColor("#3fd27d"))
             elif current_rank > prev_rank:
-                # Perdu des places, rouge
                 item_score.setForeground(QColor("#e74c3c"))
             else:
-                # Pas bougé, gris
                 item_score.setForeground(QColor("#aaaaaa"))
 
             table.setItem(row, 2, item_score)
@@ -194,18 +291,7 @@ class DashboardRankingView(QFrame):
                 item_sos.setForeground(QColor("#aaaaaa"))
                 table.setItem(row, 4, item_sos)
 
-        # =====================
-        # 🔑 Le tableau s'adapte à l'espace disponible avec scroll si nécessaire
-        # =====================
-        if table.rowCount():
-            row_h = table.rowHeight(0)
-            header_h = table.horizontalHeader().height()
-            frame = table.frameWidth() * 2
-
-            # Hauteur minimale pour afficher au moins 3 lignes
-            min_rows = min(3, table.rowCount())
-            table_min_h = header_h + row_h * min_rows + frame + 2
-            table.setMinimumHeight(table_min_h)
+        table.blockSignals(False)
 
     # =================================================
     # Compute player results per round
@@ -214,8 +300,7 @@ class DashboardRankingView(QFrame):
         """Calcule les résultats de chaque joueur pour chaque round."""
         self._player_results = {p.id: [] for p in tournament.players}
 
-        position_labels = {1: "🥇 1er", 2: "🥈 2ème", 3: "🥉 3ème", 4: "4ème"}
-        points_by_position = {1: 3, 2: 2, 3: 1, 4: 1}
+        is_1v1 = self._1v1_mode
 
         for rnd in tournament.rounds:
             if not rnd.tables:
@@ -224,11 +309,22 @@ class DashboardRankingView(QFrame):
                 for player in tbl.players:
                     position = tbl.results.get(player.id)
                     if position is not None:
+                        if is_1v1 and len(tbl.players) <= 2:
+                            # 1v1 : Win=3, Loss=0
+                            points = 3 if position == 1 else 0
+                            label = "🏆 Win" if position == 1 else "❌ Loss"
+                        else:
+                            # Commander multiplayer
+                            position_labels = {1: "🥇 1er", 2: "🥈 2ème", 3: "🥉 3ème", 4: "4ème"}
+                            points_by_position = {1: 3, 2: 2, 3: 1, 4: 1}
+                            label = position_labels.get(position, f"{position}ème")
+                            points = points_by_position.get(position, 1)
+
                         self._player_results[player.id].append({
                             "round": rnd.number,
                             "table": tbl.number,
-                            "position": position_labels.get(position, f"{position}ème"),
-                            "points": points_by_position.get(position, 1),
+                            "position": label,
+                            "points": points,
                         })
 
     def _compute_previous_ranks(self, tournament):
@@ -236,11 +332,13 @@ class DashboardRankingView(QFrame):
         if len(tournament.rounds) < 2:
             return {}
 
-        # Calculer les scores après tous les rounds sauf le dernier
+        if self._1v1_mode:
+            return self._compute_previous_ranks_1v1(tournament)
+
+        # Commander multiplayer : scoring par position
         points_by_position = {1: 3, 2: 2, 3: 1, 4: 1}
         scores = {p.id: 0 for p in tournament.players}
 
-        # Ne prendre que les rounds terminés sauf le dernier
         rounds_to_consider = tournament.rounds[:-1]
 
         for rnd in rounds_to_consider:
@@ -252,13 +350,29 @@ class DashboardRankingView(QFrame):
                         position = tbl.results.get(player.id, 3)
                         scores[player.id] += points_by_position.get(position, 1)
 
-        # Trier pour obtenir le classement (on ne peut pas utiliser la robustesse historique ici)
         sorted_players = sorted(
             tournament.players,
             key=lambda p: (-scores[p.id], -p.robustness, p.name)
         )
 
         return {p.id: rank + 1 for rank, p in enumerate(sorted_players)}
+
+    def _compute_previous_ranks_1v1(self, tournament):
+        """Calcule le classement 1v1 après tous les rounds sauf le dernier."""
+        from core.tournament import Tournament
+
+        # Créer un tournoi temporaire avec tous les rounds sauf le dernier
+        temp = Tournament(
+            id=tournament.id,
+            name=tournament.name,
+            format=tournament.format,
+            date=tournament.date,
+            players=tournament.players,
+            rounds=tournament.rounds[:-1],
+        )
+
+        standings = build_standings(temp)
+        return {e.player_id: rank + 1 for rank, e in enumerate(standings)}
 
     # =================================================
     # Hover handling
@@ -269,7 +383,7 @@ class DashboardRankingView(QFrame):
 
         self._current_hover_row = row
 
-        if row < 0 or row not in self._player_ids_by_row:
+        if not self._tournament or row < 0 or row not in self._player_ids_by_row:
             self.popup.hide()
             return
 

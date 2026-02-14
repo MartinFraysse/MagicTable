@@ -445,6 +445,10 @@ class Tournament:
         """Vérifie si le tournoi utilise l'appariement Swiss."""
         return self.pairing_system == "swiss"
 
+    def is_1v1_format(self) -> bool:
+        """True pour tous les formats sauf Commander multiplayer."""
+        return self.format != "👑 Commander"
+
     def get_recommended_rounds(self) -> int:
         """Nombre de rounds recommandé pour Swiss: ceil(log2(n))."""
         return compute_recommended_rounds(len(self.players))
@@ -552,6 +556,7 @@ class Tournament:
                     "score": p.score,
                     "robustness": p.robustness,
                     "reward_claimed": p.reward_claimed,
+                    "commander": p.commander,
                     "buchholz": p.buchholz,
                     "sos": p.sos,
                     "had_bye": p.had_bye,
@@ -586,6 +591,7 @@ class Tournament:
                 score=p.get("score", 0),
                 robustness=p.get("robustness", 0),
                 reward_claimed=p.get("reward_claimed", False),
+                commander=p.get("commander", ""),
                 buchholz=p.get("buchholz", 0.0),
                 sos=p.get("sos", 0.0),
                 had_bye=p.get("had_bye", False),

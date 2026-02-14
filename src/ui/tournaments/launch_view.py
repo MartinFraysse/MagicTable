@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QMenu,
     QCompleter,
+    QInputDialog,
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QStyle,
@@ -240,6 +241,9 @@ class LaunchView(QWidget):
         self.players_list.customContextMenuRequested.connect(
             self._show_player_context_menu
         )
+        self.players_list.itemDoubleClicked.connect(
+            self._on_player_double_clicked
+        )
 
         # Delegate pour fond arrondi unifié
         player_delegate = PlayerListDelegate(self.players_list)
@@ -275,6 +279,9 @@ class LaunchView(QWidget):
         tables_row.addWidget(self.tables_info)
         tables_row.addStretch()
 
+        start_col = QVBoxLayout()
+        start_col.setSpacing(4)
+
         self.start_btn = QPushButton("🚀 Lancer le tournoi")
         self.start_btn.setObjectName("LaunchPrimaryButton")
         self.start_btn.setMinimumHeight(56)
@@ -282,7 +289,15 @@ class LaunchView(QWidget):
         self.start_btn.setEnabled(False)
         self.start_btn.clicked.connect(self._start_tournament)
 
-        tables_row.addWidget(self.start_btn)
+        self.commander_warning = QLabel()
+        self.commander_warning.setStyleSheet("color: #e94560; font-size: 12px;")
+        self.commander_warning.setAlignment(Qt.AlignCenter)
+        self.commander_warning.hide()
+
+        start_col.addWidget(self.start_btn)
+        start_col.addWidget(self.commander_warning)
+
+        tables_row.addLayout(start_col)
 
         prep_layout.addLayout(tables_row)
 
@@ -467,6 +482,15 @@ class LaunchView(QWidget):
                     return True  # Toujours consommer Tab si le champ a du texte
         return super().eventFilter(obj, event)
 
+    def _on_player_double_clicked(self, item: QListWidgetItem):
+        """Double-clic sur un joueur : ouvre le dialogue commandant si format Commander."""
+        if not self._current_tournament or not self._is_commander_format():
+            return
+
+        player_id = item.data(Qt.UserRole)
+        if player_id is not None:
+            self._edit_commander(player_id)
+
     def _show_player_context_menu(self, pos):
         if not self._current_tournament:
             return
@@ -477,9 +501,23 @@ class LaunchView(QWidget):
 
         # Récupérer le nom original du joueur
         player_name = item.data(Qt.UserRole + 1) or item.text()
+        player_id = item.data(Qt.UserRole)
         is_regular = self._is_regular_player(player_name)
 
         menu = QMenu(self)
+
+        # Option commandant (formats Commander uniquement)
+        commander_action = None
+        if self._is_commander_format():
+            player = next(
+                (p for p in self._current_tournament.players if p.id == player_id),
+                None,
+            )
+            if player and player.commander:
+                commander_action = menu.addAction(f"🛡️ {player.commander}")
+            else:
+                commander_action = menu.addAction("🛡️ Ajouter un commandant")
+            menu.addSeparator()
 
         # Option joueur permanent
         if is_regular:
@@ -495,12 +533,17 @@ class LaunchView(QWidget):
 
         action = menu.exec(self.players_list.mapToGlobal(pos))
 
-        if action == edit_action:
+        if action is None:
+            return
+
+        if action == commander_action:
+            self._edit_commander(player_id)
+        elif action == edit_action:
             self._edit_player(item)
         elif action == delete_action:
             self.players_list.setCurrentItem(item)
             self._delete_selected_player()
-        elif not is_regular and action and action.text().startswith("➕"):
+        elif not is_regular and action.text().startswith("➕"):
             self._add_to_regular_players(player_name)
 
     def _add_to_regular_players(self, name: str):
@@ -567,6 +610,33 @@ class LaunchView(QWidget):
         self._save_all()
         self._refresh_players_ui()
 
+    def _edit_commander(self, player_id: int):
+        """Ouvre un dialogue pour définir/modifier le commandant d'un joueur."""
+        if not self._current_tournament:
+            return
+
+        player = next(
+            (p for p in self._current_tournament.players if p.id == player_id),
+            None,
+        )
+        if not player:
+            return
+
+        text, ok = QInputDialog.getText(
+            self,
+            "Commandant",
+            f"Commandant de {player.name} :",
+            QLineEdit.Normal,
+            player.commander,
+        )
+
+        if not ok:
+            return
+
+        player.commander = text.strip()
+        self._save_all()
+        self._refresh_players_ui()
+
     # ======================================================
     # UI Refresh
     # ======================================================
@@ -599,6 +669,12 @@ class LaunchView(QWidget):
         name_lower = name.lower().strip()
         return any(p.pseudo.lower().strip() == name_lower for p in self._regular_players)
 
+    def _is_commander_format(self) -> bool:
+        """Vérifie si le tournoi utilise un format Commander."""
+        if not self._current_tournament:
+            return False
+        return "Commander" in self._current_tournament.format
+
     def _refresh_players_ui(self):
         if not self._current_tournament:
             return
@@ -610,6 +686,8 @@ class LaunchView(QWidget):
         # Créer un set des pseudos réguliers pour une recherche rapide
         regular_pseudos = {p.pseudo.lower().strip() for p in self._regular_players}
 
+        is_commander = self._is_commander_format()
+
         self.players_list.clear()
         for player in self._current_tournament.players:
             # Ajouter une pastille si c'est un joueur régulier
@@ -619,6 +697,13 @@ class LaunchView(QWidget):
             else:
                 display_name = player.name
 
+            # Format Commander : afficher le commandant ou ⚠️ si absent
+            if is_commander:
+                if player.commander:
+                    display_name = f"{display_name}  |  {player.commander}"
+                else:
+                    display_name = f"⚠️ {display_name}"
+
             item = QListWidgetItem(display_name)
             item.setData(Qt.UserRole, player.id)
             # Stocker le nom original pour l'édition
@@ -627,7 +712,26 @@ class LaunchView(QWidget):
 
         self._refresh_meta()
         self._update_tables_info()
-        self.start_btn.setEnabled(self._current_tournament.player_count >= 3)
+
+        can_start = self._current_tournament.player_count >= 3
+
+        # Duel Commander : tous les commandants requis
+        if self._current_tournament.format == "⚔️ Duel Commander":
+            all_have_commander = all(
+                p.commander for p in self._current_tournament.players
+            )
+            if self._current_tournament.players and not all_have_commander:
+                can_start = False
+                self.commander_warning.setText(
+                    "⚠️ Tous les commandants doivent être renseignés"
+                )
+                self.commander_warning.show()
+            else:
+                self.commander_warning.hide()
+        else:
+            self.commander_warning.hide()
+
+        self.start_btn.setEnabled(can_start)
 
     def _start_tournament(self):
         if self._current_tournament:

@@ -8,6 +8,15 @@ from core.tournament import Tournament
 
 
 @dataclass
+class CommanderEntry:
+    """Commandant joue par un joueur dans un tournoi."""
+    commander_name: str
+    format: str
+    tournament_name: str
+    tournament_date: str
+
+
+@dataclass
 class HeadToHeadResult:
     """Résultat d'une confrontation entre deux joueurs."""
     tournament_name: str
@@ -52,6 +61,7 @@ class PlayerStats:
     top_2: int = 0
     top_3: int = 0
     total_points: int = 0
+    commanders: list[CommanderEntry] = field(default_factory=list)
 
     @property
     def total_podiums(self) -> int:
@@ -99,6 +109,15 @@ class StatsAnalyzer:
                 stats.top_2 += 1
             elif rank == 3:
                 stats.top_3 += 1
+
+            # Collecter le commandant joue
+            if player.commander:
+                stats.commanders.append(CommanderEntry(
+                    commander_name=player.commander,
+                    format=tournament.format,
+                    tournament_name=tournament.name,
+                    tournament_date=tournament.date,
+                ))
 
             # Compter les matchs (tables jouées)
             for rnd in tournament.rounds:
@@ -215,6 +234,43 @@ class StatsAnalyzer:
         result = list(matchups.values())
         result.sort(key=lambda m: (-m.total_matches, -m.wins, m.opponent_name.lower()))
         return result
+
+    def get_commander_highlights(self, format_name: str) -> dict:
+        """
+        Retourne le commandant le plus joué et le plus victorieux pour un format donné.
+        Retourne {"most_played": (name, count) | None, "most_wins": (name, count) | None}
+        """
+        play_count: dict[str, int] = defaultdict(int)
+        win_count: dict[str, int] = defaultdict(int)
+
+        for tournament in self._tournaments:
+            if tournament.format != format_name:
+                continue
+
+            ranked = sorted(
+                tournament.players,
+                key=lambda p: (-p.score, -p.robustness, p.name)
+            )
+
+            for rank, player in enumerate(ranked, 1):
+                if not player.commander:
+                    continue
+                cmd = player.commander
+                play_count[cmd] += 1
+                if rank == 1:
+                    win_count[cmd] += 1
+
+        most_played = None
+        if play_count:
+            name = max(play_count, key=play_count.get)
+            most_played = (name, play_count[name])
+
+        most_wins = None
+        if win_count:
+            name = max(win_count, key=win_count.get)
+            most_wins = (name, win_count[name])
+
+        return {"most_played": most_played, "most_wins": most_wins}
 
     def get_head_to_head(self, player_name: str, opponent_name: str) -> MatchupStats | None:
         """Retourne les stats détaillées entre deux joueurs."""

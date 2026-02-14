@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal, QTimer, QEvent
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
+    QAbstractItemView,
     QMenu,
     QMessageBox,
     QCheckBox,
@@ -168,6 +169,15 @@ class HistoricDialog(QDialog):
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, alignment=Qt.AlignRight)
 
+    def eventFilter(self, obj, event):
+        """Double-clic sur une carte ouvre les détails."""
+        if event.type() == QEvent.MouseButtonDblClick and isinstance(obj, QFrame):
+            tid = obj.property("tournament_id")
+            if tid is not None:
+                self._show_detail_dialog(tid)
+                return True
+        return super().eventFilter(obj, event)
+
     def _create_tournament_card(self, tournament: Tournament) -> QFrame:
         card = QFrame()
         card.setObjectName("HistoricCard")
@@ -177,6 +187,7 @@ class HistoricDialog(QDialog):
         card.customContextMenuRequested.connect(
             lambda pos, c=card: self._show_context_menu(pos, c)
         )
+        card.installEventFilter(self)
 
         layout = QVBoxLayout(card)
         layout.setSpacing(8)
@@ -225,6 +236,8 @@ class HistoricDialog(QDialog):
         tournament_name = card.property("tournament_name")
 
         menu = QMenu(self)
+        detail_action = menu.addAction("📋 Détails")
+        menu.addSeparator()
         rewards_action = menu.addAction("🎁 Récompenses")
         export_action = menu.addAction("📄 Exporter PDF")
         menu.addSeparator()
@@ -232,12 +245,22 @@ class HistoricDialog(QDialog):
 
         action = menu.exec(card.mapToGlobal(pos))
 
-        if action == rewards_action:
+        if action == detail_action:
+            self._show_detail_dialog(tournament_id)
+        elif action == rewards_action:
             self._show_rewards_dialog(tournament_id)
         elif action == export_action:
             self._export_tournament_pdf(tournament_id, tournament_name)
         elif action == delete_action:
             self._delete_tournament(tournament_id, tournament_name)
+
+    def _show_detail_dialog(self, tournament_id: int):
+        """Affiche les détails complets d'un tournoi."""
+        tournament = self._tournaments_by_id.get(tournament_id)
+        if not tournament:
+            return
+        dialog = TournamentDetailDialog(self, tournament)
+        dialog.exec()
 
     def _show_rewards_dialog(self, tournament_id: int):
         """Affiche le dialogue des récompenses pour un tournoi."""
@@ -559,3 +582,187 @@ class RewardsDialog(QDialog):
             self._apply_changes()
             return True
         return False
+
+
+class TournamentDetailDialog(QDialog):
+    """Dialog affichant les détails complets d'un tournoi archivé."""
+
+    def __init__(self, parent, tournament: Tournament):
+        super().__init__(parent)
+
+        self._tournament = tournament
+        is_commander = "Commander" in tournament.format
+
+        self.setWindowTitle(f"Détails — {tournament.name}")
+        self.setModal(True)
+        self.setMinimumSize(700, 550)
+        self.setObjectName("HistoricDialog")
+
+        self._build_ui(is_commander)
+
+    def _build_ui(self, is_commander: bool):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        t = self._tournament
+
+        # Header
+        title = QLabel(f"📋 {t.name}")
+        title.setObjectName("DialogTitle")
+        title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title)
+
+        meta = QLabel(f"{t.format} • {t.date} • {len(t.players)} joueurs • {len(t.rounds)} rounds")
+        meta.setAlignment(Qt.AlignCenter)
+        meta.setStyleSheet("color: #b6dcd0; font-size: 13px;")
+        layout.addWidget(meta)
+
+        # Scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setFrameShape(QFrame.NoFrame)
+
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(20)
+
+        # === CLASSEMENT FINAL ===
+        ranking_title = QLabel("🏆 Classement final")
+        ranking_title.setObjectName("StatsSectionTitle")
+        content_layout.addWidget(ranking_title)
+
+        ranked_players = sorted(
+            t.players,
+            key=lambda p: (-p.score, -p.robustness, p.name)
+        )
+
+        cols = ["#", "Joueur", "Points"]
+        if is_commander:
+            cols.append("Commandant")
+
+        ranking_table = QTableWidget()
+        ranking_table.setObjectName("MatchupsTable")
+        ranking_table.setColumnCount(len(cols))
+        ranking_table.setHorizontalHeaderLabels(cols)
+        ranking_table.setRowCount(len(ranked_players))
+        ranking_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        ranking_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        ranking_table.verticalHeader().setVisible(False)
+        ranking_table.setShowGrid(False)
+        ranking_table.setMaximumHeight(min(40 + len(ranked_players) * 32, 300))
+
+        header = ranking_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        ranking_table.setColumnWidth(0, 50)
+        ranking_table.setColumnWidth(2, 80)
+        if is_commander:
+            header.setSectionResizeMode(3, QHeaderView.Stretch)
+
+        for row, player in enumerate(ranked_players):
+            rank = row + 1
+            rank_text = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, str(rank))
+
+            items = [
+                (rank_text, Qt.AlignCenter),
+                (player.name, Qt.AlignLeft | Qt.AlignVCenter),
+                (str(player.score), Qt.AlignCenter),
+            ]
+            if is_commander:
+                items.append((player.commander or "—", Qt.AlignLeft | Qt.AlignVCenter))
+
+            for col, (text, alignment) in enumerate(items):
+                item = QTableWidgetItem(text)
+                item.setTextAlignment(alignment)
+                if rank == 1:
+                    item.setForeground(Qt.GlobalColor.yellow)
+                elif rank == 2:
+                    item.setForeground(Qt.GlobalColor.lightGray)
+                elif rank == 3:
+                    item.setForeground(Qt.GlobalColor.darkYellow)
+                ranking_table.setItem(row, col, item)
+
+        content_layout.addWidget(ranking_table)
+
+        # === ROUNDS ===
+        for rnd in t.rounds:
+            round_title = QLabel(f"⚔️ Round {rnd.number}")
+            round_title.setObjectName("StatsSectionTitle")
+            content_layout.addWidget(round_title)
+
+            for table in rnd.tables:
+                card = QFrame()
+                card.setObjectName("HistoryCard")
+                card_layout = QVBoxLayout(card)
+                card_layout.setContentsMargins(12, 10, 12, 10)
+                card_layout.setSpacing(6)
+
+                # Titre table
+                is_bye = len(table.players) == 1
+                if is_bye:
+                    table_label = QLabel(f"Table {table.number} (Bye)")
+                else:
+                    table_label = QLabel(f"Table {table.number}")
+                table_label.setStyleSheet("font-weight: bold; font-size: 13px; color: #3ad68a;")
+                card_layout.addWidget(table_label)
+
+                # Joueurs de la table
+                table_players = list(table.players)
+                if table.finished and table.results:
+                    table_players.sort(key=lambda p: table.results.get(p.id, 99))
+
+                for player in table_players:
+                    position = table.results.get(player.id, None) if table.finished else None
+
+                    parts = []
+
+                    # Position / résultat
+                    if is_bye:
+                        parts.append("🔹 Bye")
+                    elif position is not None:
+                        if position == 1:
+                            parts.append("🏆")
+                        else:
+                            parts.append(f"#{position}")
+                    else:
+                        parts.append("•")
+
+                    parts.append(player.name)
+
+                    if is_commander and player.commander:
+                        parts.append(f"  |  {player.commander}")
+
+                    player_row = QHBoxLayout()
+                    player_label = QLabel("  ".join(parts[:2]))
+
+                    if position == 1 and not is_bye:
+                        player_label.setStyleSheet("color: #f1c40f; font-weight: bold;")
+                    elif is_bye:
+                        player_label.setStyleSheet("color: #b6dcd0;")
+
+                    player_row.addWidget(player_label)
+
+                    if is_commander and player.commander:
+                        cmd_label = QLabel(player.commander)
+                        cmd_label.setStyleSheet("color: #8ab4a0; font-style: italic;")
+                        cmd_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        player_row.addStretch()
+                        player_row.addWidget(cmd_label)
+
+                    card_layout.addLayout(player_row)
+
+                content_layout.addWidget(card)
+
+        content_layout.addStretch()
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
+
+        # Bouton fermer
+        close_btn = QPushButton("Fermer")
+        close_btn.setObjectName("CancelButton")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn, alignment=Qt.AlignRight)

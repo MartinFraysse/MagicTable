@@ -273,6 +273,20 @@ class UpcomingView(QWidget):
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
 
+    def reload_from_storage(self):
+        """Recharge les tournois depuis le storage (après suppression externe)."""
+        # Nettoyer les anciennes cartes
+        for card in self._cards_by_id.values():
+            self.cards_layout.removeWidget(card)
+            card.deleteLater()
+        self._cards_by_id.clear()
+        self._tournament_ids.clear()
+        self._selected_card = None
+        self._tournaments.clear()
+
+        # Recharger
+        self._load_tournaments_from_storage()
+
     def _save_all(self):
         TournamentStorage.save([t.to_dict() for t in self._tournaments])
 

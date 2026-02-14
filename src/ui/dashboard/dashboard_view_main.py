@@ -16,6 +16,7 @@ from core.tournament import Tournament
 from core.table import Table
 from core.round import Round
 from core.regular_player import RegularPlayer
+from core.standings import build_standings
 from storage.regular_players import RegularPlayerStorage
 
 
@@ -200,9 +201,9 @@ class DashboardViewMain(QWidget):
         self.round_controls.set_start_enabled(True)
         self.round_controls.set_next_enabled(False)
 
-        # Configurer le mode Swiss si nécessaire
+        # Configurer le mode d'affichage du ranking
         self.round_controls.set_swiss_mode(tournament.is_swiss_format())
-        self.ranking_view.set_swiss_mode(tournament.is_swiss_format())
+        self.ranking_view.set_1v1_mode(tournament.is_1v1_format())
 
         self.ranking_view.set_tournament(tournament)
 
@@ -247,10 +248,12 @@ class DashboardViewMain(QWidget):
             self._finish_tournament()
             return
 
+        # Synchroniser les scores 1v1 avant le pairing
+        if self.current_tournament.is_1v1_format():
+            self._apply_1v1_standings()
+
         # Utiliser l'algorithme approprié selon le système d'appariement
         if self.current_tournament.is_swiss_format():
-            # Calculer les départages avant de créer le round
-            self.current_tournament.calculate_swiss_tiebreakers()
             self.current_tournament.create_round_swiss()
             print(f"\n⚖️ Round Swiss généré (appariement officiel)\n")
         else:
@@ -266,10 +269,16 @@ class DashboardViewMain(QWidget):
 
     def _finish_tournament(self):
         """Affiche le classement final quand le tournoi est terminé."""
-        # Utiliser le tri approprié selon le système d'appariement
-        if self.current_tournament.is_swiss_format():
-            self.current_tournament.calculate_swiss_tiebreakers()
-            players = self.current_tournament.sort_players_swiss()
+        # Utiliser le tri approprié selon le format
+        if self.current_tournament.is_1v1_format():
+            standings = build_standings(self.current_tournament)
+            # Synchroniser player.score
+            players_by_id = {p.id: p for p in self.current_tournament.players}
+            for entry in standings:
+                player = players_by_id.get(entry.player_id)
+                if player:
+                    player.score = entry.match_points
+            players = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
         else:
             players = sorted(
                 self.current_tournament.players,
@@ -323,15 +332,19 @@ class DashboardViewMain(QWidget):
         table.finished = True
 
         # Calcul et application des scores
-        self._apply_table_scores(table)
+        if self.current_tournament.is_1v1_format():
+            self._apply_1v1_standings()
+        else:
+            self._apply_table_scores(table)
 
         self.tables_view.set_round(self.current_round)
         self.ranking_view.set_tournament(self.current_tournament)
         self._update_projection()
 
         if self._all_tables_finished():
-            # Recalculer la robustesse après la fin du round
-            self.current_tournament.recalculate_robustness()
+            if not self.current_tournament.is_1v1_format():
+                # Recalculer la robustesse après la fin du round (Commander uniquement)
+                self.current_tournament.recalculate_robustness()
 
             if self.current_tournament.can_create_round():
                 self.round_controls.set_next_enabled(True)
@@ -361,6 +374,16 @@ class DashboardViewMain(QWidget):
             print(f"  {player.name:<20} {position_label:<10} +{points}pts → Total: {player.score}pts")
 
         print(f"{'='*50}\n")
+
+    def _apply_1v1_standings(self):
+        """Recalcule tous les scores 1v1 depuis les résultats bruts (Win=3, Loss=0)."""
+        standings = build_standings(self.current_tournament)
+        players_by_id = {p.id: p for p in self.current_tournament.players}
+
+        for entry in standings:
+            player = players_by_id.get(entry.player_id)
+            if player:
+                player.score = entry.match_points
 
     # ======================================================
     # Reset tournament

@@ -12,6 +12,7 @@ class Player:
     score: int = 0
     robustness: int = 0
     reward_claimed: bool = False
+    commander: str = ""
 
     # Champs Swiss (départage)
     buchholz: float = 0.0      # Somme des scores des adversaires

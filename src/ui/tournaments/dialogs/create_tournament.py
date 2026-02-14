@@ -23,7 +23,7 @@ class CreateTournamentDialog(QDialog):
 
         self.setWindowTitle("Tournoi")
         self.setModal(True)
-        self.setFixedSize(400, 540)
+        self.setFixedSize(400, 515)
         self.setObjectName("CreateTournamentDialog")
 
         root = QVBoxLayout(self)
@@ -199,12 +199,16 @@ class CreateTournamentDialog(QDialog):
         self._on_format_changed()
 
     def _on_format_changed(self):
-        """Affiche les options d'appariement pour les formats 1v1."""
+        """Les formats 1v1 utilisent toujours Swiss, pas besoin de demander."""
         current = self.format_input.currentText()
-        # Commander et Draft sont multi-joueurs, pas de Swiss
         is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
-        self.pairing_label.setVisible(is_1v1)
-        self.pairing_combo.setVisible(is_1v1)
+        # Swiss automatique pour 1v1, on force la sélection sans montrer le combo
+        if is_1v1:
+            self.pairing_combo.setCurrentIndex(1)  # Swiss
+        else:
+            self.pairing_combo.setCurrentIndex(0)  # Standard
+        self.pairing_label.setVisible(False)
+        self.pairing_combo.setVisible(False)
 
     def _update_state(self):
         name = self.name_input.text().strip()
@@ -246,10 +250,10 @@ class CreateTournamentDialog(QDialog):
         return self.rounds_input.value()
 
     def get_pairing_system(self) -> str:
-        """Retourne 'swiss' ou 'standard' selon la sélection."""
-        if self.pairing_combo.isVisible() and self.pairing_combo.currentIndex() == 1:
-            return "swiss"
-        return "standard"
+        """Retourne 'swiss' pour les formats 1v1, 'standard' pour Commander/Draft."""
+        current = self.format_input.currentText()
+        is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
+        return "swiss" if is_1v1 else "standard"
 
 
 class ComboBoxItemDelegate(QStyledItemDelegate):

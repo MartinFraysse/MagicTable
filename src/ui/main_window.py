@@ -65,6 +65,11 @@ class MainWindow(QMainWindow):
             self.tournaments_view.on_tournament_archived
         )
 
+        # Recharger les tournois quand les paramètres les suppriment
+        self.settings_view.tournaments_cleared.connect(
+            self._on_tournaments_cleared
+        )
+
     # ========================
     # Sidebar
     # ========================
@@ -196,6 +201,11 @@ class MainWindow(QMainWindow):
             self.players_view.refresh()
         elif index == 3:  # Stats
             self.stats_view.refresh()
+
+    def _on_tournaments_cleared(self):
+        """Recharge les tournois en mémoire après suppression depuis les paramètres."""
+        self.tournaments_view.launch_view._clear_tournament()
+        self.tournaments_view.upcoming_view.reload_from_storage()
 
     def start_tournament(self, tournament: Tournament):
         self.stack.setCurrentIndex(0)

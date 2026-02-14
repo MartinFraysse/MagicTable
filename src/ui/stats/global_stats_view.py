@@ -68,6 +68,31 @@ class GlobalStatsView(QWidget):
         self.format_layout.setSpacing(12)
 
         content_layout.addWidget(self.format_container)
+
+        # Section commandants Duel Commander
+        duel_title = QLabel("⚔️ Duel Commander")
+        duel_title.setObjectName("StatsSectionTitle")
+        content_layout.addWidget(duel_title)
+
+        self.duel_commander_container = QWidget()
+        self.duel_commander_container.setObjectName("ChartContainer")
+        self.duel_commander_layout = QHBoxLayout(self.duel_commander_container)
+        self.duel_commander_layout.setContentsMargins(16, 16, 16, 16)
+        self.duel_commander_layout.setSpacing(16)
+        content_layout.addWidget(self.duel_commander_container)
+
+        # Section commandants Commander
+        cmdr_title = QLabel("👑 Commander")
+        cmdr_title.setObjectName("StatsSectionTitle")
+        content_layout.addWidget(cmdr_title)
+
+        self.commander_container = QWidget()
+        self.commander_container.setObjectName("ChartContainer")
+        self.commander_layout = QHBoxLayout(self.commander_container)
+        self.commander_layout.setContentsMargins(16, 16, 16, 16)
+        self.commander_layout.setSpacing(16)
+        content_layout.addWidget(self.commander_container)
+
         content_layout.addStretch()
 
         scroll.setWidget(content)
@@ -99,6 +124,64 @@ class GlobalStatsView(QWidget):
 
         return tile
 
+    def _create_commander_highlight(self, icon: str, label: str, name: str, count: int) -> QFrame:
+        """Crée une tuile pour un commandant mis en avant."""
+        tile = QFrame()
+        tile.setObjectName("StatsTile")
+        tile.setAttribute(Qt.WA_StyledBackground, True)
+
+        layout = QVBoxLayout(tile)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(4)
+
+        icon_label = QLabel(icon)
+        icon_label.setAlignment(Qt.AlignCenter)
+        icon_label.setStyleSheet("font-size: 24px;")
+
+        name_label = QLabel(name)
+        name_label.setObjectName("StatsTileValue")
+        name_label.setAlignment(Qt.AlignCenter)
+        name_label.setWordWrap(True)
+
+        desc_label = QLabel(f"{label} ({count}x)")
+        desc_label.setObjectName("StatsTileLabel")
+        desc_label.setAlignment(Qt.AlignCenter)
+
+        layout.addWidget(icon_label)
+        layout.addWidget(name_label)
+        layout.addWidget(desc_label)
+
+        return tile
+
+    def _update_commander_section(self, layout: QHBoxLayout, highlights: dict):
+        """Met à jour une section de commandants (vide le layout puis le remplit)."""
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        has_data = False
+
+        if highlights["most_played"]:
+            name, count = highlights["most_played"]
+            tile = self._create_commander_highlight("🎴", "Plus joué", name, count)
+            layout.addWidget(tile)
+            has_data = True
+
+        if highlights["most_wins"]:
+            name, count = highlights["most_wins"]
+            tile = self._create_commander_highlight("🏆", "Plus victorieux", name, count)
+            layout.addWidget(tile)
+            has_data = True
+
+        if not has_data:
+            empty = QLabel("Aucune donnée")
+            empty.setObjectName("EmptyState")
+            empty.setAlignment(Qt.AlignCenter)
+            layout.addWidget(empty)
+
+        layout.addStretch()
+
     def update_stats(self, analyzer: StatsAnalyzer):
         """Met à jour les statistiques affichées."""
         global_stats = analyzer.get_global_stats()
@@ -110,6 +193,13 @@ class GlobalStatsView(QWidget):
 
         # Mettre à jour la distribution des formats
         self._update_format_distribution(analyzer.get_format_distribution())
+
+        # Mettre à jour les commandants par format
+        duel_highlights = analyzer.get_commander_highlights("⚔️ Duel Commander")
+        self._update_commander_section(self.duel_commander_layout, duel_highlights)
+
+        cmdr_highlights = analyzer.get_commander_highlights("👑 Commander")
+        self._update_commander_section(self.commander_layout, cmdr_highlights)
 
     def _update_format_distribution(self, distribution: dict[str, int]):
         """Met à jour l'affichage de la distribution des formats."""
@@ -178,7 +268,8 @@ class GlobalStatsView(QWidget):
         self.tile_players.value_label.setText("0")
         self.tile_tables.value_label.setText("0")
 
-        while self.format_layout.count():
-            item = self.format_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        for layout in [self.format_layout, self.duel_commander_layout, self.commander_layout]:
+            while layout.count():
+                item = layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()

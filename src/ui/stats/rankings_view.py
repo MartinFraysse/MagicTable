@@ -1,8 +1,10 @@
 """Vue du classement des joueurs."""
 
+from collections import defaultdict
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
-    QHeaderView, QAbstractItemView, QLabel
+    QHeaderView, QAbstractItemView, QLabel, QDialog,
+    QScrollArea, QFrame, QHBoxLayout,
 )
 from PySide6.QtCore import Qt
 
@@ -16,6 +18,8 @@ class RankingsView(QWidget):
         super().__init__(parent)
         self.setObjectName("RankingsView")
         self.setAttribute(Qt.WA_StyledBackground, True)
+
+        self._players: list[PlayerStats] = []
 
         self._build_ui()
 
@@ -44,6 +48,9 @@ class RankingsView(QWidget):
         self.table.setAlternatingRowColors(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
+
+        # Double-clic pour voir les commandants
+        self.table.doubleClicked.connect(self._on_player_double_clicked)
 
         # Largeurs des colonnes
         header = self.table.horizontalHeader()
@@ -85,6 +92,8 @@ class RankingsView(QWidget):
             ]
         else:
             players = all_players
+
+        self._players = players
 
         if not players:
             self.table.hide()
@@ -131,8 +140,88 @@ class RankingsView(QWidget):
 
             self.table.setItem(row, col, item)
 
+    def _on_player_double_clicked(self, index):
+        """Ouvre le dialog des commandants pour le joueur sélectionné."""
+        row = index.row()
+        if row < 0 or row >= len(self._players):
+            return
+
+        player = self._players[row]
+        if not player.commanders:
+            return
+
+        dialog = PlayerCommandersDialog(self, player)
+        dialog.exec()
+
     def clear(self):
         """Réinitialise l'affichage."""
+        self._players = []
         self.table.setRowCount(0)
         self.table.hide()
         self.empty_label.show()
+
+
+class PlayerCommandersDialog(QDialog):
+    """Dialog affichant les commandants joués par un joueur, groupés par format."""
+
+    def __init__(self, parent, player: PlayerStats):
+        super().__init__(parent)
+
+        self.setWindowTitle(f"Commandants de {player.name}")
+        self.setModal(True)
+        self.setMinimumSize(500, 400)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(16)
+
+        # Titre
+        title = QLabel(f"Commandants de {player.name}")
+        title.setObjectName("StatsSectionTitle")
+        layout.addWidget(title)
+
+        # Grouper par format
+        by_format: dict[str, list] = defaultdict(list)
+        for entry in player.commanders:
+            by_format[entry.format].append(entry)
+
+        # Scroll area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setFrameShape(QFrame.NoFrame)
+
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(16)
+
+        for fmt, entries in by_format.items():
+            # Section par format
+            fmt_label = QLabel(fmt)
+            fmt_label.setObjectName("StatsSectionTitle")
+            content_layout.addWidget(fmt_label)
+
+            for entry in entries:
+                card = QFrame()
+                card.setObjectName("HistoryCard")
+                card_layout = QHBoxLayout(card)
+                card_layout.setContentsMargins(12, 10, 12, 10)
+
+                # Commandant
+                cmd_label = QLabel(entry.commander_name)
+                cmd_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+
+                # Tournoi + date
+                info_label = QLabel(f"{entry.tournament_name} - {entry.tournament_date}")
+                info_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                info_label.setStyleSheet("opacity: 0.7;")
+
+                card_layout.addWidget(cmd_label, 1)
+                card_layout.addWidget(info_label)
+
+                content_layout.addWidget(card)
+
+        content_layout.addStretch()
+        scroll.setWidget(content)
+        layout.addWidget(scroll)

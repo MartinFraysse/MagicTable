@@ -14,6 +14,8 @@ class SettingsView(QWidget):
 
     # Signal émis quand la durée du timer change
     timer_duration_changed = Signal(int)
+    # Signal émis quand des tournois sont supprimés depuis les paramètres
+    tournaments_cleared = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -125,6 +127,10 @@ class SettingsView(QWidget):
         # Boutons
         buttons_layout = QHBoxLayout()
 
+        reset_archived_btn = QPushButton("Supprimer les tournois archivés")
+        reset_archived_btn.setObjectName("DangerButton")
+        reset_archived_btn.clicked.connect(self._reset_archived_tournaments)
+
         reset_tournaments_btn = QPushButton("Supprimer tous les tournois")
         reset_tournaments_btn.setObjectName("DangerButton")
         reset_tournaments_btn.clicked.connect(self._reset_tournaments)
@@ -133,6 +139,7 @@ class SettingsView(QWidget):
         reset_players_btn.setObjectName("DangerButton")
         reset_players_btn.clicked.connect(self._reset_players)
 
+        buttons_layout.addWidget(reset_archived_btn)
         buttons_layout.addWidget(reset_tournaments_btn)
         buttons_layout.addWidget(reset_players_btn)
         buttons_layout.addStretch()
@@ -189,6 +196,44 @@ class SettingsView(QWidget):
             f"{p_count} joueur{'s' if p_count != 1 else ''} permanent{'s' if p_count != 1 else ''}"
         )
 
+    def _reset_archived_tournaments(self):
+        """Supprime uniquement les tournois archivés après confirmation."""
+        all_tournaments = TournamentStorage.load()
+        archived_count = sum(1 for t in all_tournaments if t.get("archived", False))
+
+        if archived_count == 0:
+            QMessageBox.information(
+                self,
+                "Aucun tournoi archivé",
+                "Il n'y a aucun tournoi archivé à supprimer."
+            )
+            return
+
+        reply = QMessageBox.warning(
+            self,
+            "Supprimer les tournois archivés",
+            f"Cette action est irréversible !\n\n"
+            f"{archived_count} tournoi{'s' if archived_count > 1 else ''} archivé{'s' if archived_count > 1 else ''} "
+            f"{'seront supprimés' if archived_count > 1 else 'sera supprimé'}.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply != QMessageBox.Yes:
+            return
+
+        remaining = [t for t in all_tournaments if not t.get("archived", False)]
+        TournamentStorage.save(remaining)
+        self._refresh_stats()
+        self.tournaments_cleared.emit()
+
+        QMessageBox.information(
+            self,
+            "Tournois archivés supprimés",
+            f"{archived_count} tournoi{'s' if archived_count > 1 else ''} archivé{'s' if archived_count > 1 else ''} "
+            f"{'ont été supprimés' if archived_count > 1 else 'a été supprimé'}."
+        )
+
     def _reset_tournaments(self):
         """Supprime tous les tournois après confirmation."""
         reply = QMessageBox.warning(
@@ -205,6 +250,7 @@ class SettingsView(QWidget):
 
         TournamentStorage.save([])
         self._refresh_stats()
+        self.tournaments_cleared.emit()
 
         QMessageBox.information(
             self,
