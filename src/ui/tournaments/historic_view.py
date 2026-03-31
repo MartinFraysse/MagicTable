@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
     QAbstractItemView,
+    QAbstractScrollArea,
     QMenu,
     QMessageBox,
     QCheckBox,
@@ -22,6 +23,7 @@ from core.tournament import Tournament
 from core.regular_player import RegularPlayer
 from storage.regular_players import RegularPlayerStorage
 from export.pdf_export import export_tournament_pdf
+from ui.dashboard.dialogs.round_summary_dialog import RoundSummaryDialog
 
 
 class HistoricView(QWidget):
@@ -468,6 +470,7 @@ class HistoricDialog(QDialog):
     def accept(self):
         """Ferme le dialog et émet le signal si suppression en attente."""
         pending_id = getattr(self, '_pending_delete_id', None)
+        self._pending_delete_id = None
         super().accept()
         if pending_id is not None:
             self.tournament_deleted.emit(pending_id)
@@ -585,184 +588,143 @@ class RewardsDialog(QDialog):
 
 
 class TournamentDetailDialog(QDialog):
-    """Dialog affichant les détails complets d'un tournoi archivé."""
+    """Dialog compact affichant le classement d'un tournoi archivé."""
+
+    ROW_H    = 32
+    HEADER_H = 30
+    MAX_ROWS = 10   # lignes visibles avant scrollbar
 
     def __init__(self, parent, tournament: Tournament):
         super().__init__(parent)
 
         self._tournament = tournament
-        is_commander = "Commander" in tournament.format
-
-        self.setWindowTitle(f"Détails — {tournament.name}")
-        self.setModal(True)
-        self.setMinimumSize(700, 550)
-        self.setObjectName("HistoricDialog")
-
-        self._build_ui(is_commander)
-
-    def _build_ui(self, is_commander: bool):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        t = self._tournament
-
-        # Header
-        title = QLabel(f"📋 {t.name}")
-        title.setObjectName("DialogTitle")
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-
-        meta = QLabel(f"{t.format} • {t.date} • {len(t.players)} joueurs • {len(t.rounds)} rounds")
-        meta.setAlignment(Qt.AlignCenter)
-        meta.setStyleSheet("color: #b6dcd0; font-size: 13px;")
-        layout.addWidget(meta)
-
-        # Scroll area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setFrameShape(QFrame.NoFrame)
-
-        content = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(20)
-
-        # === CLASSEMENT FINAL ===
-        ranking_title = QLabel("🏆 Classement final")
-        ranking_title.setObjectName("StatsSectionTitle")
-        content_layout.addWidget(ranking_title)
-
-        ranked_players = sorted(
-            t.players,
+        self._is_commander = "Commander" in tournament.format
+        self._ranked_players = sorted(
+            tournament.players,
             key=lambda p: (-p.score, -p.robustness, p.name)
         )
 
-        cols = ["#", "Joueur", "Points"]
-        if is_commander:
+        self.setWindowTitle(tournament.name)
+        self.setModal(True)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setObjectName("DetailDialog")
+        self.setFixedWidth(460 if self._is_commander else 380)
+
+        self._build_ui()
+
+        # Hauteur exacte : tableau + overhead fixe (marges + titre + méta + spacings + footer)
+        n = len(self._ranked_players)
+        table_h = min(self.HEADER_H + n * self.ROW_H,
+                      self.HEADER_H + self.MAX_ROWS * self.ROW_H)
+        self.setFixedHeight(table_h + 150)
+
+    def _build_ui(self):
+        t = self._tournament
+        layout = QVBoxLayout(self)
+        layout.setSpacing(8)
+        layout.setContentsMargins(16, 16, 16, 14)
+
+        # ── Titre ────────────────────────────────────────────────────
+        title = QLabel(f"🏆  {t.name}")
+        title.setObjectName("DetailTitle")
+        title.setAlignment(Qt.AlignCenter)
+        title.setWordWrap(True)
+        layout.addWidget(title)
+
+        meta = QLabel(f"{t.format}  •  {t.date}  •  {len(t.players)} joueurs  •  {len(t.rounds)} rounds")
+        meta.setObjectName("DetailMeta")
+        meta.setAlignment(Qt.AlignCenter)
+        layout.addWidget(meta)
+
+        layout.addSpacing(4)
+
+        # ── Tableau ──────────────────────────────────────────────────
+        cols = ["#", "Joueur", "Score"]
+        if self._is_commander:
             cols.append("Commandant")
 
-        ranking_table = QTableWidget()
-        ranking_table.setObjectName("MatchupsTable")
-        ranking_table.setColumnCount(len(cols))
-        ranking_table.setHorizontalHeaderLabels(cols)
-        ranking_table.setRowCount(len(ranked_players))
-        ranking_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        ranking_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        ranking_table.verticalHeader().setVisible(False)
-        ranking_table.setShowGrid(False)
-        ranking_table.setMaximumHeight(min(40 + len(ranked_players) * 32, 300))
+        self._table = QTableWidget()
+        self._table.setObjectName("RankingTable")
+        self._table.setColumnCount(len(cols))
+        self._table.setHorizontalHeaderLabels(cols)
+        self._table.setRowCount(len(self._ranked_players))
+        self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._table.verticalHeader().setVisible(False)
+        self._table.setShowGrid(False)
+        self._table.setAlternatingRowColors(True)
+        self._table.verticalHeader().setDefaultSectionSize(self.ROW_H)
 
-        header = ranking_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Fixed)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.Fixed)
-        ranking_table.setColumnWidth(0, 50)
-        ranking_table.setColumnWidth(2, 80)
-        if is_commander:
-            header.setSectionResizeMode(3, QHeaderView.Stretch)
+        hdr = self._table.horizontalHeader()
+        hdr.setHighlightSections(False)
+        hdr.setSectionResizeMode(0, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(1, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(2, QHeaderView.Fixed)
+        self._table.setColumnWidth(0, 44)
+        self._table.setColumnWidth(2, 80)
+        if self._is_commander:
+            hdr.setSectionResizeMode(3, QHeaderView.Stretch)
 
-        for row, player in enumerate(ranked_players):
+        for row, player in enumerate(self._ranked_players):
             rank = row + 1
-            rank_text = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, str(rank))
-
-            items = [
-                (rank_text, Qt.AlignCenter),
-                (player.name, Qt.AlignLeft | Qt.AlignVCenter),
-                (str(player.score), Qt.AlignCenter),
+            medal = {1: "🥇", 2: "🥈", 3: "🥉"}
+            cells = [
+                (medal.get(rank, str(rank)), Qt.AlignCenter),
+                (player.name,               Qt.AlignLeft | Qt.AlignVCenter),
+                (f"{player.score} pts",     Qt.AlignCenter),
             ]
-            if is_commander:
-                items.append((player.commander or "—", Qt.AlignLeft | Qt.AlignVCenter))
+            if self._is_commander:
+                cells.append((player.commander or "—", Qt.AlignLeft | Qt.AlignVCenter))
 
-            for col, (text, alignment) in enumerate(items):
+            for col, (text, align) in enumerate(cells):
                 item = QTableWidgetItem(text)
-                item.setTextAlignment(alignment)
-                if rank == 1:
-                    item.setForeground(Qt.GlobalColor.yellow)
-                elif rank == 2:
-                    item.setForeground(Qt.GlobalColor.lightGray)
-                elif rank == 3:
-                    item.setForeground(Qt.GlobalColor.darkYellow)
-                ranking_table.setItem(row, col, item)
+                item.setTextAlignment(align)
+                if col == 0:
+                    item.setData(Qt.UserRole, player.id)
+                self._table.setItem(row, col, item)
 
-        content_layout.addWidget(ranking_table)
+        self._table.cellDoubleClicked.connect(self._on_double_click)
+        self._table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._table.customContextMenuRequested.connect(self._on_context_menu)
+        self._table.setCursor(Qt.PointingHandCursor)
 
-        # === ROUNDS ===
-        for rnd in t.rounds:
-            round_title = QLabel(f"⚔️ Round {rnd.number}")
-            round_title.setObjectName("StatsSectionTitle")
-            content_layout.addWidget(round_title)
+        # Hauteur exacte, plafonnée à MAX_ROWS
+        n = len(self._ranked_players)
+        exact_h = self.HEADER_H + n * self.ROW_H
+        max_h   = self.HEADER_H + self.MAX_ROWS * self.ROW_H
+        self._table.setFixedHeight(min(exact_h, max_h))
+        self._table.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff if n <= self.MAX_ROWS else Qt.ScrollBarAsNeeded
+        )
 
-            for table in rnd.tables:
-                card = QFrame()
-                card.setObjectName("HistoryCard")
-                card_layout = QVBoxLayout(card)
-                card_layout.setContentsMargins(12, 10, 12, 10)
-                card_layout.setSpacing(6)
+        layout.addWidget(self._table)
 
-                # Titre table
-                is_bye = len(table.players) == 1
-                if is_bye:
-                    table_label = QLabel(f"Table {table.number} (Bye)")
-                else:
-                    table_label = QLabel(f"Table {table.number}")
-                table_label.setStyleSheet("font-weight: bold; font-size: 13px; color: #3ad68a;")
-                card_layout.addWidget(table_label)
-
-                # Joueurs de la table
-                table_players = list(table.players)
-                if table.finished and table.results:
-                    table_players.sort(key=lambda p: table.results.get(p.id, 99))
-
-                for player in table_players:
-                    position = table.results.get(player.id, None) if table.finished else None
-
-                    parts = []
-
-                    # Position / résultat
-                    if is_bye:
-                        parts.append("🔹 Bye")
-                    elif position is not None:
-                        if position == 1:
-                            parts.append("🏆")
-                        else:
-                            parts.append(f"#{position}")
-                    else:
-                        parts.append("•")
-
-                    parts.append(player.name)
-
-                    if is_commander and player.commander:
-                        parts.append(f"  |  {player.commander}")
-
-                    player_row = QHBoxLayout()
-                    player_label = QLabel("  ".join(parts[:2]))
-
-                    if position == 1 and not is_bye:
-                        player_label.setStyleSheet("color: #f1c40f; font-weight: bold;")
-                    elif is_bye:
-                        player_label.setStyleSheet("color: #b6dcd0;")
-
-                    player_row.addWidget(player_label)
-
-                    if is_commander and player.commander:
-                        cmd_label = QLabel(player.commander)
-                        cmd_label.setStyleSheet("color: #8ab4a0; font-style: italic;")
-                        cmd_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                        player_row.addStretch()
-                        player_row.addWidget(cmd_label)
-
-                    card_layout.addLayout(player_row)
-
-                content_layout.addWidget(card)
-
-        content_layout.addStretch()
-        scroll.setWidget(content)
-        layout.addWidget(scroll)
-
-        # Bouton fermer
+        # ── Footer ───────────────────────────────────────────────────
+        footer = QHBoxLayout()
+        hint = QLabel("Double-clic → parcours du joueur")
+        hint.setObjectName("DetailMeta")
+        footer.addWidget(hint)
+        footer.addStretch()
         close_btn = QPushButton("Fermer")
         close_btn.setObjectName("CancelButton")
+        close_btn.setMinimumHeight(32)
         close_btn.clicked.connect(self.accept)
-        layout.addWidget(close_btn, alignment=Qt.AlignRight)
+        footer.addWidget(close_btn)
+        layout.addLayout(footer)
+
+    # ------------------------------------------------------------------
+    def _on_double_click(self, row: int, col: int):
+        if row < len(self._ranked_players):
+            self._open_journey(self._ranked_players[row])
+
+    def _on_context_menu(self, pos):
+        row = self._table.rowAt(pos.y())
+        if row < 0 or row >= len(self._ranked_players):
+            return
+        menu = QMenu(self)
+        action = menu.addAction("📋  Voir le parcours")
+        if menu.exec(self._table.viewport().mapToGlobal(pos)) == action:
+            self._open_journey(self._ranked_players[row])
+
+    def _open_journey(self, player):
+        RoundSummaryDialog(self, self._tournament, player.id).exec()

@@ -282,6 +282,11 @@ class LaunchView(QWidget):
         start_col = QVBoxLayout()
         start_col.setSpacing(4)
 
+        self.min_players_label = QLabel()
+        self.min_players_label.setStyleSheet("color: #e94560; font-size: 12px;")
+        self.min_players_label.setAlignment(Qt.AlignCenter)
+        self.min_players_label.hide()
+
         self.start_btn = QPushButton("🚀 Lancer le tournoi")
         self.start_btn.setObjectName("LaunchPrimaryButton")
         self.start_btn.setMinimumHeight(56)
@@ -294,6 +299,7 @@ class LaunchView(QWidget):
         self.commander_warning.setAlignment(Qt.AlignCenter)
         self.commander_warning.hide()
 
+        start_col.addWidget(self.min_players_label)
         start_col.addWidget(self.start_btn)
         start_col.addWidget(self.commander_warning)
 
@@ -713,7 +719,20 @@ class LaunchView(QWidget):
         self._refresh_meta()
         self._update_tables_info()
 
-        can_start = self._current_tournament.player_count >= 3
+        # Commander : min 6 joueurs (tables de 3-4), autres formats : min 4 (tables de 2)
+        if self._current_tournament.format == "👑 Commander":
+            min_players = 6
+            can_start = self._current_tournament.player_count >= min_players
+        else:
+            min_players = 4
+            can_start = self._current_tournament.player_count >= min_players
+
+        # Afficher ou cacher le message de minimum joueurs
+        if self._current_tournament.player_count < min_players:
+            self.min_players_label.setText(f"Minimum {min_players} joueurs requis")
+            self.min_players_label.show()
+        else:
+            self.min_players_label.hide()
 
         # Duel Commander : tous les commandants requis
         if self._current_tournament.format == "⚔️ Duel Commander":

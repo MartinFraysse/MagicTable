@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QSpacerItem, QMessageBox, QFileDialog
-from PySide6.QtCore import QTimer, Signal, QUrl
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QFileDialog, QInputDialog
+from PySide6.QtCore import QTimer, Signal, QUrl, Qt
 from PySide6.QtMultimedia import QSoundEffect
 import os
 
@@ -10,11 +10,15 @@ from ui.dashboard.ranking_view import DashboardRankingView
 from ui.dashboard.tables_view import DashboardTablesView
 from ui.dashboard.round_controls_view import DashboardRoundControlsView
 from ui.dashboard.dialogs.edit_table_results import EditTableResultsDialog
+from ui.dashboard.dialogs.edit_pairings_dialog import EditPairingsDialog
+from ui.dashboard.dialogs.edit_bracket_result import EditBracketResultDialog
 from ui.dashboard.pairings_window import PairingsWindow
+from ui.dashboard.final_standings_overlay import FinalStandingsOverlay
 
 from core.tournament import Tournament
 from core.table import Table
 from core.round import Round
+from core.bracket import BracketType, BracketRoundName
 from core.regular_player import RegularPlayer
 from core.standings import build_standings
 from storage.regular_players import RegularPlayerStorage
@@ -35,6 +39,10 @@ class DashboardViewMain(QWidget):
 
         self.current_tournament: Tournament | None = None
         self.current_round: Round | None = None
+
+        # État du mode bracket
+        self._bracket_mode: bool = False
+        self._bracket_displayed_round: BracketRoundName | None = None
 
         # =====================
         # Son de fin de tournoi
@@ -79,6 +87,9 @@ class DashboardViewMain(QWidget):
         self.tables_view.edit_results_requested.connect(
             self._edit_table_results
         )
+        self.tables_view.edit_bracket_result_requested.connect(
+            self._edit_bracket_result
+        )
 
         # === CONTROLES
         self.round_controls = DashboardRoundControlsView(self)
@@ -90,11 +101,13 @@ class DashboardViewMain(QWidget):
         self.round_controls.start_round_requested.connect(self._start_round)
         self.round_controls.next_round_requested.connect(self._next_round)
         self.round_controls.shuffle_round_requested.connect(self._shuffle_round)
+        self.round_controls.edit_pairings_requested.connect(self._edit_pairings)
         self.round_controls.reset_requested.connect(self._reset_tournament)
         self.round_controls.archive_requested.connect(self._archive_tournament)
         self.round_controls.export_pdf_requested.connect(self._export_pdf)
         self.round_controls.projection_requested.connect(self._show_projection)
         self.round_controls.quit_requested.connect(self._quit_tournament)
+        self.round_controls.launch_bracket_requested.connect(self._launch_bracket)
 
         # =====================
         # Timer
@@ -110,6 +123,11 @@ class DashboardViewMain(QWidget):
         self.pairings_window: PairingsWindow | None = None
 
         # =====================
+        # Overlay classement final
+        # =====================
+        self.final_overlay = FinalStandingsOverlay(self)
+
+        # =====================
         # Calcul initial des hauteurs
         # =====================
         self._recompute_layout_heights()
@@ -120,6 +138,7 @@ class DashboardViewMain(QWidget):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._recompute_layout_heights()
+        self.final_overlay.fit_to_parent()
 
     def _recompute_layout_heights(self):
         # 3 spacings entre les 4 widgets (tiles, ranking, tables, controls)
@@ -185,9 +204,15 @@ class DashboardViewMain(QWidget):
     # Round lifecycle
     # ======================================================
     def set_current_round(self, tournament: Tournament, timer_minutes: int = None):
+        # Si le tournoi est en phase de bracket, configurer le mode bracket
+        if tournament.bracket and not tournament.bracket.finished:
+            self._setup_bracket_mode(tournament, timer_minutes)
+            return
+
         if not tournament.rounds:
             return
 
+        self._bracket_mode = False
         self.current_tournament = tournament
         self.current_round = tournament.rounds[-1]
 
@@ -200,6 +225,11 @@ class DashboardViewMain(QWidget):
 
         self.round_controls.set_start_enabled(True)
         self.round_controls.set_next_enabled(False)
+        self.round_controls.set_finish_mode(False)
+
+        # Bouton "Modifier les pairings" : visible uniquement au round 1
+        # et tant qu'aucune table n'est terminée
+        self._update_edit_pairings_visibility()
 
         # Configurer le mode d'affichage du ranking
         self.round_controls.set_swiss_mode(tournament.is_swiss_format())
@@ -240,11 +270,31 @@ class DashboardViewMain(QWidget):
             and all(table.finished for table in self.current_round.tables)
         )
 
+    def _all_bracket_round_matches_finished(self) -> bool:
+        """Vérifie si tous les matches du round de bracket affiché sont terminés."""
+        bracket = self.current_tournament.bracket if self.current_tournament else None
+        if not bracket or not self._bracket_displayed_round:
+            return False
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round)
+        return bool(matches) and all(m.finished for m in matches)
+
     def _next_round(self):
-        if not self.current_tournament or not self._all_tables_finished():
+        if not self.current_tournament:
+            return
+
+        # Mode bracket
+        if self._bracket_mode:
+            if not self._all_bracket_round_matches_finished():
+                return
+            self._advance_bracket_round()
+            return
+
+        # Mode normal
+        if not self._all_tables_finished():
             return
 
         if not self.current_tournament.can_create_round():
+            self.round_controls.hide_bracket_launch_button()
             self._finish_tournament()
             return
 
@@ -254,10 +304,21 @@ class DashboardViewMain(QWidget):
 
         # Utiliser l'algorithme approprié selon le système d'appariement
         if self.current_tournament.is_swiss_format():
-            self.current_tournament.create_round_swiss()
+            try:
+                self.current_tournament.create_round_swiss()
+            except ValueError as e:
+                QMessageBox.critical(self, "Appariement impossible", str(e))
+                return
             print(f"\n⚖️ Round Swiss généré (appariement officiel)\n")
         else:
-            self.current_tournament.create_round()
+            result = self.current_tournament.create_round()
+            if result is None:
+                QMessageBox.critical(
+                    self,
+                    "Appariement impossible",
+                    "Impossible de créer les tables avec le nombre de joueurs actuel."
+                )
+                return
 
         self.set_current_round(self.current_tournament)
 
@@ -305,19 +366,70 @@ class DashboardViewMain(QWidget):
         if self.victory_sound.source().isValid():
             self.victory_sound.play()
 
-        # Popup de fin de tournoi
-        ranking_text = ""
-        for rank, player in enumerate(players[:10], 1):  # Top 10
-            medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"{rank}.")
-            ranking_text += f"{medal} {player.name} — {player.score} pts\n"
+        # Overlay de fin de tournoi (superposé au dashboard, pas de nouvelle fenêtre)
+        self.final_overlay.show_standings(self.current_tournament.name, players)
 
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Tournoi terminé")
-        msg.setIcon(QMessageBox.Information)
-        msg.setText(f"🏆 {self.current_tournament.name} est terminé !")
-        msg.setInformativeText(f"<b>Classement final :</b><br><pre>{ranking_text}</pre>")
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec()
+    # ======================================================
+    # Edit pairings (round 1 only)
+    # ======================================================
+    def _update_edit_pairings_visibility(self):
+        """Affiche le bouton 'Modifier les pairings' uniquement au round 1 sans résultat."""
+        if not self.current_round:
+            self.round_controls.set_edit_pairings_visible(False)
+            return
+
+        is_round_1 = self.current_round.number == 1
+        # Exclure les tables BYE (1 joueur) qui sont finished dès leur création
+        real_tables = [t for t in (self.current_round.tables or []) if len(t.players) > 1]
+        any_finished = any(t.finished for t in real_tables)
+        self.round_controls.set_edit_pairings_visible(is_round_1 and not any_finished)
+
+    def _edit_pairings(self):
+        """Ouvre le dialog de modification manuelle des pairings (round 1)."""
+        if not self.current_round or self.current_round.number != 1:
+            return
+
+        # Identifier l'ancien joueur BYE (avant modification)
+        old_bye_table = next(
+            (t for t in self.current_round.tables if len(t.players) == 1), None
+        )
+        old_bye_player = old_bye_table.players[0] if old_bye_table else None
+
+        dialog = EditPairingsDialog(self, self.current_round)
+        if not dialog.exec():
+            return
+
+        new_tables = dialog.get_updated_tables()
+
+        # Identifier le nouveau joueur BYE
+        new_bye_table = next(
+            (t for t in new_tables if len(t.players) == 1), None
+        )
+        new_bye_player = new_bye_table.players[0] if new_bye_table else None
+
+        # Si le BYE a changé de joueur, mettre à jour l'historique
+        if (old_bye_player and new_bye_player
+                and old_bye_player.id != new_bye_player.id):
+            # Annuler l'ancien BYE
+            old_bye_player.had_bye = False
+            self.current_tournament.bye_history.discard(old_bye_player.id)
+
+            # Appliquer le nouveau BYE
+            new_bye_player.had_bye = True
+            self.current_tournament.bye_history.add(new_bye_player.id)
+
+        # Appliquer les nouvelles tables
+        self.current_round.tables = new_tables
+
+        # Recalculer les scores si format 1v1 (le BYE compte comme victoire)
+        if self.current_tournament.is_1v1_format():
+            self._apply_1v1_standings()
+
+        # Rafraîchir l'affichage
+        self.tables_view.set_round(self.current_round)
+        self.ranking_view.set_tournament(self.current_tournament)
+        self._update_projection()
+        self.tournament_changed.emit()
 
     # ======================================================
     # Table results
@@ -329,6 +441,7 @@ class DashboardViewMain(QWidget):
             return
 
         table.results = dialog.results()
+        table.game_scores = dialog.game_scores()
         table.finished = True
 
         # Calcul et application des scores
@@ -340,25 +453,32 @@ class DashboardViewMain(QWidget):
         self.tables_view.set_round(self.current_round)
         self.ranking_view.set_tournament(self.current_tournament)
         self._update_projection()
+        self._update_edit_pairings_visibility()
 
         if self._all_tables_finished():
             if not self.current_tournament.is_1v1_format():
                 # Recalculer la robustesse après la fin du round (Commander uniquement)
                 self.current_tournament.recalculate_robustness()
 
+            self.round_controls.set_next_enabled(True)
+
             if self.current_tournament.can_create_round():
-                self.round_controls.set_next_enabled(True)
-                # Vérifier les répétitions potentielles
+                self.round_controls.set_finish_mode(False)
                 self._check_repetitions()
             else:
-                self._finish_tournament()
+                self.round_controls.set_finish_mode(True)
+                # Proposer le bracket pour les formats 1v1 (pas déjà en cours)
+                if (self.current_tournament.is_1v1_format()
+                        and len(self.current_tournament.players) >= 4
+                        and self.current_tournament.bracket is None):
+                    self.round_controls.show_bracket_launch_button()
 
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
 
     def _apply_table_scores(self, table: Table):
         """Applique les scores aux joueurs et affiche le résultat."""
-        # Système de points: 1er=4pts, 2ème=3pts, 3ème=2pts, 4ème=1pt
+        # Système de points: 1er=3pts, 2ème=2pts, 3ème-4ème=1pt
         POINTS_BY_POSITION = {1: 3, 2: 2, 3: 1, 4: 1}
 
         print(f"\n{'='*50}")
@@ -384,6 +504,160 @@ class DashboardViewMain(QWidget):
             player = players_by_id.get(entry.player_id)
             if player:
                 player.score = entry.match_points
+
+        self.current_tournament.calculate_swiss_tiebreakers()
+
+    # ======================================================
+    # Bracket (phase d'élimination)
+    # ======================================================
+
+    def _launch_bracket(self):
+        """Demande le format du bracket puis lance la phase éliminatoire."""
+        if not self.current_tournament:
+            return
+
+        n = len(self.current_tournament.players)
+        options: list[BracketType] = []
+        labels: list[str] = []
+
+        if n >= 2:
+            options.append(BracketType.FINAL)
+            labels.append("Top 2 — Finale directe")
+        if n >= 4:
+            options.append(BracketType.DEMI_FINALE)
+            labels.append("Top 4 — Demi-finales + Finale")
+        if n >= 8:
+            options.append(BracketType.QUART_DE_FINALE)
+            labels.append("Top 8 — Quarts + Demis + Finale")
+
+        if not options:
+            QMessageBox.warning(self, "Bracket", "Pas assez de joueurs pour lancer un bracket.")
+            return
+
+        label, ok = QInputDialog.getItem(
+            self, "Lancer le bracket", "Choisir le format :", labels, 0, False
+        )
+        if not ok:
+            return
+
+        bracket_type = options[labels.index(label)]
+        self.current_tournament.start_bracket(bracket_type)
+        self.round_controls.hide_bracket_launch_button()
+        self._setup_bracket_mode(self.current_tournament)
+        self.tournament_changed.emit()
+
+    def _setup_bracket_mode(self, tournament: Tournament, timer_minutes: int = None):
+        """Configure l'UI en mode bracket d'élimination."""
+        self.current_tournament = tournament
+        self.current_round = None
+        self._bracket_mode = True
+
+        bracket = tournament.bracket
+        self._bracket_displayed_round = bracket.current_round_name()
+
+        if timer_minutes is not None:
+            self.timer_duration = timer_minutes
+
+        self.timer.stop()
+        self._reset_timer(self.timer_duration)
+
+        self.round_controls.set_bracket_mode()
+        self.round_controls.set_start_enabled(True)
+        self.round_controls.set_next_enabled(False)
+
+        # Vérifier si le round affiché est déjà terminé (reprise en cours de route)
+        if self._all_bracket_round_matches_finished():
+            self.round_controls.set_next_enabled(True)
+
+        # Dernier round du bracket ?
+        round_order = bracket.get_round_order()
+        is_last = self._bracket_displayed_round == round_order[-1]
+        self.round_controls.set_finish_mode(is_last)
+
+        players_by_id = {p.id: p for p in tournament.players}
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round) if self._bracket_displayed_round else []
+
+        self.tables_view.title.setText("🏆 Phase éliminatoire")
+        self.tables_view.set_bracket_round(matches, players_by_id)
+        self.ranking_view.set_tournament(tournament)
+        self._update_bracket_tiles()
+        self._recompute_layout_heights()
+
+    def _update_bracket_tiles(self):
+        ROUND_LABELS = {
+            "quart": "Quarts de finale",
+            "demi": "Demi-finales",
+            "final": "Finale",
+        }
+        round_val = self._bracket_displayed_round.value if self._bracket_displayed_round else "?"
+        label = ROUND_LABELS.get(round_val, round_val)
+
+        bracket = self.current_tournament.bracket
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round) if self._bracket_displayed_round else []
+        real_matches = [m for m in matches if m.player1_id is not None and m.player2_id is not None]
+
+        self.tiles_view.set_active()
+        self.tiles_view.tile_name.value_label.setText(self.current_tournament.name)
+        self.tiles_view.tile_round.value_label.setText(label)
+        self.tiles_view.tile_players.value_label.setText(str(len(self.current_tournament.players)))
+        self.tiles_view.tile_tables.value_label.setText(str(len(real_matches)))
+
+    def _edit_bracket_result(self, match):
+        """Saisit le résultat d'un match de bracket."""
+        bracket = self.current_tournament.bracket
+        players_by_id = {p.id: p for p in self.current_tournament.players}
+
+        dialog = EditBracketResultDialog(self, match, players_by_id)
+        if not dialog.exec():
+            return
+
+        winner_id = dialog.winner_id()
+        if winner_id is None:
+            return
+
+        bracket.record_result(match.match_id, winner_id)
+
+        # Rafraîchir les cartes du round actuel
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round)
+        self.tables_view.set_bracket_round(matches, players_by_id)
+        self.ranking_view.set_tournament(self.current_tournament)
+        self._update_bracket_tiles()
+
+        # Activer "Phase suivante" si tous les matches sont terminés
+        if self._all_bracket_round_matches_finished():
+            self.round_controls.set_next_enabled(True)
+            round_order = bracket.get_round_order()
+            is_last = self._bracket_displayed_round == round_order[-1]
+            self.round_controls.set_finish_mode(is_last)
+
+        self.tournament_changed.emit()
+
+    def _advance_bracket_round(self):
+        """Passe au round suivant du bracket (demi, finale…)."""
+        bracket = self.current_tournament.bracket
+        round_order = bracket.get_round_order()
+        current_idx = round_order.index(self._bracket_displayed_round)
+
+        if current_idx + 1 >= len(round_order):
+            # Était le dernier round (Finale) — terminer
+            self._finish_tournament()
+            return
+
+        self._bracket_displayed_round = round_order[current_idx + 1]
+        players_by_id = {p.id: p for p in self.current_tournament.players}
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round)
+
+        self.tables_view.set_bracket_round(matches, players_by_id)
+        self._update_bracket_tiles()
+
+        self.round_controls.set_start_enabled(True)
+        self.round_controls.set_next_enabled(False)
+
+        round_order = bracket.get_round_order()
+        is_last = self._bracket_displayed_round == round_order[-1]
+        self.round_controls.set_finish_mode(is_last)
+
+        self.tournament_changed.emit()
 
     # ======================================================
     # Reset tournament
@@ -603,11 +877,16 @@ class DashboardViewMain(QWidget):
         regular_players = [RegularPlayer.from_dict(d) for d in raw]
         regular_by_pseudo = {p.pseudo.lower().strip(): p for p in regular_players}
 
-        # Obtenir le classement
-        ranked_players = sorted(
-            self.current_tournament.players,
-            key=lambda p: (-p.score, -p.robustness, p.name)
-        )
+        # Obtenir le classement (standings officiels pour 1v1, score/robustesse pour Commander)
+        if self.current_tournament.is_1v1_format():
+            standings = build_standings(self.current_tournament)
+            players_by_id = {p.id: p for p in self.current_tournament.players}
+            ranked_players = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
+        else:
+            ranked_players = sorted(
+                self.current_tournament.players,
+                key=lambda p: (-p.score, -p.robustness, p.name)
+            )
 
         # Enregistrer les participations, points et podiums
         players_updated = False
@@ -679,6 +958,9 @@ class DashboardViewMain(QWidget):
         self.round_controls.set_next_enabled(False)
         self.round_controls.hide_repetition_warning()
         self.round_controls.hide_archive_button()
+
+        # Cacher l'overlay de fin de tournoi si visible
+        self.final_overlay.hide()
 
         # Fermer la fenêtre de projection si ouverte
         if self.pairings_window:

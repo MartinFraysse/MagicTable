@@ -160,6 +160,36 @@
 }
 
 /* =======================================================================
+   SCORING SECTION
+   ======================================================================= */
+
+#ScoringBlock {
+    background-color: #0e2a20;
+    border: 1px solid #1f5040;
+    border-radius: 8px;
+}
+
+#ScoringFormatTitle {
+    color: #3fd27d;
+    font-size: 14px;
+    font-weight: 700;
+    padding-bottom: 2px;
+}
+
+#ScoringSubTitle {
+    color: #7fd9bb;
+    font-size: 13px;
+    font-weight: 600;
+    padding-top: 6px;
+}
+
+#ScoringLine {
+    color: #9abfb2;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+/* =======================================================================
    ABOUT SECTION
    ======================================================================= */
 

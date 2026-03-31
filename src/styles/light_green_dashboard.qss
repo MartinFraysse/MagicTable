@@ -456,6 +456,39 @@ QPushButton#WarningButton:disabled {
 }
 
 /* =====================
+   FINISH BUTTON (Terminer le tournoi)
+===================== */
+
+QPushButton#FinishButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #d4a017,
+        stop:1 #a07510
+    );
+    color: #fff8e7;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(180, 130, 0, 0.4);
+}
+
+QPushButton#FinishButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #e8b520,
+        stop:1 #b88510
+    );
+    border: 1px solid rgba(180, 130, 0, 0.7);
+}
+
+QPushButton#FinishButton:pressed {
+    background: #8b6508;
+}
+
+/* =====================
    ARCHIVE BUTTON
 ===================== */
 
@@ -486,4 +519,436 @@ QPushButton#ArchiveButton:hover {
 
 QPushButton#ArchiveButton:pressed {
     background: #4a7fb8;
+}
+
+/* =====================
+   DIALOG RÉSULTATS BO3
+===================== */
+
+#EditTableResultsDialog {
+    background-color: #f5fffc;
+    border: 1px solid #b3dfd0;
+    border-radius: 16px;
+}
+
+#BO3PlayerName {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a3d33;
+}
+
+QSpinBox#BO3SpinBox {
+    background-color: #eaf7f0;
+    border: 1px solid #b3dfd0;
+    border-radius: 10px;
+    color: #1a3d33;
+    font-size: 22px;
+    font-weight: 800;
+    padding: 4px 8px;
+    min-width: 90px;
+    min-height: 46px;
+}
+
+QSpinBox#BO3SpinBox:focus {
+    border-color: #2eaa6e;
+    background-color: #d6f0e4;
+}
+
+QSpinBox#BO3SpinBox::up-button,
+QSpinBox#BO3SpinBox::down-button {
+    width: 28px;
+    border-radius: 6px;
+    background-color: #c8edd8;
+    border: none;
+}
+
+QSpinBox#BO3SpinBox::up-button:hover,
+QSpinBox#BO3SpinBox::down-button:hover {
+    background-color: #2eaa6e;
+}
+
+QSpinBox#BO3SpinBox::up-arrow {
+    image: none;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 6px solid #1a3d33;
+}
+
+QSpinBox#BO3SpinBox::down-arrow {
+    image: none;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #1a3d33;
+}
+
+#BO3StatusLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: #5a8a74;
+    padding: 4px 0;
+}
+
+#BO3StatusLabel[state="valid"] {
+    color: #2eaa6e;
+}
+
+#BO3StatusLabel[state="invalid"] {
+    color: #c0392b;
+}
+
+/* =====================
+   EDIT PAIRINGS DIALOG
+===================== */
+
+#EditPairingsDialog {
+    background-color: #edf5f0;
+}
+
+#EditPairingsScroll,
+#EditPairingsScroll QWidget,
+#EditPairingsContent {
+    background-color: #edf5f0;
+    border: none;
+}
+
+/* Bandeau instruction */
+#EditPairingsInfoBanner {
+    background-color: #d8f0e5;
+    border: 1px solid #98cdb5;
+    border-radius: 8px;
+}
+
+#EditPairingsInfoIcon {
+    color: #1a7a4a;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+#EditPairingsInfo {
+    color: #1a4838;
+    font-size: 13px;
+}
+
+/* Barre d'état sélection */
+#EditPairingsSelStatus {
+    border-radius: 8px;
+    border: 1px solid #c0d8cc;
+    background-color: #f0f8f4;
+    min-height: 36px;
+}
+
+#EditPairingsSelStatus[selState="empty"] {
+    background-color: #f0f8f4;
+    border-color: #c0d8cc;
+}
+
+#EditPairingsSelStatus[selState="one"] {
+    background-color: #e8f0ff;
+    border-color: #88a8e0;
+}
+
+#EditPairingsSelStatus[selState="error"] {
+    background-color: #fff0f0;
+    border-color: #e09090;
+}
+
+#EditPairingsSelStatus[selState="ready"] {
+    background-color: #e0f5eb;
+    border-color: #28b868;
+}
+
+#EditPairingsSelIcon {
+    font-size: 14px;
+    color: #6a9a88;
+}
+
+#EditPairingsSelIcon[selState="one"] {
+    color: #4870c0;
+}
+
+#EditPairingsSelIcon[selState="error"] {
+    color: #c84040;
+}
+
+#EditPairingsSelIcon[selState="ready"] {
+    color: #1a9850;
+}
+
+#EditPairingsSelLabel {
+    color: #4a7060;
+    font-size: 13px;
+}
+
+#EditPairingsSelLabel[selState="one"] {
+    color: #3860a0;
+}
+
+#EditPairingsSelLabel[selState="error"] {
+    color: #c04040;
+    font-weight: 600;
+}
+
+#EditPairingsSelLabel[selState="ready"] {
+    color: #1a8040;
+    font-weight: 600;
+}
+
+/* Lignes de table */
+#EditPairingsRow {
+    background-color: #ffffff;
+    border: 1px solid #a8d8c0;
+    border-radius: 8px;
+}
+
+#EditPairingsByeRow {
+    background-color: #fffce8;
+    border: 1px solid #d4c050;
+    border-radius: 8px;
+}
+
+/* Badges */
+#EditPairingsTableBadge {
+    background-color: #1d7a50;
+    border-radius: 6px;
+    min-height: 44px;
+}
+
+#EditPairingsByeBadge {
+    background-color: #c8a010;
+    border-radius: 6px;
+    min-height: 44px;
+}
+
+#EditPairingsBadgeTop {
+    color: rgba(255,255,255,0.75);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+#EditPairingsBadgeNum {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+#EditPairingsBadgeLabel {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Séparateur */
+QFrame#EditPairingsSep {
+    color: #c0ddd0;
+    background-color: #c0ddd0;
+    border: none;
+    max-width: 1px;
+}
+
+/* "vs" label */
+#EditPairingsVsLabel {
+    color: #98b8a8;
+    font-size: 11px;
+    font-style: italic;
+}
+
+/* Boutons joueurs */
+QPushButton#EditPairingsPlayerBtn {
+    background-color: #eef8f3;
+    color: #1a3d2e;
+    border: 1px solid #b0d8c5;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+}
+
+QPushButton#EditPairingsPlayerBtn:hover {
+    background-color: #d8f0e5;
+    border-color: #28b868;
+    color: #0f2a20;
+}
+
+QPushButton#EditPairingsPlayerBtn:checked {
+    background-color: #1d7a50;
+    border: 2px solid #28b868;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+QPushButton#EditPairingsPlayerBtn:disabled {
+    background-color: #f5f5f5;
+    color: #aaaaaa;
+    border-color: #dddddd;
+}
+
+/* Bouton d'échange */
+QPushButton#EditPairingsSwapBtn {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3580c0, stop:1 #265e90);
+    color: #ffffff;
+    border: 1px solid rgba(50, 120, 200, 0.4);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+}
+
+QPushButton#EditPairingsSwapBtn:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #4090d0, stop:1 #3070a8);
+    border-color: rgba(50, 120, 200, 0.7);
+}
+
+QPushButton#EditPairingsSwapBtn:disabled {
+    background: #d8d8d8;
+    color: rgba(0,0,0,0.3);
+    border-color: rgba(0,0,0,0.08);
+}
+
+#EditPairingsHint {
+    color: #7a9060;
+    font-size: 11px;
+    font-style: italic;
+}
+
+/* =====================
+   ROUND SUMMARY DIALOG
+===================== */
+
+#RoundSummaryDialog {
+    background-color: #f8fffe;
+    border: 1px solid #c0e0d5;
+    border-radius: 14px;
+}
+
+/* =====================
+   FINAL STANDINGS OVERLAY
+===================== */
+
+#FinalCard {
+    background-color: #f0faf5;
+    border-radius: 18px;
+    border: 1px solid rgba(46, 170, 110, 0.4);
+}
+
+/* Scroll transparent — hérite du fond de la carte */
+#FinalScroll,
+#FinalContent {
+    background-color: transparent;
+}
+
+#FinalTitle {
+    color: #1a3d33;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+#FinalSubtitle {
+    color: #4a9070;
+    font-size: 10px;
+    letter-spacing: 2px;
+}
+
+#FinalRowGold {
+    color: #7a5800;
+    background-color: rgba(200, 160, 0, 0.10);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 5px 10px;
+}
+
+#FinalRowSilver {
+    color: #3a5570;
+    background-color: rgba(90, 112, 144, 0.08);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 10px;
+}
+
+#FinalRowBronze {
+    color: #7a3a10;
+    background-color: rgba(160, 90, 40, 0.08);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 10px;
+}
+
+#FinalRow {
+    color: #2a5040;
+    font-size: 12px;
+    padding: 5px 10px;
+}
+
+/* =====================
+   BRACKET BUTTON (Lancer le bracket)
+===================== */
+
+QPushButton#BracketButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #c06820,
+        stop:1 #9a5018
+    );
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(180, 100, 30, 0.4);
+}
+
+QPushButton#BracketButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #d87828,
+        stop:1 #b86020
+    );
+    border: 1px solid rgba(180, 100, 30, 0.7);
+}
+
+QPushButton#BracketButton:pressed {
+    background: #7a3c10;
+}
+
+/* =====================
+   BRACKET WINNER BUTTON (Dialog résultat)
+===================== */
+
+QPushButton#BracketWinnerButton {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #2eaa6e,
+        stop:1 #1e8f55
+    );
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+QPushButton#BracketWinnerButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:0, y2:1,
+        stop:0 #36c07a,
+        stop:1 #28a366
+    );
+    border: 1px solid rgba(46, 170, 110, 0.5);
+}
+
+QPushButton#BracketWinnerButton:pressed {
+    background: #1e8f55;
+}
+
+#BracketMatchVsLabel {
+    color: rgba(0, 0, 0, 0.5);
+    font-size: 13px;
 }

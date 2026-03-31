@@ -21,6 +21,7 @@ class SwissPairingResult:
     """Résultat d'un appariement Swiss."""
     pairings: list[tuple["Player", "Player"]]
     bye_player: "Player | None"
+    rematch_forced: bool = False
 
 
 def compute_recommended_rounds(player_count: int) -> int:
@@ -42,13 +43,14 @@ def compute_recommended_rounds(player_count: int) -> int:
 def generate_swiss_pairings(
     players: list["Player"],
     opponents_map: dict[int, set[int]],
-    bye_history: set[int]
+    bye_history: set[int],
+    standings_order: list[int] | None = None,
 ) -> SwissPairingResult:
     """
     Génère les appariements Swiss pour un round.
 
     Algorithme:
-    1. Si nombre impair: assigner bye au joueur avec le plus bas score
+    1. Si nombre impair: assigner bye au dernier joueur du classement
        qui n'a pas encore reçu de bye
     2. Grouper les joueurs restants par bracket de score
     3. Dans chaque bracket (du plus haut au plus bas):
@@ -60,6 +62,7 @@ def generate_swiss_pairings(
         players: Liste des joueurs à apparier
         opponents_map: Dict {player_id: set(opponent_ids déjà rencontrés)}
         bye_history: Set des player_ids ayant déjà reçu un bye
+        standings_order: Liste d'IDs joueurs du meilleur au moins bon (pour le bye)
 
     Returns:
         SwissPairingResult avec les pairings et le joueur bye (si applicable)
@@ -69,22 +72,29 @@ def generate_swiss_pairings(
 
     # Gérer nombre impair - assigner bye
     if len(active_players) % 2 == 1:
-        # Trier par score croissant (plus bas score = priorité pour bye)
-        sorted_by_score = sorted(
-            active_players,
-            key=lambda p: (p.score, random.random())
-        )
+        player_map = {p.id: p for p in active_players}
 
-        # Trouver le premier joueur sans bye précédent
-        for player in sorted_by_score:
+        if standings_order:
+            # Itérer du dernier au premier dans le classement
+            candidates = [
+                player_map[pid]
+                for pid in reversed(standings_order)
+                if pid in player_map
+            ]
+        else:
+            # Fallback : trier par score croissant
+            candidates = sorted(active_players, key=lambda p: (p.score, random.random()))
+
+        # Trouver le premier candidat sans bye précédent
+        for player in candidates:
             if player.id not in bye_history:
                 bye_player = player
                 active_players.remove(player)
                 break
 
-        # Si tous ont eu un bye, donner au plus bas score
-        if bye_player is None and sorted_by_score:
-            bye_player = sorted_by_score[0]
+        # Si tous ont eu un bye, donner au dernier du classement
+        if bye_player is None and candidates:
+            bye_player = candidates[0]
             active_players.remove(bye_player)
 
     # Grouper par score brackets
@@ -109,10 +119,11 @@ def generate_swiss_pairings(
         pairings.extend(paired)
         floaters = unpaired
 
-    # Forcer l'appariement des floaters restants (rematches autorisés)
+    # Si des floaters restent, les rematches sont inévitables — on les force et on signale
     if len(floaters) >= 2:
         for i in range(0, len(floaters) - 1, 2):
             pairings.append((floaters[i], floaters[i + 1]))
+        return SwissPairingResult(pairings=pairings, bye_player=bye_player, rematch_forced=True)
 
     return SwissPairingResult(pairings=pairings, bye_player=bye_player)
 
@@ -124,10 +135,10 @@ def _pair_bracket(
     """
     Apparie les joueurs d'un bracket en évitant les rematches.
 
-    Utilise un algorithme glouton:
-    - Pour chaque joueur non apparié, chercher un adversaire valide
-    - Un adversaire est valide s'il n'a pas déjà été rencontré
-    - Les joueurs sans adversaire valide sont retournés comme floaters
+    Utilise un backtracking pour maximiser les appariements sans rematch :
+    - Pour chaque joueur, on essaie tous ses partenaires valides (sans rematch)
+    - Si aucun partenaire valide n'existe, le joueur devient floater
+    - On garde la solution avec le moins de floaters possible
 
     Args:
         players: Joueurs du bracket à apparier
@@ -139,31 +150,50 @@ def _pair_bracket(
     if len(players) < 2:
         return [], players
 
-    pairings: list[tuple["Player", "Player"]] = []
-    available = list(range(len(players)))
+    n = len(players)
+    best_floater_count = [n + 1]
+    best_result: list[tuple[list, list] | None] = [None]
 
-    while len(available) >= 2:
-        found_pair = False
+    def backtrack(available: list[int], pairings: list[tuple[int, int]], floaters: list[int]) -> None:
+        # Élagage: impossible de faire mieux que le meilleur connu
+        if len(floaters) >= best_floater_count[0]:
+            return
+
+        if len(available) < 2:
+            all_floaters = floaters + available
+            if len(all_floaters) < best_floater_count[0]:
+                best_floater_count[0] = len(all_floaters)
+                best_result[0] = (pairings[:], all_floaters[:])
+            return
+
+        # Solution optimale déjà trouvée
+        if best_floater_count[0] == 0:
+            return
+
         i = available[0]
+        rest = available[1:]
+        has_valid_partner = False
 
-        # Chercher un adversaire valide pour le joueur i
-        for j in available[1:]:
-            p1, p2 = players[i], players[j]
+        for k, j in enumerate(rest):
+            if players[j].id not in opponents_map.get(players[i].id, set()):
+                has_valid_partner = True
+                remaining = rest[:k] + rest[k + 1:]
+                pairings.append((i, j))
+                backtrack(remaining, pairings, floaters)
+                pairings.pop()
+                if best_floater_count[0] == 0:
+                    return
 
-            # Vérifier si c'est un rematch
-            if p2.id in opponents_map.get(p1.id, set()):
-                continue
+        # Si aucun partenaire valide, i doit forcément flotter
+        if not has_valid_partner:
+            backtrack(rest, pairings, floaters + [i])
 
-            # Appariement valide trouvé
-            pairings.append((p1, p2))
-            available.remove(i)
-            available.remove(j)
-            found_pair = True
-            break
+    backtrack(list(range(n)), [], [])
 
-        if not found_pair:
-            # Aucun adversaire valide, ces joueurs vont flotter
-            break
+    if best_result[0] is None:
+        return [], players
 
-    unpaired = [players[i] for i in available]
-    return pairings, unpaired
+    pairings_idx, floaters_idx = best_result[0]
+    result_pairings = [(players[i], players[j]) for i, j in pairings_idx]
+    result_floaters = [players[i] for i in floaters_idx]
+    return result_pairings, result_floaters

@@ -88,7 +88,11 @@ def build_standings(tournament: Tournament) -> list[StandingEntry]:
                 if pos1 is None or pos2 is None:
                     continue
 
-                _record_1v1_result(stats, p1.id, p2.id, pos1, pos2)
+                # Récupérer les game_scores BO3 si disponibles
+                p1_games = table.game_scores.get(p1.id)
+                p2_games = table.game_scores.get(p2.id)
+
+                _record_1v1_result(stats, p1.id, p2.id, pos1, pos2, p1_games, p2_games)
                 continue
 
     # ---------------------------------------------------------------
@@ -132,12 +136,33 @@ def build_standings(tournament: Tournament) -> list[StandingEntry]:
         s.omw_pct = total / count if count > 0 else 0.0
 
     # ---------------------------------------------------------------
-    # Phase 4 : GW% et OGW% — placeholders (games non trackés)
+    # Phase 4 : GW% et OGW%
     # ---------------------------------------------------------------
-    # GW% = games_won / games_played — non disponible dans le modèle actuel.
-    # OGW% = moyenne des GW% adverses avec floor 0.33 — idem.
-    # Les deux restent à 0.0 et pourront être implémentés si le modèle
-    # est étendu pour tracker les résultats par game (ex: 2-1, 2-0).
+    # GW% = games_won / games_played (pour les matchs avec score BO3 saisi).
+    # OGW% = moyenne des GW% adverses avec floor 0.33.
+    # Si aucun score BO3 n'a été saisi, les deux restent à 0.0.
+
+    for s in stats.values():
+        if s.games_played > 0:
+            s.gw_pct = s.games_won / s.games_played
+        else:
+            s.gw_pct = 0.0
+
+    for s in stats.values():
+        if not s.opponents:
+            s.ogw_pct = 0.0
+            continue
+
+        total = 0.0
+        count = 0
+        for opp_id in s.opponents:
+            opp = stats.get(opp_id)
+            if opp is None:
+                continue
+            total += max(opp.gw_pct, 0.33)
+            count += 1
+
+        s.ogw_pct = total / count if count > 0 else 0.0
 
     # ---------------------------------------------------------------
     # Phase 5 : construire les StandingEntry et trier
@@ -154,8 +179,8 @@ def build_standings(tournament: Tournament) -> list[StandingEntry]:
             matches_played=s.matches_played,
             mw_pct=s.mw_pct,
             omw_pct=s.omw_pct,
-            gw_pct=0.0,
-            ogw_pct=0.0,
+            gw_pct=s.gw_pct,
+            ogw_pct=s.ogw_pct,
         ))
 
     # Tri officiel MTG :
@@ -187,6 +212,10 @@ class _PlayerStats:
     match_points: int = 0
     mw_pct: float = 0.0
     omw_pct: float = 0.0
+    gw_pct: float = 0.0
+    ogw_pct: float = 0.0
+    games_won: int = 0
+    games_played: int = 0
     opponents: list[int] = field(default_factory=list)
 
 
@@ -196,12 +225,15 @@ def _record_1v1_result(
     p2_id: int,
     pos1: int,
     pos2: int,
+    p1_games: int | None = None,
+    p2_games: int | None = None,
 ) -> None:
     """
     Enregistre le résultat d'un match 1v1 dans les stats.
 
     - Position plus basse = meilleur (1 = gagnant).
     - Positions identiques = draw (1 pt chacun).
+    - p1_games / p2_games : games gagnées en BO3 (optionnel, pour GW%).
     """
     s1 = stats.get(p1_id)
     s2 = stats.get(p2_id)
@@ -227,3 +259,11 @@ def _record_1v1_result(
         # Draw (positions identiques)
         s1.draws += 1
         s2.draws += 1
+
+    # Accumuler les games pour GW% (si score BO3 disponible)
+    if p1_games is not None and p2_games is not None:
+        total_games = p1_games + p2_games
+        s1.games_won += p1_games
+        s1.games_played += total_games
+        s2.games_won += p2_games
+        s2.games_played += total_games

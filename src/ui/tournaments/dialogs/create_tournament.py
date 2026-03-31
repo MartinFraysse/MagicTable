@@ -199,10 +199,9 @@ class CreateTournamentDialog(QDialog):
         self._on_format_changed()
 
     def _on_format_changed(self):
-        """Les formats 1v1 utilisent toujours Swiss, pas besoin de demander."""
+        """Les formats 1v1 utilisent toujours Swiss, Commander toujours Standard."""
         current = self.format_input.currentText()
         is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
-        # Swiss automatique pour 1v1, on force la sélection sans montrer le combo
         if is_1v1:
             self.pairing_combo.setCurrentIndex(1)  # Swiss
         else:

@@ -772,6 +772,99 @@ QMessageBox QPushButton:default {
 
 
 /* =======================================================================
+   TOURNAMENT DETAIL DIALOG
+   ======================================================================= */
+
+#DetailDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 14px;
+}
+
+#DetailTitle {
+    color: #e8fff4;
+    font-size: 16px;
+    font-weight: 700;
+    padding-bottom: 2px;
+}
+
+#DetailMeta {
+    color: #8fcfb5;
+    font-size: 12px;
+}
+
+#RankingTable {
+    background-color: #132f26;
+    alternate-background-color: #153a2e;
+    border: none;
+    border-radius: 8px;
+    gridline-color: transparent;
+    color: #eafff6;
+    font-size: 13px;
+    selection-background-color: #2f6b56;
+    selection-color: #ffffff;
+    outline: none;
+}
+
+#RankingTable::item {
+    padding: 4px 8px;
+    border: none;
+}
+
+#RankingTable::item:hover {
+    background-color: rgba(58, 214, 138, 0.12);
+}
+
+#RankingTable::item:selected {
+    background-color: #2f6b56;
+    color: #ffffff;
+}
+
+#RankingTable QHeaderView {
+    background-color: #1c4a3a;
+    border: none;
+    border-radius: 0;
+}
+
+#RankingTable QHeaderView::section {
+    background-color: #1c4a3a;
+    color: #7de2a8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 8px;
+    border: none;
+    border-bottom: 1px solid #2f6f55;
+    border-radius: 0;
+}
+
+#RankingTable QScrollBar:vertical {
+    background: transparent;
+    width: 6px;
+    margin: 2px;
+}
+
+#RankingTable QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 3px;
+    min-height: 24px;
+}
+
+#RankingTable QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+#RankingTable QScrollBar::add-line:vertical,
+#RankingTable QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#RankingTable QScrollBar::add-page:vertical,
+#RankingTable QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* =======================================================================
    EDIT PLAYER DIALOG
    ======================================================================= */
 

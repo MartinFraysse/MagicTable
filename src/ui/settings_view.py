@@ -49,6 +49,10 @@ class SettingsView(QWidget):
         timer_section = self._build_timer_section()
         content_layout.addWidget(timer_section)
 
+        # Section Notation
+        scoring_section = self._build_scoring_section()
+        content_layout.addWidget(scoring_section)
+
         # Section Données
         data_section = self._build_data_section()
         content_layout.addWidget(data_section)
@@ -96,6 +100,86 @@ class SettingsView(QWidget):
         layout.addWidget(hint)
 
         return frame
+
+    def _build_scoring_section(self) -> QFrame:
+        """Construit la section d'explication des systèmes de notation."""
+        frame = QFrame()
+        frame.setObjectName("SettingsSection")
+
+        layout = QVBoxLayout(frame)
+        layout.setSpacing(16)
+
+        title = QLabel("Systèmes de notation par format")
+        title.setObjectName("SettingsSectionTitle")
+        layout.addWidget(title)
+
+        # --- Commander ---
+        commander_block = self._build_scoring_block(
+            "👑 Commander (tables de 3-4 joueurs)",
+            [
+                ("Points par manche", [
+                    "🥇 1er  →  3 points",
+                    "🥈 2ème →  2 points",
+                    "🥉 3ème / 4ème  →  1 point",
+                ]),
+                ("Départage — Robustesse", [
+                    "Somme pondérée du rang actuel de chaque adversaire rencontré",
+                    "Formule : pour chaque adversaire → (N − rang adversaire), où N = nb de joueurs",
+                    "Plus tu affrontes des joueurs bien classés, plus ta robustesse est élevée",
+                    "Recalculée automatiquement après chaque round",
+                ]),
+            ]
+        )
+        layout.addWidget(commander_block)
+
+        # --- Formats 1v1 ---
+        standard_block = self._build_scoring_block(
+            "⚔️ Formats 1v1 — Swiss pairing (Duel Commander, AP, Pokémon…)",
+            [
+                ("Points par manche", [
+                    "🏆 Victoire  →  3 points",
+                    "⚖️ Match nul  →  1 point",
+                    "❌ Défaite  →  0 point",
+                ]),
+                ("Départage (ordre de priorité — système officiel MTG)", [
+                    "1. OMW% (Opponent Match Win %) — % de victoires de tes adversaires",
+                    "2. GW% (Game Win %) — % de parties gagnées sur l'ensemble de tes games",
+                    "3. OGW% (Opponent Game Win %) — % de parties gagnées par tes adversaires",
+                ]),
+                ("Précisions OMW% / GW%", [
+                    "OMW% : chaque adversaire est compté à minimum 33% même s'il a moins",
+                    "GW%  : calculé si les scores BO3 (2-0, 2-1…) ont été saisis, sinon « — »",
+                ]),
+            ]
+        )
+        layout.addWidget(standard_block)
+
+        return frame
+
+    def _build_scoring_block(self, title: str, sections: list) -> QFrame:
+        """Construit un bloc de notation pour un format."""
+        block = QFrame()
+        block.setObjectName("ScoringBlock")
+
+        layout = QVBoxLayout(block)
+        layout.setSpacing(10)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        title_label = QLabel(title)
+        title_label.setObjectName("ScoringFormatTitle")
+        layout.addWidget(title_label)
+
+        for section_title, lines in sections:
+            sub_title = QLabel(section_title)
+            sub_title.setObjectName("ScoringSubTitle")
+            layout.addWidget(sub_title)
+
+            for line in lines:
+                line_label = QLabel(f"  {line}")
+                line_label.setObjectName("ScoringLine")
+                layout.addWidget(line_label)
+
+        return block
 
     def _build_data_section(self) -> QFrame:
         """Construit la section de gestion des données."""

@@ -358,7 +358,7 @@ def export_tournament_pdf(tournament: Tournament, filepath: str) -> bool:
 
             # Si nombre impair de tables, finaliser la position
             if len(tables) % 2 == 1:
-                pdf.ln(tables[-1].players.__len__() * 5 + 10)
+                pdf.ln(len(tables[-1].players) * 5 + 10)
 
             pdf.ln(8)
 

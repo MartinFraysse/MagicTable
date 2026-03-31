@@ -5,11 +5,11 @@ from PySide6.QtWidgets import (
     QMenu, QMessageBox
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QCursor, QColor
-from ui.widgets.player_matches_popup import PlayerMatchesPopup
+from PySide6.QtGui import QColor
 from core.regular_player import RegularPlayer
 from core.standings import build_standings
 from storage.regular_players import RegularPlayerStorage
+from ui.dashboard.dialogs.round_summary_dialog import RoundSummaryDialog
 
 
 class DashboardRankingView(QFrame):
@@ -22,7 +22,6 @@ class DashboardRankingView(QFrame):
         self.setObjectName("DashboardCard")
 
         self._tournament = None
-        self._player_results = {}  # player_id -> list of round results
         self._previous_ranks = {}  # player_id -> rank at previous round
         self._swiss_mode = False
         self._1v1_mode = False
@@ -49,7 +48,6 @@ class DashboardRankingView(QFrame):
         table.setSelectionBehavior(QTableWidget.SelectRows)
         table.setSelectionMode(QTableWidget.SingleSelection)
         table.setFocusPolicy(Qt.NoFocus)
-        table.setMouseTracking(True)
 
         # --- Apparence ---
         table.setShowGrid(False)
@@ -71,9 +69,6 @@ class DashboardRankingView(QFrame):
         # --- Size policy ---
         table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # --- Hover events ---
-        table.cellEntered.connect(self._on_cell_hover)
-
         # --- Context menu ---
         table.setContextMenuPolicy(Qt.CustomContextMenu)
         table.customContextMenuRequested.connect(self._show_context_menu)
@@ -83,10 +78,6 @@ class DashboardRankingView(QFrame):
         self.ranking_table = table
         self.ranking_viewport = table.viewport()
 
-        self.popup = PlayerMatchesPopup(self)
-        self.popup.hide()
-
-        self._current_hover_row = -1
         self._player_ids_by_row = {}
 
     # =================================================
@@ -114,8 +105,8 @@ class DashboardRankingView(QFrame):
         self._player_ids_by_row = {}
 
         if self._1v1_mode:
-            table.setColumnCount(5)
-            table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "OMW%", "W-D-L"])
+            table.setColumnCount(6)
+            table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "OMW%", "GW%", "W-L-D"])
 
             header = table.horizontalHeader()
             header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -123,6 +114,8 @@ class DashboardRankingView(QFrame):
             header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
+
         elif self._swiss_mode:
             table.setColumnCount(5)
             table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "Buchholz", "SOS"])
@@ -134,13 +127,15 @@ class DashboardRankingView(QFrame):
             header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         else:
-            table.setColumnCount(3)
-            table.setHorizontalHeaderLabels(["#", "Joueur", "Score"])
+            # Commander standard : score + robustesse comme départage
+            table.setColumnCount(4)
+            table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "Robustesse"])
 
             header = table.horizontalHeader()
             header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(1, QHeaderView.Stretch)
             header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
 
         # Centrer les en-têtes
         for i in range(table.columnCount()):
@@ -155,9 +150,6 @@ class DashboardRankingView(QFrame):
         if not tournament:
             table.setRowCount(0)
             return
-
-        # Calculer les résultats par joueur
-        self._compute_player_results(tournament)
 
         # Calculer le classement précédent pour l'évolution
         previous_ranks = self._compute_previous_ranks(tournament)
@@ -223,12 +215,19 @@ class DashboardRankingView(QFrame):
             item_omw.setForeground(QColor("#aaaaaa"))
             table.setItem(row, 3, item_omw)
 
+            # --- GW%
+            gw_text = f"{entry.gw_pct * 100:.1f}%" if entry.gw_pct > 0.0 else "—"
+            item_gw = QTableWidgetItem(gw_text)
+            item_gw.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            item_gw.setForeground(QColor("#aaaaaa"))
+            table.setItem(row, 4, item_gw)
+
             # --- W-D-L
-            wdl_text = f"{entry.wins}-{entry.draws}-{entry.losses}"
+            wdl_text = f"{entry.wins}-{entry.losses}-{entry.draws}"
             item_wdl = QTableWidgetItem(wdl_text)
             item_wdl.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             item_wdl.setForeground(QColor("#aaaaaa"))
-            table.setItem(row, 4, item_wdl)
+            table.setItem(row, 5, item_wdl)
 
         table.blockSignals(False)
 
@@ -279,7 +278,7 @@ class DashboardRankingView(QFrame):
 
             table.setItem(row, 2, item_score)
 
-            # --- Colonnes Swiss (Buchholz et SOS)
+            # --- Colonnes de départage Commander
             if self._swiss_mode:
                 item_buchholz = QTableWidgetItem(f"{player.buchholz:.0f}")
                 item_buchholz.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
@@ -290,42 +289,14 @@ class DashboardRankingView(QFrame):
                 item_sos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
                 item_sos.setForeground(QColor("#aaaaaa"))
                 table.setItem(row, 4, item_sos)
+            else:
+                # Commander standard : robustesse (somme pondérée du rang des adversaires)
+                item_rob = QTableWidgetItem(str(player.robustness))
+                item_rob.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+                item_rob.setForeground(QColor("#aaaaaa"))
+                table.setItem(row, 3, item_rob)
 
         table.blockSignals(False)
-
-    # =================================================
-    # Compute player results per round
-    # =================================================
-    def _compute_player_results(self, tournament):
-        """Calcule les résultats de chaque joueur pour chaque round."""
-        self._player_results = {p.id: [] for p in tournament.players}
-
-        is_1v1 = self._1v1_mode
-
-        for rnd in tournament.rounds:
-            if not rnd.tables:
-                continue
-            for tbl in rnd.tables:
-                for player in tbl.players:
-                    position = tbl.results.get(player.id)
-                    if position is not None:
-                        if is_1v1 and len(tbl.players) <= 2:
-                            # 1v1 : Win=3, Loss=0
-                            points = 3 if position == 1 else 0
-                            label = "🏆 Win" if position == 1 else "❌ Loss"
-                        else:
-                            # Commander multiplayer
-                            position_labels = {1: "🥇 1er", 2: "🥈 2ème", 3: "🥉 3ème", 4: "4ème"}
-                            points_by_position = {1: 3, 2: 2, 3: 1, 4: 1}
-                            label = position_labels.get(position, f"{position}ème")
-                            points = points_by_position.get(position, 1)
-
-                        self._player_results[player.id].append({
-                            "round": rnd.number,
-                            "table": tbl.number,
-                            "position": label,
-                            "points": points,
-                        })
 
     def _compute_previous_ranks(self, tournament):
         """Calcule le classement des joueurs après le round précédent."""
@@ -375,50 +346,6 @@ class DashboardRankingView(QFrame):
         return {e.player_id: rank + 1 for rank, e in enumerate(standings)}
 
     # =================================================
-    # Hover handling
-    # =================================================
-    def _on_cell_hover(self, row, col):
-        if row == self._current_hover_row:
-            return
-
-        self._current_hover_row = row
-
-        if not self._tournament or row < 0 or row not in self._player_ids_by_row:
-            self.popup.hide()
-            return
-
-        player_id = self._player_ids_by_row[row]
-        results = self._player_results.get(player_id, [])
-
-        if not results:
-            self.popup.hide()
-            return
-
-        # Trouver le joueur
-        player = None
-        for p in self._tournament.players:
-            if p.id == player_id:
-                player = p
-                break
-
-        if not player:
-            self.popup.hide()
-            return
-
-        self.popup.set_player(player.name, results, player.robustness)
-
-        # Positionner le popup près du curseur
-        cursor_pos = QCursor.pos()
-        self.popup.move(cursor_pos.x() + 15, cursor_pos.y() + 10)
-        self.popup.show()
-
-    def leaveEvent(self, event):
-        """Cache le popup quand la souris quitte le widget."""
-        super().leaveEvent(event)
-        self.popup.hide()
-        self._current_hover_row = -1
-
-    # =================================================
     # Context menu
     # =================================================
     def _show_context_menu(self, pos):
@@ -436,21 +363,33 @@ class DashboardRankingView(QFrame):
         if not player:
             return
 
-        # Vérifier si le joueur est déjà dans les joueurs permanents
         is_regular = self._is_regular_player(player.name)
 
         menu = QMenu(self)
 
+        summary_action = menu.addAction("📋 Résumé des rounds")
+
+        menu.addSeparator()
+
         if is_regular:
             info_action = menu.addAction("⭐ Joueur permanent")
             info_action.setEnabled(False)
+            add_action = None
         else:
             add_action = menu.addAction("➕ Ajouter aux joueurs permanents")
 
         action = menu.exec(self.ranking_table.viewport().mapToGlobal(pos))
 
-        if not is_regular and action:
+        if action == summary_action:
+            self._show_round_summary(player_id)
+        elif add_action and action == add_action:
             self._add_to_regular_players(player.name)
+
+    def _show_round_summary(self, player_id: int):
+        if not self._tournament:
+            return
+        dlg = RoundSummaryDialog(self, self._tournament, player_id)
+        dlg.exec()
 
     def _is_regular_player(self, name: str) -> bool:
         """Vérifie si un joueur est dans la liste des joueurs permanents."""

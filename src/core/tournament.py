@@ -5,6 +5,8 @@ from core.player import Player
 from core.round import Round
 from core.table import Table
 from core.swiss_pairing import generate_swiss_pairings, compute_recommended_rounds
+from core.standings import build_standings
+from core.bracket import Bracket, BracketType, create_bracket_matches
 import random
 
 @dataclass
@@ -23,6 +25,9 @@ class Tournament:
     # Swiss pairing system
     pairing_system: str = "standard"  # "standard" ou "swiss"
     bye_history: set[int] = field(default_factory=set)
+
+    # Phase d'élimination (bracket)
+    bracket: Bracket | None = None
 
     _next_player_id: int = 0
 
@@ -98,9 +103,12 @@ class Tournament:
         return False
 
     ### ROUND
-    def create_round(self) -> Round:
+    def create_round(self) -> Round | None:
         round_number = len(self.rounds) + 1
         tables = self._generate_tables()
+
+        if tables is None:
+            return None
 
         new_round = Round(
             number=round_number,
@@ -380,11 +388,22 @@ class Tournament:
         round_number = len(self.rounds) + 1
         opponents_map = self.get_opponents_map()
 
+        # Ordre du classement actuel pour attribuer le bye au dernier
+        standings = build_standings(self)
+        standings_order = [e.player_id for e in standings]
+
         result = generate_swiss_pairings(
             self.players,
             opponents_map,
-            self.bye_history
+            self.bye_history,
+            standings_order=standings_order,
         )
+
+        if result.rematch_forced:
+            raise ValueError(
+                "Impossible de créer ce round sans rematch.\n"
+                "Tous les joueurs ont déjà joué ensemble."
+            )
 
         tables: list[Table] = []
         for i, (p1, p2) in enumerate(result.pairings, 1):
@@ -394,7 +413,6 @@ class Tournament:
         if result.bye_player:
             self.bye_history.add(result.bye_player.id)
             result.bye_player.had_bye = True
-            result.bye_player.add_score(3)  # Victoire automatique
             tables.append(Table(
                 number=len(tables) + 1,
                 players=[result.bye_player],
@@ -459,8 +477,32 @@ class Tournament:
         self.date = date
         self.max_rounds = max_rounds
 
+    def start_bracket(self, bracket_type: BracketType) -> Bracket:
+        """Lance la phase de bracket d'élimination à partir du classement actuel."""
+        standings = build_standings(self)
+        seeded_ids = [e.player_id for e in standings]
+
+        required = {
+            BracketType.FINAL: 2,
+            BracketType.DEMI_FINALE: 4,
+            BracketType.QUART_DE_FINALE: 8,
+        }
+        n = required[bracket_type]
+        seeded_ids = seeded_ids[:n]
+
+        matches = create_bracket_matches(bracket_type, seeded_ids)
+        self.bracket = Bracket(bracket_type=bracket_type, matches=matches)
+        return self.bracket
+
+    @property
+    def is_bracket_phase(self) -> bool:
+        """True si le tournoi est en phase de bracket d'élimination."""
+        return self.bracket is not None and not self.bracket.finished
+
     def can_create_round(self) -> bool:
         """Vérifie si on peut créer un nouveau round."""
+        if self.bracket is not None:
+            return False  # Bracket actif, plus de rounds Swiss
         return len(self.rounds) < self.max_rounds
 
     def is_finished(self) -> bool:
@@ -493,6 +535,9 @@ class Tournament:
 
         # Réinitialiser l'historique des byes
         self.bye_history.clear()
+
+        # Supprimer le bracket
+        self.bracket = None
 
         print(f"\n{'='*50}")
         print(f"🔄 TOURNOI RÉINITIALISÉ - {self.name}")
@@ -564,6 +609,7 @@ class Tournament:
                 for p in self.players
             ],
             "rounds": [r.to_dict() for r in self.rounds],
+            "bracket": self.bracket.to_dict() if self.bracket else None,
         }
 
     @classmethod
@@ -607,6 +653,11 @@ class Tournament:
         for r in data.get("rounds", []):
             round_obj = Round.from_dict(r, players_by_id)
             tournament.rounds.append(round_obj)
+
+        # Charger le bracket
+        bracket_data = data.get("bracket")
+        if bracket_data:
+            tournament.bracket = Bracket.from_dict(bracket_data)
 
         return tournament
 
