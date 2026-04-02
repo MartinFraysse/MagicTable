@@ -1,62 +1,58 @@
 # MagicTable
 
-## Overview
-
-Application desktop de gestion de tournois **Magic: The Gathering**.
-Permet d'organiser des tournois, gérer les joueurs, générer les tables automatiquement et suivre les scores en temps réel.
+Application desktop de gestion de tournois de jeux de cartes (Magic: The Gathering, Duel Commander, Pokémon…).
 
 ---
 
 ## Fonctionnalités
 
-- Création et gestion de tournois (nom, format, date)
-- Gestion des joueurs (ajout, suppression, renommage avec détection des doublons)
-- Génération automatique des tables selon le format :
-  - **Commander** : tables de 4 ou 3 joueurs (minimum 6 joueurs)
-  - **Duel** : tables de 2 joueurs (minimum 4 joueurs)
-- Système de rounds avec timer de 50 minutes
-- Classement des joueurs par score et robustesse
-- Interface drag & drop pour lancer les tournois
-- Thème sombre vert personnalisé
-- Persistance des données en JSON
+### Tournois
+- Création de tournois avec nom, format, date et nombre de rounds
+- 6 formats supportés : Commander, Duel Commander, Draft, AP, Pokémon, Rise
+- Deux systèmes d'appariement : **Standard** (score + robustesse) et **Swiss officiel MTG**
+- Glisser-déposer pour charger un tournoi en zone de lancement
+- Timer de round configurable (par défaut 50 minutes)
+- Fenêtre de projection plein écran pour afficher les tables
 
----
+### Rounds & Résultats
+- Génération automatique des tables selon le format et l'effectif
+- Saisie des résultats par double-clic ou menu contextuel sur une carte table
+- Support **BO3 (Best of 3)** pour les formats 1v1 (5 résultats : 2-0, 2-1, 1-1, 1-2, 0-2)
+- Détection des répétitions de tables + bouton "Round varié" pour les éviter
+- Modification manuelle des pairings au round 1
 
-## Structure du projet
+### Standings MTG officiels
+- Calcul complet : **MW%**, **OMW%**, **GW%**, **OGW%**
+- Plancher OMW% à 33% (règle officielle)
+- Tri officiel : Match Points → OMW% → GW% → OGW% → Nom
 
-```
-src/
-├── app.py                 # Point d'entrée de l'application
-├── core/                  # Logique métier
-│   ├── player.py          # Entité joueur
-│   ├── tournament.py      # Entité tournoi + algorithmes
-│   ├── round.py           # Gestion des rounds
-│   └── table.py           # Entité table
-├── storage/               # Persistance des données
-│   ├── base.py            # Stockage JSON générique
-│   └── tournaments.py     # Stockage des tournois
-├── ui/                    # Interface utilisateur (PySide6)
-│   ├── main_window.py     # Fenêtre principale
-│   ├── dashboard/         # Vue tableau de bord
-│   ├── tournaments/       # Gestion des tournois
-│   └── widgets/           # Composants réutilisables
-├── styles/                # Feuilles de style QSS
-├── assets/                # Images et ressources
-└── data/                  # Données persistées
-    └── tournaments.json
-```
+### Swiss
+- Appariement par bracket de score avec backtracking
+- Bye automatique pour effectif impair (rotation équitable)
+- **Rematches impossibles** : si tous les appariements possibles ont déjà eu lieu, la génération du round est bloquée avec un message d'erreur
+- Départages Buchholz et SOS calculés automatiquement
 
----
+### Phase de bracket d'élimination
+Disponible après le dernier round Swiss pour les formats 1v1 :
+- **Top 2** — Finale directe
+- **Top 4** — Demi-finales + Finale
+- **Top 8** — Quarts + Demi-finales + Finale
 
-## Stack technique
+Les seeds sont issus du classement final des rounds Swiss. Les gagnants progressent automatiquement vers le match suivant.
 
-| Composant | Technologie |
-|-----------|-------------|
-| Langage | Python 3.14 |
-| Framework UI | PySide6 (Qt for Python) |
-| Persistance | JSON |
-| Style | QSS (Qt Style Sheets) |
-| OS | Linux (Arch) |
+### Joueurs réguliers
+- Registre permanent de joueurs (pseudo, nom complet, téléphone)
+- Autocomplétion lors de l'inscription à un tournoi
+- Cumul inter-tournois : points, podiums (top 1/2/3), tournois joués
+
+### Statistiques
+- Stats globales : distribution des formats, commandants populaires
+- Classement des joueurs réguliers par points
+- Tête-à-tête : historique des confrontations entre deux joueurs
+
+### Export & thèmes
+- Export **PDF** du classement final et des détails de rounds (nécessite `fpdf2`)
+- Deux thèmes : **Dark** et **Light** (vert)
 
 ---
 
@@ -65,90 +61,146 @@ src/
 ### Prérequis
 
 - Python 3.10+
-- pip
-
-### Installation des dépendances
+- PySide6
 
 ```bash
 cd src
 python -m venv .venv
 source .venv/bin/activate
 pip install PySide6
+
+# Optionnel : export PDF
+pip install fpdf2
 ```
 
----
-
-## Lancement
+### Lancement
 
 ```bash
 cd src
 python app.py
 ```
 
-Ou depuis n'importe quel répertoire :
-
-```bash
-python /chemin/vers/MagicTable/src/app.py
-```
-
 ---
 
-## Utilisation
+## Utilisation rapide
 
-### Créer un tournoi
+### Créer et lancer un tournoi
 
-1. Aller dans l'onglet **Tournois**
-2. Cliquer sur **Créer un tournoi**
-3. Remplir le nom, format et date
-4. Le tournoi apparaît dans la liste "À venir"
+1. Onglet **Tournois** → **Créer un tournoi** → remplir nom, format, date, nombre de rounds
+2. La carte apparaît dans "À venir" — la glisser vers la zone de lancement (ou clic droit → Lancer)
+3. Ajouter les joueurs (saisie manuelle ou autocomplétion depuis les joueurs réguliers)
+4. Cliquer sur **🚀 Lancer le tournoi**
 
-### Lancer un tournoi
-
-1. Glisser-déposer une carte tournoi vers la zone de lancement
-2. Ou clic droit → **Lancer**
-3. Ajouter les joueurs dans la section de préparation
-4. Cliquer sur **Démarrer le tournoi**
+> Le bouton reste désactivé tant que l'effectif minimum n'est pas atteint :
+> **6 joueurs** pour Commander, **4 joueurs** pour les autres formats.
 
 ### Gérer les rounds
 
-1. Les tables sont générées automatiquement
-2. Le timer de 50 minutes démarre
-3. Entrer les résultats de chaque table (clic droit → Modifier)
-4. Cliquer sur **Round suivant** pour continuer
+1. **▶ Lancer le round** — démarre le timer
+2. Double-cliquer sur une carte table pour entrer les résultats
+3. Quand toutes les tables sont terminées → **⏭ Round suivant** (ou **🏁 Terminer le tournoi** au dernier round)
+4. En mode Swiss, si tous les joueurs se sont déjà affrontés, la création du round est bloquée avec un message d'erreur
+
+### Lancer un bracket d'élimination
+
+Après le dernier round Swiss :
+1. Cliquer sur **🏆 Lancer le bracket**
+2. Choisir le format (Top 2 / Top 4 / Top 8)
+3. Entrer les résultats de chaque match (double-clic sur la carte)
+4. **⏭ Phase suivante** pour avancer vers les demi-finales puis la finale
+
+### Archiver un tournoi
+
+Une fois le tournoi terminé, cliquer sur **📦 Archiver le tournoi** — il apparaît dans l'onglet Historique.
+Les résultats des joueurs réguliers (points, podiums) sont enregistrés automatiquement.
 
 ---
 
-## Architecture
-
-L'application suit une architecture en couches :
+## Structure du projet
 
 ```
-┌─────────────────────────────────────┐
-│              UI Layer               │
-│  (PySide6 Views, Widgets, Dialogs)  │
-├─────────────────────────────────────┤
-│           Storage Layer             │
-│      (JSON File Persistence)        │
-├─────────────────────────────────────┤
-│            Core Layer               │
-│   (Tournament, Player, Round, Table)│
-└─────────────────────────────────────┘
+MagicTable/
+├── src/
+│   ├── app.py                  ← Point d'entrée
+│   ├── core/                   ← Logique métier (sans Qt)
+│   │   ├── player.py
+│   │   ├── regular_player.py
+│   │   ├── tournament.py       ← Entité centrale + algorithmes
+│   │   ├── round.py
+│   │   ├── table.py
+│   │   ├── bracket.py          ← Bracket d'élimination
+│   │   ├── standings.py        ← Standings MTG officiels
+│   │   ├── swiss_pairing.py    ← Appariement Swiss
+│   │   ├── stats_analyzer.py
+│   │   └── theme_manager.py
+│   ├── storage/                ← Persistance JSON
+│   │   ├── base.py
+│   │   ├── tournaments.py
+│   │   └── regular_players.py
+│   ├── export/
+│   │   └── pdf_export.py
+│   ├── ui/                     ← Interface PySide6
+│   │   ├── main_window.py
+│   │   ├── dashboard/
+│   │   ├── tournaments/
+│   │   ├── players/
+│   │   ├── stats/
+│   │   └── settings_view.py
+│   ├── styles/                 ← Thèmes QSS
+│   └── data/                   ← Données (JSON, auto-créé)
+│       ├── tournaments.json
+│       ├── regular_players.json
+│       └── config.json
+├── tests/
+│   └── test_standings.py
+├── docs/                       ← Documentation interne
+├── TECHNICAL_DOC.md            ← Documentation technique détaillée
+└── README.md
 ```
-
-**Patterns utilisés :**
-- Signal/Slot (Qt) pour la communication entre composants
-- Dataclasses pour les entités
-- State Machine pour les états des rounds
-- Factory Pattern pour la création de tournois
 
 ---
 
 ## Formats supportés
 
-| Format | Joueurs/table | Min. joueurs |
-|--------|---------------|--------------|
-| Commander | 3-4 | 6 |
-| Duel | 2 | 4 |
+| Format | Tables | Effectif min. | Pairing | Scoring |
+|--------|--------|---------------|---------|---------|
+| 👑 Commander | 3-4 joueurs | 6 | Standard | Position : 1er=3pts, 2e=2pts, 3e-4e=1pt |
+| ⚔️ Duel Commander | 2 joueurs | 4 | Swiss | V=3pts, N=1pt, D=0pt |
+| 🃏 Draft | 2 joueurs | 4 | Swiss | V=3pts, N=1pt, D=0pt |
+| AP | 2 joueurs | 4 | Swiss | V=3pts, N=1pt, D=0pt |
+| 🎮 Pokémon | 2 joueurs | 4 | Swiss | V=3pts, N=1pt, D=0pt |
+| ⚡ Rise | 2 joueurs | 4 | Swiss | V=3pts, N=1pt, D=0pt |
+
+---
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| Langage | Python 3.10+ |
+| Framework UI | PySide6 (Qt 6) |
+| Persistance | JSON |
+| Style | QSS (Qt Style Sheets) |
+| Export PDF | fpdf2 (optionnel) |
+| Tests | pytest |
+| OS | Linux (développé sur Arch) |
+
+---
+
+## Tests
+
+```bash
+cd /path/to/MagicTable
+PYTHONPATH=src python -m pytest tests/ -v
+```
+
+Les tests couvrent le calcul des standings MTG officiels (`core/standings.py`).
+
+---
+
+## Documentation technique
+
+Pour les détails d'architecture, les algorithmes, les dataclasses, les signaux Qt et le format JSON : voir **[TECHNICAL_DOC.md](TECHNICAL_DOC.md)**.
 
 ---
 
@@ -156,17 +208,17 @@ L'application suit une architecture en couches :
 
 ### Configuration VS Code
 
-Le projet inclut des tâches VS Code préconfigurées (`.vscode/tasks.json`) :
+Le projet inclut des tâches préconfigurées (`.vscode/tasks.json`) :
 
-| Tâche | Description | Raccourci |
-|-------|-------------|-----------|
-| **Open Dev Terminal** | Ouvre un terminal avec nvm configuré | Auto à l'ouverture du projet |
-| **Claude Code** | Lance Claude Code dans un nouveau terminal | `Ctrl+Shift+P` → "Run Task" |
+| Tâche | Description |
+|-------|-------------|
+| **Open Dev Terminal** | Terminal avec nvm configuré |
+| **Claude Code** | Lance Claude Code dans un terminal dédié |
 
-> **Note** : Ces tâches utilisent nvm installé via pacman sur Arch Linux (`/usr/share/nvm/init-nvm.sh`). Sur d'autres systèmes, adapter le chemin vers `~/.nvm/nvm.sh`.
+> Ces tâches utilisent nvm installé via pacman (`/usr/share/nvm/init-nvm.sh`). Adapter le chemin sur d'autres distributions.
 
 ---
 
 ## Licence
 
-Non spécifiée.
+Projet personnel — aucune licence open source définie.
