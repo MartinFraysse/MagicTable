@@ -168,10 +168,25 @@ class DashboardRankingView(QFrame):
             table_min_h = header_h + row_h * min_rows + frame + 2
             table.setMinimumHeight(table_min_h)
 
-    def _fill_table_1v1(self, tournament, previous_ranks):
+    def set_final_standings(self, tournament, ordered_player_ids: list):
+        """
+        Affiche le classement final dans l'ordre bracket (appelé après la fin du tournoi).
+        ordered_player_ids : IDs des joueurs dans l'ordre final (1er, 2ème, …).
+        """
+        previous_ranks = {}  # Pas d'évolution pour le classement final
+        if self._1v1_mode:
+            self._fill_table_1v1(tournament, previous_ranks, override_order=ordered_player_ids)
+        else:
+            self._fill_table_standard(tournament, previous_ranks, override_order=ordered_player_ids)
+
+    def _fill_table_1v1(self, tournament, previous_ranks, override_order=None):
         """Remplit le tableau avec les standings 1v1 (OMW%, W-D-L)."""
         table = self.ranking_table
         standings = build_standings(tournament)
+
+        if override_order:
+            entries_by_id = {e.player_id: e for e in standings}
+            standings = [entries_by_id[pid] for pid in override_order if pid in entries_by_id]
 
         table.blockSignals(True)
         table.setRowCount(len(standings))
@@ -231,11 +246,14 @@ class DashboardRankingView(QFrame):
 
         table.blockSignals(False)
 
-    def _fill_table_standard(self, tournament, previous_ranks):
+    def _fill_table_standard(self, tournament, previous_ranks, override_order=None):
         """Remplit le tableau avec le classement standard (Commander/autres)."""
         table = self.ranking_table
 
-        if self._swiss_mode:
+        if override_order:
+            players_by_id = {p.id: p for p in tournament.players}
+            players = [players_by_id[pid] for pid in override_order if pid in players_by_id]
+        elif self._swiss_mode:
             players = tournament.sort_players_swiss()
         else:
             players = sorted(

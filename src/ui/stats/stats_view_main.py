@@ -12,6 +12,7 @@ from storage.regular_players import RegularPlayerStorage
 from ui.stats.global_stats_view import GlobalStatsView
 from ui.stats.rankings_view import RankingsView
 from ui.stats.head_to_head_view import HeadToHeadView
+from ui.stats.commanders_view import CommandersView
 
 
 class StatsViewMain(QWidget):
@@ -39,10 +40,12 @@ class StatsViewMain(QWidget):
         # Onglets
         self.global_stats_view = GlobalStatsView()
         self.rankings_view = RankingsView()
+        self.commanders_view = CommandersView()
         self.head_to_head_view = HeadToHeadView()
 
         self.tabs.addTab(self.global_stats_view, "   Stats Globales")
         self.tabs.addTab(self.rankings_view, "   Classement")
+        self.tabs.addTab(self.commanders_view, "   Commandants")
         self.tabs.addTab(self.head_to_head_view, "   Head-to-Head")
 
         layout.addWidget(self.tabs)
@@ -64,4 +67,5 @@ class StatsViewMain(QWidget):
         # Mettre à jour les vues
         self.global_stats_view.update_stats(analyzer)
         self.rankings_view.update_stats(analyzer, regular_pseudos)
+        self.commanders_view.update_stats(analyzer)
         self.head_to_head_view.update_stats(analyzer, regular_pseudos)

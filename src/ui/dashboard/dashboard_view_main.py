@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QFileDialog, QInputDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QDialog, QLabel, QPushButton
 from PySide6.QtCore import QTimer, Signal, QUrl, Qt
 from PySide6.QtMultimedia import QSoundEffect
 import os
@@ -12,13 +12,14 @@ from ui.dashboard.round_controls_view import DashboardRoundControlsView
 from ui.dashboard.dialogs.edit_table_results import EditTableResultsDialog
 from ui.dashboard.dialogs.edit_pairings_dialog import EditPairingsDialog
 from ui.dashboard.dialogs.edit_bracket_result import EditBracketResultDialog
+from ui.dashboard.dialogs.launch_bracket_dialog import LaunchBracketDialog
 from ui.dashboard.pairings_window import PairingsWindow
 from ui.dashboard.final_standings_overlay import FinalStandingsOverlay
 
 from core.tournament import Tournament
 from core.table import Table
 from core.round import Round
-from core.bracket import BracketType, BracketRoundName
+from core.bracket import BracketType, BracketRoundName, get_bracket_final_ranking
 from core.regular_player import RegularPlayer
 from core.standings import build_standings
 from storage.regular_players import RegularPlayerStorage
@@ -304,11 +305,34 @@ class DashboardViewMain(QWidget):
 
         # Utiliser l'algorithme approprié selon le système d'appariement
         if self.current_tournament.is_swiss_format():
-            try:
-                self.current_tournament.create_round_swiss()
-            except ValueError as e:
-                QMessageBox.critical(self, "Appariement impossible", str(e))
-                return
+            allow_rematch = False
+            allow_large_gap = False
+            for _ in range(3):  # au plus 2 alertes possibles (large_gap puis rematch)
+                try:
+                    self.current_tournament.create_round_swiss(
+                        allow_rematch=allow_rematch,
+                        allow_large_gap=allow_large_gap,
+                    )
+                    break
+                except ValueError as e:
+                    if str(e) == "large_gap":
+                        choice = self._show_large_gap_dialog()
+                    else:
+                        choice = self._show_rematch_dialog()
+
+                    if choice == "continue":
+                        if str(e) == "large_gap":
+                            allow_large_gap = True
+                        else:
+                            allow_rematch = True
+                    elif choice == "finish":
+                        self._finish_tournament()
+                        return
+                    elif choice == "bracket":
+                        self._launch_bracket()
+                        return
+                    else:
+                        return
             print(f"\n⚖️ Round Swiss généré (appariement officiel)\n")
         else:
             result = self.current_tournament.create_round()
@@ -328,23 +352,168 @@ class DashboardViewMain(QWidget):
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
 
+    def _show_rematch_dialog(self) -> str:
+        """
+        Affiche le dialog quand des rematches sont inévitables.
+        Retourne : 'continue', 'finish', 'bracket', ou 'cancel'.
+        """
+        tournament = self.current_tournament
+        can_bracket = (
+            tournament.is_1v1_format()
+            and len(tournament.players) >= 4
+            and tournament.bracket is None
+        )
+
+        from PySide6.QtWidgets import QSizePolicy
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Rematches inévitables")
+        dialog.setObjectName("RematchDialog")
+        dialog.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+        dialog.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(8)
+        layout.setContentsMargins(20, 20, 20, 16)
+
+        msg = QLabel(
+            "⚠️  Impossible de créer ce round sans rematches.\n"
+            "Tous les joueurs ont déjà joué ensemble.\n\n"
+            "Que souhaitez-vous faire ?"
+        )
+        msg.setObjectName("RematchDialogMessage")
+        layout.addWidget(msg)
+
+        layout.addSpacing(4)
+
+        choice = ["cancel"]
+
+        btn_continue = QPushButton("▶  Continuer  (avec rematches)")
+        btn_continue.setObjectName("RematchDialogContinue")
+        btn_finish   = QPushButton("🏁  Terminer le tournoi")
+        btn_finish.setObjectName("RematchDialogFinish")
+
+        def on_continue(): choice[0] = "continue"; dialog.accept()
+        def on_finish():   choice[0] = "finish";   dialog.accept()
+
+        btn_continue.clicked.connect(on_continue)
+        btn_finish.clicked.connect(on_finish)
+        layout.addWidget(btn_continue)
+        layout.addWidget(btn_finish)
+
+        if can_bracket:
+            btn_bracket = QPushButton("🏆  Passer en bracket final")
+            btn_bracket.setObjectName("RematchDialogBracket")
+            def on_bracket(): choice[0] = "bracket"; dialog.accept()
+            btn_bracket.clicked.connect(on_bracket)
+            layout.addWidget(btn_bracket)
+
+        layout.addSpacing(2)
+        btn_cancel = QPushButton("Annuler")
+        btn_cancel.setObjectName("RematchDialogCancel")
+        btn_cancel.clicked.connect(dialog.reject)
+        layout.addWidget(btn_cancel)
+
+        dialog.adjustSize()
+        dialog.setFixedSize(dialog.sizeHint())
+        dialog.exec()
+        return choice[0]
+
+    def _show_large_gap_dialog(self) -> str:
+        """
+        Affiche le dialog quand les pairings présentent un écart de rang trop grand.
+        Retourne : 'continue', 'finish', 'bracket', ou 'cancel'.
+        """
+        from PySide6.QtWidgets import QSizePolicy
+
+        tournament = self.current_tournament
+        can_bracket = (
+            tournament.is_1v1_format()
+            and len(tournament.players) >= 4
+            and tournament.bracket is None
+        )
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Pairings déséquilibrés")
+        dialog.setObjectName("RematchDialog")
+        dialog.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+        dialog.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(8)
+        layout.setContentsMargins(20, 20, 20, 16)
+
+        msg = QLabel(
+            "⚠️  Les pairings de ce round sont déséquilibrés.\n"
+            "Un joueur bien classé devrait affronter un adversaire\n"
+            "classé trop loin (manque d'adversaires disponibles).\n\n"
+            "Que souhaitez-vous faire ?"
+        )
+        msg.setObjectName("RematchDialogMessage")
+        layout.addWidget(msg)
+
+        layout.addSpacing(4)
+
+        choice = ["cancel"]
+
+        btn_continue = QPushButton("▶  Continuer  (avec ces pairings)")
+        btn_continue.setObjectName("RematchDialogContinue")
+        btn_finish = QPushButton("🏁  Terminer le tournoi")
+        btn_finish.setObjectName("RematchDialogFinish")
+
+        def on_continue(): choice[0] = "continue"; dialog.accept()
+        def on_finish():   choice[0] = "finish";   dialog.accept()
+
+        btn_continue.clicked.connect(on_continue)
+        btn_finish.clicked.connect(on_finish)
+        layout.addWidget(btn_continue)
+        layout.addWidget(btn_finish)
+
+        if can_bracket:
+            btn_bracket = QPushButton("🏆  Passer en bracket final")
+            btn_bracket.setObjectName("RematchDialogBracket")
+            def on_bracket(): choice[0] = "bracket"; dialog.accept()
+            btn_bracket.clicked.connect(on_bracket)
+            layout.addWidget(btn_bracket)
+
+        layout.addSpacing(2)
+        btn_cancel = QPushButton("Annuler")
+        btn_cancel.setObjectName("RematchDialogCancel")
+        btn_cancel.clicked.connect(dialog.reject)
+        layout.addWidget(btn_cancel)
+
+        dialog.adjustSize()
+        dialog.setFixedSize(dialog.sizeHint())
+        dialog.exec()
+        return choice[0]
+
     def _finish_tournament(self):
         """Affiche le classement final quand le tournoi est terminé."""
-        # Utiliser le tri approprié selon le format
-        if self.current_tournament.is_1v1_format():
-            standings = build_standings(self.current_tournament)
-            # Synchroniser player.score
-            players_by_id = {p.id: p for p in self.current_tournament.players}
+        tournament = self.current_tournament
+        players_by_id = {p.id: p for p in tournament.players}
+
+        # ── 1. Classement Swiss de base ──────────────────────────────
+        if tournament.is_1v1_format():
+            standings = build_standings(tournament)
             for entry in standings:
                 player = players_by_id.get(entry.player_id)
                 if player:
                     player.score = entry.match_points
-            players = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
+            swiss_ordered = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
         else:
-            players = sorted(
-                self.current_tournament.players,
+            swiss_ordered = sorted(
+                tournament.players,
                 key=lambda p: (-p.score, -p.robustness, p.name)
             )
+
+        # ── 2. Classement final : bracket (même partiel) prioritaire sur Swiss ─
+        swiss_ids = [p.id for p in swiss_ordered]
+        if tournament.bracket:
+            final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
+        else:
+            final_ids = swiss_ids
+        players = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
+        self.ranking_view.set_final_standings(tournament, final_ids)
 
         # Print dans le terminal
         print(f"\n{'='*60}")
@@ -517,30 +686,18 @@ class DashboardViewMain(QWidget):
             return
 
         n = len(self.current_tournament.players)
-        options: list[BracketType] = []
-        labels: list[str] = []
-
-        if n >= 2:
-            options.append(BracketType.FINAL)
-            labels.append("Top 2 — Finale directe")
-        if n >= 4:
-            options.append(BracketType.DEMI_FINALE)
-            labels.append("Top 4 — Demi-finales + Finale")
-        if n >= 8:
-            options.append(BracketType.QUART_DE_FINALE)
-            labels.append("Top 8 — Quarts + Demis + Finale")
-
-        if not options:
+        if n < 2:
             QMessageBox.warning(self, "Bracket", "Pas assez de joueurs pour lancer un bracket.")
             return
 
-        label, ok = QInputDialog.getItem(
-            self, "Lancer le bracket", "Choisir le format :", labels, 0, False
-        )
-        if not ok:
+        dialog = LaunchBracketDialog(self, player_count=n)
+        if not dialog.exec():
             return
 
-        bracket_type = options[labels.index(label)]
+        bracket_type = dialog.bracket_type()
+        if bracket_type is None:
+            return
+
         self.current_tournament.start_bracket(bracket_type)
         self.round_controls.hide_bracket_launch_button()
         self._setup_bracket_mode(self.current_tournament)
@@ -603,7 +760,7 @@ class DashboardViewMain(QWidget):
         self.tiles_view.tile_tables.value_label.setText(str(len(real_matches)))
 
     def _edit_bracket_result(self, match):
-        """Saisit le résultat d'un match de bracket."""
+        """Saisit ou modifie le résultat d'un match de bracket."""
         bracket = self.current_tournament.bracket
         players_by_id = {p.id: p for p in self.current_tournament.players}
 
@@ -615,6 +772,10 @@ class DashboardViewMain(QWidget):
         if winner_id is None:
             return
 
+        # Si le match était déjà terminé, annuler le résultat (cascade) avant de ré-enregistrer
+        if match.finished:
+            bracket.reset_result(match.match_id)
+
         bracket.record_result(match.match_id, winner_id)
 
         # Rafraîchir les cartes du round actuel
@@ -623,12 +784,14 @@ class DashboardViewMain(QWidget):
         self.ranking_view.set_tournament(self.current_tournament)
         self._update_bracket_tiles()
 
-        # Activer "Phase suivante" si tous les matches sont terminés
+        # Mettre à jour l'état du bouton selon que tous les matches sont terminés ou non
         if self._all_bracket_round_matches_finished():
             self.round_controls.set_next_enabled(True)
             round_order = bracket.get_round_order()
             is_last = self._bracket_displayed_round == round_order[-1]
             self.round_controls.set_finish_mode(is_last)
+        else:
+            self.round_controls.set_next_enabled(False)
 
         self.tournament_changed.emit()
 
@@ -877,16 +1040,25 @@ class DashboardViewMain(QWidget):
         regular_players = [RegularPlayer.from_dict(d) for d in raw]
         regular_by_pseudo = {p.pseudo.lower().strip(): p for p in regular_players}
 
-        # Obtenir le classement (standings officiels pour 1v1, score/robustesse pour Commander)
-        if self.current_tournament.is_1v1_format():
-            standings = build_standings(self.current_tournament)
-            players_by_id = {p.id: p for p in self.current_tournament.players}
-            ranked_players = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
+        # Obtenir le classement final (bracket prioritaire sur Swiss si disponible)
+        tournament = self.current_tournament
+        players_by_id = {p.id: p for p in tournament.players}
+
+        if tournament.is_1v1_format():
+            standings = build_standings(tournament)
+            swiss_ordered = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
         else:
-            ranked_players = sorted(
-                self.current_tournament.players,
+            swiss_ordered = sorted(
+                tournament.players,
                 key=lambda p: (-p.score, -p.robustness, p.name)
             )
+
+        if tournament.bracket:
+            swiss_ids = [p.id for p in swiss_ordered]
+            final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
+            ranked_players = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
+        else:
+            ranked_players = swiss_ordered
 
         # Enregistrer les participations, points et podiums
         players_updated = False

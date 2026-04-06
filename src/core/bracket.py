@@ -127,6 +127,39 @@ class Bracket:
         if final_matches and all(m.finished for m in final_matches):
             self.finished = True
 
+    def reset_result(self, match_id: int) -> None:
+        """
+        Annule le résultat d'un match et propage la réinitialisation
+        aux matches suivants en cascade (si le vainqueur avait déjà avancé).
+        """
+        match = next((m for m in self.matches if m.match_id == match_id), None)
+        if not match or not match.finished:
+            return
+
+        old_winner_id = match.winner_id
+        match.winner_id = None
+        match.finished = False
+        self.finished = False
+
+        if match.next_match_id is None:
+            return
+
+        next_match = next(
+            (m for m in self.matches if m.match_id == match.next_match_id), None
+        )
+        if not next_match:
+            return
+
+        # Retirer l'ancien vainqueur du slot correspondant dans le match suivant
+        if next_match.player1_id == old_winner_id:
+            next_match.player1_id = None
+        elif next_match.player2_id == old_winner_id:
+            next_match.player2_id = None
+
+        # Cascade : si le match suivant avait déjà un résultat, le réinitialiser aussi
+        if next_match.finished:
+            self.reset_result(next_match.match_id)
+
     def get_round_order(self) -> list[BracketRoundName]:
         return _ROUND_ORDER[self.bracket_type]
 
@@ -144,6 +177,99 @@ class Bracket:
             matches=[BracketMatch.from_dict(m) for m in data.get("matches", [])],
             finished=data.get("finished", False),
         )
+
+
+def get_bracket_final_ranking(bracket: "Bracket", swiss_seeded_ids: list[int]) -> list[int]:
+    """
+    Retourne les IDs des joueurs dans l'ordre du classement final.
+
+    Fonctionne avec un bracket terminé OU partiel :
+      1. Vainqueur de la finale
+      2. Finaliste (ou les deux finalistes à égalité si finale non jouée → départage Swiss)
+      3-4. Perdants des demi-finales (départage Swiss)
+      5-8. Perdants des quarts de finale (départage Swiss)
+      Reste. Joueurs hors bracket (ordre Swiss)
+
+    Pour un bracket partiel : les joueurs encore en lice sont classés après les éliminés
+    de leur stade, triés par classement Swiss.
+
+    swiss_seeded_ids : IDs de TOUS les joueurs triés par classement Swiss (meilleur en premier).
+    """
+
+    def swiss_rank(pid: int) -> int:
+        try:
+            return swiss_seeded_ids.index(pid)
+        except ValueError:
+            return len(swiss_seeded_ids)
+
+    def add_group(group: list[int]):
+        """Ajoute un groupe trié par rang Swiss au résultat."""
+        sorted_group = sorted(group, key=swiss_rank)
+        result.extend(sorted_group)
+        already_ranked.update(sorted_group)
+
+    # Tous les participants du bracket
+    bracket_pids: set[int] = set()
+    for m in bracket.matches:
+        if m.player1_id is not None:
+            bracket_pids.add(m.player1_id)
+        if m.player2_id is not None:
+            bracket_pids.add(m.player2_id)
+
+    result: list[int] = []
+    already_ranked: set[int] = set()
+
+    # ── Finale ──────────────────────────────────────────────────────────────
+    final_matches = bracket.get_matches_for_round(BracketRoundName.FINAL)
+    final_match = final_matches[0] if final_matches else None
+
+    if final_match and final_match.finished and final_match.winner_id is not None:
+        # Finale jouée : vainqueur puis finaliste
+        winner_id = final_match.winner_id
+        finalist_id = (
+            final_match.player1_id
+            if final_match.winner_id == final_match.player2_id
+            else final_match.player2_id
+        )
+        result.append(winner_id)
+        already_ranked.add(winner_id)
+        if finalist_id and finalist_id not in already_ranked:
+            result.append(finalist_id)
+            already_ranked.add(finalist_id)
+    elif final_match:
+        # Finale non jouée : les deux finalistes à égalité → départage Swiss
+        finalists = [pid for pid in [final_match.player1_id, final_match.player2_id] if pid is not None]
+        add_group(finalists)
+
+    # ── Perdants des demi-finales (rangs 3-4) ────────────────────────────────
+    if bracket.bracket_type in (BracketType.QUART_DE_FINALE, BracketType.DEMI_FINALE):
+        semi_losers = []
+        for m in bracket.get_matches_for_round(BracketRoundName.DEMI):
+            if m.finished and m.winner_id is not None:
+                loser_id = m.player2_id if m.winner_id == m.player1_id else m.player1_id
+                if loser_id is not None and loser_id not in already_ranked:
+                    semi_losers.append(loser_id)
+        add_group(semi_losers)
+
+    # ── Perdants des quarts de finale (rangs 5-8) ────────────────────────────
+    if bracket.bracket_type == BracketType.QUART_DE_FINALE:
+        quart_losers = []
+        for m in bracket.get_matches_for_round(BracketRoundName.QUART):
+            if m.finished and m.winner_id is not None:
+                loser_id = m.player2_id if m.winner_id == m.player1_id else m.player1_id
+                if loser_id is not None and loser_id not in already_ranked:
+                    quart_losers.append(loser_id)
+        add_group(quart_losers)
+
+    # ── Joueurs en bracket encore en lice (bracket partiel) ──────────────────
+    # Triés par Swiss car on ne peut pas les départager par résultat bracket
+    still_active = [pid for pid in bracket_pids if pid not in already_ranked]
+    add_group(still_active)
+
+    # ── Joueurs hors bracket (ordre Swiss) ───────────────────────────────────
+    result.extend(pid for pid in swiss_seeded_ids if pid not in already_ranked)
+
+    return result
 
 
 def create_bracket_matches(

@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Phelia",
+    "colors": "W",
+    "format": "duel"
+  },
+  {
+    "id": 2,
+    "name": "Sorin",
+    "colors": "WB",
+    "format": "duel"
+  }
+]

@@ -1,0 +1,317 @@
+/* =======================================================================
+   MAGIC TABLE — COMMANDERS VIEW (DARK)
+   ======================================================================= */
+
+#CommandersViewMain {
+    background-color: transparent;
+}
+
+#CommandersHeader {
+    background-color: transparent;
+}
+
+#CommandersScroll {
+    background-color: transparent;
+    border: none;
+}
+
+#CommandersContent {
+    background-color: transparent;
+}
+
+#CommandersScroll QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#CommandersScroll QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.4);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#CommandersScroll QScrollBar::handle:vertical:hover {
+    background-color: rgba(58, 214, 138, 0.65);
+}
+
+#CommandersScroll QScrollBar::add-line:vertical,
+#CommandersScroll QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+/* =======================================================================
+   COMMANDER CARD
+   ======================================================================= */
+
+#CommanderCard {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 #184a39, stop:1 #0f2f25);
+    border: 1px solid #2f6f55;
+    border-left: 4px solid #2f6f55;
+    border-radius: 12px;
+    min-height: 140px;
+}
+
+#CommanderCard:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+        stop:0 #1e5a45, stop:1 #133a2e);
+    border-color: rgba(58, 214, 138, 0.6);
+    border-left-color: rgba(58, 214, 138, 0.6);
+}
+
+/* Accent gauche selon le format */
+#CommanderCard[fmt="commander"] { border-left-color: #3ad68a; }
+#CommanderCard[fmt="duel"]      { border-left-color: #5ba0e0; }
+#CommanderCard[fmt="both"]      { border-left-color: #a87fdc; }
+
+#CommanderCard[fmt="commander"]:hover { border-left-color: #5aebb0; }
+#CommanderCard[fmt="duel"]:hover      { border-left-color: #7ac0ff; }
+#CommanderCard[fmt="both"]:hover      { border-left-color: #c49ef0; }
+
+/* Nom */
+#CommanderCardName {
+    color: #eafff6;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* =======================================================================
+   MANA PIPS
+   ======================================================================= */
+
+#ManaPip_W {
+    background-color: #e8e4cc;
+    color: #333;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#ManaPip_U {
+    background-color: #2e6ec0;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#ManaPip_B {
+    background-color: #2a2a3a;
+    color: #ccc;
+    border-radius: 12px;
+    border: 1px solid #555;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#ManaPip_R {
+    background-color: #c0392b;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#ManaPip_G {
+    background-color: #1e7a40;
+    color: #fff;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+#ManaPipNone {
+    color: #4a6e5a;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* =======================================================================
+   FORMAT BADGE
+   ======================================================================= */
+
+#CommanderFormatBadge {
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#CommanderFormatBadge[fmt="commander"] {
+    background-color: rgba(58, 214, 138, 0.15);
+    color: #3ad68a;
+    border: 1px solid rgba(58, 214, 138, 0.3);
+}
+
+#CommanderFormatBadge[fmt="duel"] {
+    background-color: rgba(91, 160, 224, 0.15);
+    color: #5ba0e0;
+    border: 1px solid rgba(91, 160, 224, 0.3);
+}
+
+#CommanderFormatBadge[fmt="both"] {
+    background-color: rgba(168, 127, 220, 0.15);
+    color: #a87fdc;
+    border: 1px solid rgba(168, 127, 220, 0.3);
+}
+
+/* =======================================================================
+   EMPTY STATE
+   ======================================================================= */
+
+#CommandersEmptyState {
+    color: #4a6e5a;
+    font-size: 15px;
+    font-style: italic;
+    padding: 60px 20px;
+    qproperty-alignment: AlignCenter;
+}
+
+/* =======================================================================
+   CREATE COMMANDER DIALOG
+   ======================================================================= */
+
+#CreateCommanderDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 14px;
+}
+
+#CreateCommanderDialog #DialogTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e8fff4;
+    padding-bottom: 4px;
+}
+
+#CreateCommanderDialog QLabel {
+    color: #b6dcd0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#CreateCommanderDialog #DialogInput {
+    min-height: 36px;
+    padding: 8px 12px;
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+    color: #eafff6;
+    font-size: 14px;
+}
+
+#CreateCommanderDialog #DialogInput:focus {
+    border-color: #3ad68a;
+    background-color: #153a2e;
+}
+
+#CreateCommanderDialog #DialogInput[error="true"] {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+#CreateCommanderDialog QComboBox {
+    min-height: 36px;
+    padding: 6px 12px;
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+    color: #eafff6;
+    font-size: 14px;
+}
+
+#CreateCommanderDialog QComboBox:focus {
+    border-color: #3ad68a;
+}
+
+#CreateCommanderDialog QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+#CreateCommanderDialog QComboBox::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #7fd9bb;
+    margin-right: 8px;
+}
+
+#CreateCommanderDialog QComboBox QAbstractItemView {
+    background-color: #0f241d;
+    border: 1px solid #2f6f55;
+    color: #eafff6;
+    selection-background-color: #2f6b56;
+    padding: 4px;
+    outline: none;
+}
+
+#CreateCommanderDialog #ColorCheckBox {
+    color: #eafff6;
+    font-size: 13px;
+    spacing: 4px;
+}
+
+#CreateCommanderDialog #ColorCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #3f8d6a;
+    border-radius: 4px;
+    background-color: #132f26;
+}
+
+#CreateCommanderDialog #ColorCheckBox::indicator:checked {
+    background-color: #2eaa6e;
+    border-color: #3ad68a;
+}
+
+#CreateCommanderDialog #ErrorLabel {
+    color: #e74c3c;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#CreateCommanderDialog #FormLabel {
+    color: #b6dcd0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#CreateCommanderDialog #CancelButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    padding: 0 16px;
+    min-height: 36px;
+    min-width: 90px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#CreateCommanderDialog #CancelButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+}
+
+#CreateCommanderDialog #PrimaryButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #34cfa1, stop:1 #1f7a5a);
+    color: #eafff7;
+    border: 1px solid #55e0b6;
+    border-radius: 8px;
+    padding: 0 16px;
+    min-height: 36px;
+    min-width: 90px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#CreateCommanderDialog #PrimaryButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #55e0b6, stop:1 #2fb38a);
+}
+
+#CreateCommanderDialog #PrimaryButton:pressed {
+    background: #17664a;
+}

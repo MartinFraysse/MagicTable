@@ -525,6 +525,13 @@
     padding-left: 2px;
 }
 
+#LaunchRecoRoundsLabel {
+    color: #3a7a5a;
+    font-size: 12px;
+    font-style: italic;
+    padding-left: 2px;
+}
+
 /* =======================================================================
    TOURNAMENT CARD
    ======================================================================= */

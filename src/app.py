@@ -1,10 +1,39 @@
 import sys
+import shutil
 from pathlib import Path
 from ui.main_window import MainWindow
 from PySide6.QtWidgets import QApplication, QStyleFactory
+from PySide6.QtGui import QIcon
 
-# Répertoire racine de l'application (où se trouve app.py)
+# Répertoire racine de l’application (où se trouve app.py)
 APP_DIR = Path(__file__).parent
+
+def install_desktop_entry():
+    """Installe l’icône et le .desktop dans ~/.local/share/ pour Wayland/Linux."""
+    import subprocess
+    icon_src = APP_DIR / "assets" / "MT_logo.png"
+    if not icon_src.exists():
+        return
+
+    icon_dst = Path.home() / ".local/share/icons/hicolor/256x256/apps/MagicTable.png"
+    desktop_dst = Path.home() / ".local/share/applications/MagicTable.desktop"
+
+    icon_dst.parent.mkdir(parents=True, exist_ok=True)
+    desktop_dst.parent.mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(icon_src, icon_dst)
+
+    desktop_content = f"""[Desktop Entry]
+Name=MagicTable
+Exec=python {APP_DIR / "app.py"}
+Icon=MagicTable
+Type=Application
+Categories=Game;
+"""
+    desktop_dst.write_text(desktop_content)
+
+    subprocess.run(["gtk-update-icon-cache", "-f", "-t", str(icon_dst.parent.parent.parent)], capture_output=True)
+    subprocess.run(["update-desktop-database", str(desktop_dst.parent)], capture_output=True)
 
 def main():
     app = QApplication(sys.argv)
@@ -14,6 +43,11 @@ def main():
     # 🔑 IDENTITÉ DE L’APP (OBLIGATOIRE POUR WAYLAND)
     app.setApplicationName("MagicTable")
     app.setDesktopFileName("MagicTable")
+
+    if sys.platform != "win32":
+        install_desktop_entry()
+
+    app.setWindowIcon(QIcon(str(APP_DIR / "assets" / "MT_logo.png")))
 
     # Charger le thème
     app.setStyleSheet(load_qss(

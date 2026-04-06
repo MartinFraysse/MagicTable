@@ -12,8 +12,6 @@ from storage.regular_players import RegularPlayerStorage
 class SettingsView(QWidget):
     """Vue des paramètres de l'application."""
 
-    # Signal émis quand la durée du timer change
-    timer_duration_changed = Signal(int)
     # Signal émis quand des tournois sont supprimés depuis les paramètres
     tournaments_cleared = Signal()
 
@@ -132,9 +130,9 @@ class SettingsView(QWidget):
         )
         layout.addWidget(commander_block)
 
-        # --- Formats 1v1 ---
+        # --- Formats 1v1 Swiss ---
         standard_block = self._build_scoring_block(
-            "⚔️ Formats 1v1 — Swiss pairing (Duel Commander, AP, Pokémon…)",
+            "⚔️ Formats 1v1 Swiss — Duel Commander, Draft, AP, Pokémon",
             [
                 ("Points par manche", [
                     "🏆 Victoire  →  3 points",
@@ -149,10 +147,24 @@ class SettingsView(QWidget):
                 ("Précisions OMW% / GW%", [
                     "OMW% : chaque adversaire est compté à minimum 33% même s'il a moins",
                     "GW%  : calculé si les scores BO3 (2-0, 2-1…) ont été saisis, sinon « — »",
+                    "Anti-rematch : le Swiss évite de faire s'affronter deux fois les mêmes joueurs",
                 ]),
             ]
         )
         layout.addWidget(standard_block)
+
+        # --- Bracket éliminatoire ---
+        bracket_block = self._build_scoring_block(
+            "🏅 Bracket éliminatoire (tous formats)",
+            [
+                ("Fonctionnement", [
+                    "Disponible en fin de tournoi Swiss ou à tout moment",
+                    "Tableau à élimination directe généré à partir du classement actuel",
+                    "Les résultats du bracket n'affectent pas le classement Swiss",
+                ]),
+            ]
+        )
+        layout.addWidget(bracket_block)
 
         return frame
 
@@ -256,9 +268,10 @@ class SettingsView(QWidget):
         layout.addWidget(version)
 
         description = QLabel(
-            "Application de gestion de tournois Magic: The Gathering.\n"
-            "Conçue pour organiser des tournois Commander avec\n"
-            "gestion des tables, classements et statistiques."
+            "Application de gestion de tournois Magic: The Gathering\n"
+            "et autres jeux de cartes. Supporte Commander, Duel Commander,\n"
+            "Draft, AP, Pokémon — avec Swiss pairing, bracket éliminatoire,\n"
+            "classements, statistiques et export PDF."
         )
         description.setObjectName("SettingsDescription")
         layout.addWidget(description)

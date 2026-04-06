@@ -380,10 +380,11 @@ class Tournament:
     # Swiss Pairing System
     # =====================
 
-    def create_round_swiss(self) -> Round:
+    def create_round_swiss(self, allow_rematch: bool = False, allow_large_gap: bool = False) -> Round:
         """
         Crée un round avec appariement Swiss officiel.
         Uniquement valide pour les formats 1v1.
+        Lève ValueError("rematch_forced") ou ValueError("large_gap") si non autorisé.
         """
         round_number = len(self.rounds) + 1
         opponents_map = self.get_opponents_map()
@@ -399,11 +400,10 @@ class Tournament:
             standings_order=standings_order,
         )
 
-        if result.rematch_forced:
-            raise ValueError(
-                "Impossible de créer ce round sans rematch.\n"
-                "Tous les joueurs ont déjà joué ensemble."
-            )
+        if result.rematch_forced and not allow_rematch:
+            raise ValueError("rematch_forced")
+        if result.large_gap and not allow_large_gap:
+            raise ValueError("large_gap")
 
         tables: list[Table] = []
         for i, (p1, p2) in enumerate(result.pairings, 1):

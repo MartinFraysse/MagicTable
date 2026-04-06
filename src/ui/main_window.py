@@ -7,10 +7,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStackedWidget
 from PySide6.QtGui import QPixmap
+import os
 
 from core.tournament import Tournament
 from ui.tournaments.tournaments_view_main import TournamentViewMain
 from ui.players.players_view_main import PlayersViewMain
+from ui.commanders.commanders_view_main import CommandersViewMain
 from ui.stats.stats_view_main import StatsViewMain
 from ui.settings_view import SettingsView
 from ui.dashboard.dashboard_view_main import DashboardViewMain
@@ -95,7 +97,8 @@ class MainWindow(QMainWindow):
         logo_icon.setObjectName("LogoIcon")
         logo_icon.setAlignment(Qt.AlignHCenter)
 
-        pixmap = QPixmap("assets/MT_logo.png")
+        logo_path = os.path.join(os.path.dirname(__file__), "..", "assets", "MT_logo.png")
+        pixmap = QPixmap(logo_path)
         logo_icon.setPixmap(
             pixmap.scaled(
                 112, 112,
@@ -126,6 +129,7 @@ class MainWindow(QMainWindow):
             ("📊", "Dashboard"),
             ("🏆", "Tournois"),
             ("👥", "Joueurs"),
+            ("🧙", "Commandants"),
             ("📈", "Stats"),
             ("⚙️", "Paramètres"),
         ]:
@@ -179,14 +183,16 @@ class MainWindow(QMainWindow):
         self.dashboard_view = DashboardViewMain()
         self.tournaments_view = TournamentViewMain()
         self.players_view = PlayersViewMain()
+        self.commanders_view = CommandersViewMain()
         self.stats_view = StatsViewMain()
         self.settings_view = SettingsView()
 
         self.stack.addWidget(self.dashboard_view)      # Index 0
         self.stack.addWidget(self.tournaments_view)    # Index 1
         self.stack.addWidget(self.players_view)        # Index 2
-        self.stack.addWidget(self.stats_view)          # Index 3
-        self.stack.addWidget(self.settings_view)       # Index 4
+        self.stack.addWidget(self.commanders_view)     # Index 3
+        self.stack.addWidget(self.stats_view)          # Index 4
+        self.stack.addWidget(self.settings_view)       # Index 5
 
         layout.addWidget(self.stack)
 
@@ -196,10 +202,11 @@ class MainWindow(QMainWindow):
         """Navigue vers une vue et rafraîchit les données si nécessaire."""
         self.stack.setCurrentIndex(index)
 
-        # Rafraîchir la vue des joueurs quand on y accède
-        if index == 2:  # Joueurs
+        if index == 2:   # Joueurs
             self.players_view.refresh()
-        elif index == 3:  # Stats
+        elif index == 3:  # Commandants
+            self.commanders_view.refresh()
+        elif index == 4:  # Stats
             self.stats_view.refresh()
 
     def _on_tournaments_cleared(self):

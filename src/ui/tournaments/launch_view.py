@@ -23,6 +23,7 @@ import json
 
 from core.tournament import Tournament
 from core.regular_player import RegularPlayer
+from core.swiss_pairing import compute_recommended_rounds
 from storage.tournaments import TournamentStorage
 from storage.regular_players import RegularPlayerStorage
 from ui.tournaments.dialogs.edit_player import EditPlayerDialog
@@ -270,6 +271,10 @@ class LaunchView(QWidget):
         row.addWidget(self.player_input)
         row.addWidget(add_btn)
         prep_layout.addLayout(row)
+
+        self.reco_rounds_label = QLabel("")
+        self.reco_rounds_label.setObjectName("LaunchRecoRoundsLabel")
+        prep_layout.addWidget(self.reco_rounds_label)
 
         tables_row = QHBoxLayout()
 
@@ -649,6 +654,7 @@ class LaunchView(QWidget):
     def _update_tables_info(self):
         if not self._current_tournament:
             self.tables_info.setText("🪑 0 joueur → 0 table")
+            self.reco_rounds_label.setText("")
             return
 
         tournament = self._current_tournament
@@ -659,6 +665,12 @@ class LaunchView(QWidget):
             f"🪑 {players} joueur{'s' if players > 1 else ''} → "
             f"{table_count} table{'s' if table_count > 1 else ''}"
         )
+
+        if players >= 2:
+            reco = compute_recommended_rounds(players)
+            self.reco_rounds_label.setText(f"💡 Rounds recommandés : {reco}")
+        else:
+            self.reco_rounds_label.setText("")
 
     def _refresh_meta(self):
         if not self._current_tournament:
@@ -753,8 +765,26 @@ class LaunchView(QWidget):
         self.start_btn.setEnabled(can_start)
 
     def _start_tournament(self):
-        if self._current_tournament:
-            self.start_requested.emit(self._current_tournament)
+        if not self._current_tournament:
+            return
+
+        t = self._current_tournament
+        if t.is_1v1_format():
+            reco = compute_recommended_rounds(t.player_count)
+            if t.max_rounds != reco:
+                reply = QMessageBox.warning(
+                    self,
+                    "Nombre de rounds inhabituel",
+                    f"Le nombre de rounds configuré ({t.max_rounds}) est différent "
+                    f"du recommandé pour {t.player_count} joueurs ({reco} rounds).\n\n"
+                    f"Voulez-vous quand même lancer le tournoi ?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+                if reply != QMessageBox.Yes:
+                    return
+
+        self.start_requested.emit(t)
 
     def _save_all(self):
         upcoming_view = self._get_upcoming_view()

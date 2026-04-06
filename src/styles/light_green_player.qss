@@ -304,3 +304,61 @@
     font-size: 14px;
     font-weight: 500;
 }
+
+/* Scroll area dans le dialog stats joueur */
+#PlayerStatsDialog QScrollArea {
+    background-color: #ffffff;
+    border: none;
+}
+
+#PlayerStatsDialog QScrollArea QWidget {
+    background-color: #ffffff;
+}
+
+#PlayerStatsDialog QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#PlayerStatsDialog QScrollBar::handle:vertical {
+    background-color: rgba(0, 120, 80, 0.3);
+    border-radius: 4px;
+    min-height: 24px;
+}
+
+#PlayerStatsDialog QScrollBar::handle:vertical:hover {
+    background-color: rgba(0, 150, 100, 0.5);
+}
+
+#PlayerStatsDialog QScrollBar::add-line:vertical,
+#PlayerStatsDialog QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+#PlayerStatsDialog QScrollBar::add-page:vertical,
+#PlayerStatsDialog QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Table commandants dans le dialog stats joueur */
+#PlayerStatsDialog #MatchupsTable {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 0;
+}
+
+#PlayerStatsDialog #MatchupsTable::item {
+    color: #1a3d33;
+    padding: 6px 8px;
+    background-color: transparent;
+}
+
+#PlayerStatsDialog #MatchupsTable QHeaderView::section {
+    background-color: #f5fcfa;
+    color: #2d8a5e;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    padding: 6px 8px;
+}

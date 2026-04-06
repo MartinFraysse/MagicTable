@@ -35,6 +35,12 @@
     text-transform: uppercase;
 }
 
+#DashboardTileSubtitle {
+    font-size: 10px;
+    color: #5a9e80;
+    font-style: italic;
+}
+
 /* =====================
    DASHBOARD – CARDS
 ===================== */
@@ -949,4 +955,67 @@ QPushButton#BracketWinnerButton:pressed {
 #BracketMatchVsLabel {
     color: rgba(255, 255, 255, 0.6);
     font-size: 13px;
+}
+
+#BracketRoundSubtitle {
+    color: #7ecfaa;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+#BracketOptionCard {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(63, 210, 125, 0.18);
+    border-radius: 10px;
+}
+
+#BracketOptionCard:hover {
+    background: rgba(63, 210, 125, 0.12);
+    border: 1px solid rgba(63, 210, 125, 0.45);
+}
+
+#BracketOptionIcon {
+    font-size: 18px;
+}
+
+#BracketOptionTitle {
+    color: #eafff5;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#BracketOptionDesc {
+    color: #7ecfaa;
+    font-size: 11px;
+}
+
+#BracketResultTitle {
+    color: #eafff5;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#BracketVsLabel {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+QFrame#BracketVsSeparator {
+    color: rgba(255, 255, 255, 0.12);
+    max-height: 1px;
+}
+
+QPushButton#BracketCancelButton {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+    border: none;
+    padding: 0;
+}
+
+QPushButton#BracketCancelButton:hover {
+    color: rgba(255, 255, 255, 0.65);
 }

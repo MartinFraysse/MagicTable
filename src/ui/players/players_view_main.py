@@ -114,6 +114,7 @@ class PlayersViewMain(QWidget):
         self._players: list[RegularPlayer] = []
         self._next_id = 1
         self._calculated_points: dict[str, int] = {}  # pseudo.lower() -> points calculés
+        self._analyzer: StatsAnalyzer | None = None
 
         self._build_ui()
         self._load_players()
@@ -234,8 +235,8 @@ class PlayersViewMain(QWidget):
         raw_tournaments = TournamentStorage.load()
         tournaments = [Tournament.from_dict(t) for t in raw_tournaments]
 
-        analyzer = StatsAnalyzer(tournaments)
-        top_players = analyzer.get_top_players(limit=1000)
+        self._analyzer = StatsAnalyzer(tournaments)
+        top_players = self._analyzer.get_top_players(limit=1000)
 
         self._calculated_points = {
             p.name.lower().strip(): p.total_points
@@ -440,5 +441,5 @@ class PlayersViewMain(QWidget):
             return
 
         from ui.players.dialogs.player_stats import PlayerStatsDialog
-        dialog = PlayerStatsDialog(self, player)
+        dialog = PlayerStatsDialog(self, player, self._analyzer)
         dialog.exec()

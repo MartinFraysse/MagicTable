@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": 1,
+    "pseudo": "Marfin",
+    "full_name": "Martin Fraysse",
+    "phone": "07 68 88 76 90",
+    "top_1": 2,
+    "top_2": 1,
+    "top_3": 0,
+    "points": 24,
+    "tournaments_played": 4
+  }
+]

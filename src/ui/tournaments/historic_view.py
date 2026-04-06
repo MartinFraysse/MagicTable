@@ -21,9 +21,36 @@ from PySide6.QtWidgets import (
 
 from core.tournament import Tournament
 from core.regular_player import RegularPlayer
+from core.standings import build_standings
+from core.bracket import get_bracket_final_ranking
 from storage.regular_players import RegularPlayerStorage
 from export.pdf_export import export_tournament_pdf
 from ui.dashboard.dialogs.round_summary_dialog import RoundSummaryDialog
+
+
+def _final_ranked_players(tournament: Tournament) -> list:
+    """
+    Retourne les joueurs triés par classement final.
+    Si un bracket existe (même partiel), son résultat prime sur le classement Swiss.
+    À égalité de stade bracket, le classement Swiss sert de départage.
+    """
+    players_by_id = {p.id: p for p in tournament.players}
+
+    if tournament.is_1v1_format():
+        entries = build_standings(tournament)
+        swiss_ordered = [players_by_id[e.player_id] for e in entries if e.player_id in players_by_id]
+    else:
+        swiss_ordered = sorted(
+            tournament.players,
+            key=lambda p: (-p.score, -p.robustness, p.name),
+        )
+
+    if tournament.bracket:
+        swiss_ids = [p.id for p in swiss_ordered]
+        final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
+        return [players_by_id[pid] for pid in final_ids if pid in players_by_id]
+
+    return swiss_ordered
 
 
 class HistoricView(QWidget):
@@ -212,8 +239,8 @@ class HistoricDialog(QDialog):
 
         layout.addLayout(header)
 
-        # Classement (top 3)
-        players = sorted(tournament.players, key=lambda p: (-p.score, p.name))
+        # Classement (top 3) — ordre bracket prioritaire sur Swiss si bracket joué
+        players = _final_ranked_players(tournament)
 
         ranking_layout = QHBoxLayout()
         for rank, player in enumerate(players[:3], 1):
@@ -524,10 +551,7 @@ class RewardsDialog(QDialog):
         content_layout.setSpacing(8)
 
         # Trier les joueurs par score (classement)
-        players = sorted(
-            self._tournament.players,
-            key=lambda p: (-p.score, p.name)
-        )
+        players = _final_ranked_players(self._tournament)
 
         for rank, player in enumerate(players, 1):
             row = QFrame()
@@ -599,10 +623,7 @@ class TournamentDetailDialog(QDialog):
 
         self._tournament = tournament
         self._is_commander = "Commander" in tournament.format
-        self._ranked_players = sorted(
-            tournament.players,
-            key=lambda p: (-p.score, -p.robustness, p.name)
-        )
+        self._ranked_players = _final_ranked_players(tournament)
 
         self.setWindowTitle(tournament.name)
         self.setModal(True)

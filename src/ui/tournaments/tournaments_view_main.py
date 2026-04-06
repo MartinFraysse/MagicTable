@@ -164,7 +164,7 @@ class TournamentViewMain(QWidget):
         if not tournament.rounds:
             # Utiliser l'algorithme approprié selon le système d'appariement
             if tournament.is_swiss_format():
-                tournament.create_round_swiss()
+                tournament.create_round_swiss(allow_large_gap=True)
             else:
                 tournament.create_round()
         self.round_started.emit(tournament)

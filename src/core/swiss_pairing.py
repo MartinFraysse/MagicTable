@@ -22,6 +22,7 @@ class SwissPairingResult:
     pairings: list[tuple["Player", "Player"]]
     bye_player: "Player | None"
     rematch_forced: bool = False
+    large_gap: bool = False  # True si au moins un pairing a un écart de rang trop important
 
 
 def compute_recommended_rounds(player_count: int) -> int:
@@ -125,7 +126,30 @@ def generate_swiss_pairings(
             pairings.append((floaters[i], floaters[i + 1]))
         return SwissPairingResult(pairings=pairings, bye_player=bye_player, rematch_forced=True)
 
-    return SwissPairingResult(pairings=pairings, bye_player=bye_player)
+    large_gap = _has_large_gap(pairings, standings_order)
+    return SwissPairingResult(pairings=pairings, bye_player=bye_player, large_gap=large_gap)
+
+
+def _has_large_gap(
+    pairings: list[tuple["Player", "Player"]],
+    standings_order: list[int] | None,
+) -> bool:
+    """
+    Retourne True si au moins un pairing présente un écart de rang trop important.
+    Seuil : gap > max(2, nb_joueurs // 2).
+    """
+    if not standings_order or not pairings:
+        return False
+
+    rank_map = {pid: idx for idx, pid in enumerate(standings_order)}
+    threshold = max(2, len(standings_order) // 2)
+
+    for p1, p2 in pairings:
+        r1 = rank_map.get(p1.id)
+        r2 = rank_map.get(p2.id)
+        if r1 is not None and r2 is not None and abs(r1 - r2) > threshold:
+            return True
+    return False
 
 
 def _pair_bracket(

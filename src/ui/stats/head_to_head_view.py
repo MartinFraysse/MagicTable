@@ -308,7 +308,11 @@ class MatchupHistoryDialog(QDialog):
             name_label = QLabel(result.tournament_name)
             name_label.setObjectName("HistoryTournamentName")
 
-            date_label = QLabel(f"{result.tournament_date} - Round {result.round_number}, Table {result.table_number}")
+            if result.is_bracket:
+                detail = f"{result.tournament_date} — {result.bracket_round_name} 🏆"
+            else:
+                detail = f"{result.tournament_date} — Round {result.round_number}, Table {result.table_number}"
+            date_label = QLabel(detail)
             date_label.setObjectName("HistoryDate")
 
             info_layout.addWidget(name_label)
@@ -325,7 +329,10 @@ class MatchupHistoryDialog(QDialog):
                 result_text = "Égalité"
                 result_color = "#f1c40f"
 
-            result_label = QLabel(f"{result_text} ({result.player_position}e vs {result.opponent_position}e)")
+            if result.is_bracket:
+                result_label = QLabel(result_text)
+            else:
+                result_label = QLabel(f"{result_text} ({result.player_position}e vs {result.opponent_position}e)")
             result_label.setObjectName("HistoryResult")
             result_label.setStyleSheet(f"color: {result_color};")
             result_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)

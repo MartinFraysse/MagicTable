@@ -201,7 +201,7 @@ class CreateTournamentDialog(QDialog):
     def _on_format_changed(self):
         """Les formats 1v1 utilisent toujours Swiss, Commander toujours Standard."""
         current = self.format_input.currentText()
-        is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
+        is_1v1 = current not in ["👑 Commander", "🎴 Format du tournoi"]
         if is_1v1:
             self.pairing_combo.setCurrentIndex(1)  # Swiss
         else:
@@ -249,9 +249,9 @@ class CreateTournamentDialog(QDialog):
         return self.rounds_input.value()
 
     def get_pairing_system(self) -> str:
-        """Retourne 'swiss' pour les formats 1v1, 'standard' pour Commander/Draft."""
+        """Retourne 'swiss' pour les formats 1v1 (dont Draft), 'standard' pour Commander."""
         current = self.format_input.currentText()
-        is_1v1 = current not in ["👑 Commander", "🃏 Draft", "🎴 Format du tournoi"]
+        is_1v1 = current not in ["👑 Commander", "🎴 Format du tournoi"]
         return "swiss" if is_1v1 else "standard"
 
 

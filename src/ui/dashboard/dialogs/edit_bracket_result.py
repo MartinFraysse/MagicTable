@@ -1,21 +1,28 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+    QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame, QLayout
 )
 from PySide6.QtCore import Qt
 
-from core.bracket import BracketMatch
+from core.bracket import BracketMatch, BracketRoundName
 from core.player import Player
+
+_ROUND_LABELS = {
+    BracketRoundName.QUART: "Quart de finale",
+    BracketRoundName.DEMI:  "Demi-finale",
+    BracketRoundName.FINAL: "Finale",
+}
 
 
 class EditBracketResultDialog(QDialog):
-    """Dialog pour saisir le résultat d'un match de bracket — qui a gagné?"""
+    """Dialog compact pour saisir le vainqueur d'un match de bracket."""
 
     def __init__(self, parent, match: BracketMatch, players_by_id: dict[int, Player]):
         super().__init__(parent)
-        self.setWindowTitle("Résultat du match")
+        self.setWindowTitle("Résultat")
         self.setModal(True)
         self.setObjectName("EditBracketResultDialog")
-        self.setMinimumWidth(340)
+        self.setFixedWidth(260)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         self._winner_id: int | None = None
 
@@ -23,46 +30,68 @@ class EditBracketResultDialog(QDialog):
         p2 = players_by_id.get(match.player2_id)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(16)
-        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(10)
+        layout.setContentsMargins(20, 18, 20, 16)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
 
-        title = QLabel("Qui a gagné ?")
-        title.setObjectName("DialogTitle")
+        # ── Sous-titre round ─────────────────────────────────────────
+        round_lbl = QLabel(_ROUND_LABELS.get(match.round_name, "Match"))
+        round_lbl.setObjectName("BracketRoundSubtitle")
+        round_lbl.setAlignment(Qt.AlignCenter)
+        layout.addWidget(round_lbl)
+
+        # ── Titre ────────────────────────────────────────────────────
+        title = QLabel("Vainqueur ?")
+        title.setObjectName("BracketResultTitle")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
 
-        if p1:
-            vs_label = QLabel(f"{p1.name}  vs  {p2.name if p2 else '?'}")
-        else:
-            vs_label = QLabel("Match en attente")
-        vs_label.setObjectName("BracketMatchVsLabel")
-        vs_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(vs_label)
+        layout.addSpacing(4)
 
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(12)
-
+        # ── Bouton joueur 1 ──────────────────────────────────────────
         if p1:
             btn1 = QPushButton(p1.name)
             btn1.setObjectName("BracketWinnerButton")
-            btn1.setMinimumHeight(48)
+            btn1.setFixedHeight(42)
+            btn1.setCursor(Qt.PointingHandCursor)
             btn1.clicked.connect(lambda: self._select(p1.id))
-            btn_row.addWidget(btn1)
+            layout.addWidget(btn1)
 
+        # ── Séparateur VS ────────────────────────────────────────────
+        vs_row = QHBoxLayout()
+        line_l = QFrame()
+        line_l.setFrameShape(QFrame.HLine)
+        line_l.setObjectName("BracketVsSeparator")
+        vs_lbl = QLabel("VS")
+        vs_lbl.setObjectName("BracketVsLabel")
+        vs_lbl.setAlignment(Qt.AlignCenter)
+        vs_lbl.setFixedWidth(32)
+        line_r = QFrame()
+        line_r.setFrameShape(QFrame.HLine)
+        line_r.setObjectName("BracketVsSeparator")
+        vs_row.addWidget(line_l)
+        vs_row.addWidget(vs_lbl)
+        vs_row.addWidget(line_r)
+        layout.addLayout(vs_row)
+
+        # ── Bouton joueur 2 ──────────────────────────────────────────
         if p2:
             btn2 = QPushButton(p2.name)
             btn2.setObjectName("BracketWinnerButton")
-            btn2.setMinimumHeight(48)
+            btn2.setFixedHeight(42)
+            btn2.setCursor(Qt.PointingHandCursor)
             btn2.clicked.connect(lambda: self._select(p2.id))
-            btn_row.addWidget(btn2)
+            layout.addWidget(btn2)
 
-        layout.addLayout(btn_row)
+        layout.addSpacing(4)
 
+        # ── Annuler ──────────────────────────────────────────────────
         cancel_btn = QPushButton("Annuler")
-        cancel_btn.setObjectName("SecondaryButton")
-        cancel_btn.setMinimumHeight(36)
+        cancel_btn.setObjectName("BracketCancelButton")
+        cancel_btn.setFixedHeight(28)
+        cancel_btn.setCursor(Qt.PointingHandCursor)
         cancel_btn.clicked.connect(self.reject)
-        layout.addWidget(cancel_btn)
+        layout.addWidget(cancel_btn, alignment=Qt.AlignCenter)
 
     def _select(self, player_id: int):
         self._winner_id = player_id

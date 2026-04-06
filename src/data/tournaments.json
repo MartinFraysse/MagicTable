@@ -1,406 +1,9 @@
 [
   {
-    "id": 1,
-    "name": "Test numero 2",
-    "format": "👑 Commander",
-    "date": "30/06/2001",
-    "max_rounds": 3,
-    "archived": false,
-    "podiums_recorded": false,
-    "pairing_system": "standard",
-    "bye_history": [],
-    "players": [
-      {
-        "id": 0,
-        "name": "MArfin",
-        "score": 9,
-        "robustness": 16,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 1,
-        "name": "Lea <3",
-        "score": 7,
-        "robustness": 18,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 2,
-        "name": "Julie",
-        "score": 6,
-        "robustness": 14,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 3,
-        "name": "Lyanne",
-        "score": 5,
-        "robustness": 12,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 4,
-        "name": "Juliette",
-        "score": 6,
-        "robustness": 16,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 5,
-        "name": "Chloé",
-        "score": 3,
-        "robustness": 14,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      }
-    ],
-    "rounds": [
-      {
-        "number": 1,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              5,
-              4,
-              3
-            ],
-            "finished": true,
-            "results": {
-              "4": 1,
-              "3": 2,
-              "5": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              2,
-              0,
-              1
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "1": 2,
-              "2": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      },
-      {
-        "number": 2,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              0,
-              4,
-              3
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "4": 2,
-              "3": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              1,
-              2,
-              5
-            ],
-            "finished": true,
-            "results": {
-              "1": 1,
-              "2": 2,
-              "5": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      },
-      {
-        "number": 3,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              0,
-              1,
-              4
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "1": 2,
-              "4": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              3,
-              2,
-              5
-            ],
-            "finished": true,
-            "results": {
-              "2": 1,
-              "3": 2,
-              "5": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      }
-    ],
-    "bracket": null
-  },
-  {
     "id": 0,
-    "name": "Dc test",
-    "format": "👑 Commander",
-    "date": "30/02/6214",
-    "max_rounds": 3,
-    "archived": true,
-    "podiums_recorded": false,
-    "pairing_system": "standard",
-    "bye_history": [],
-    "players": [
-      {
-        "id": 0,
-        "name": "Martin",
-        "score": 9,
-        "robustness": 17,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 1,
-        "name": "Jean",
-        "score": 5,
-        "robustness": 18,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 2,
-        "name": "Francois",
-        "score": 5,
-        "robustness": 17,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 3,
-        "name": "Eude",
-        "score": 3,
-        "robustness": 27,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 5,
-        "name": "Lea <3",
-        "score": 8,
-        "robustness": 20,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 6,
-        "name": "Julie",
-        "score": 5,
-        "robustness": 29,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 7,
-        "name": "bref",
-        "score": 4,
-        "robustness": 32,
-        "reward_claimed": false,
-        "commander": "",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      }
-    ],
-    "rounds": [
-      {
-        "number": 1,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              3,
-              0,
-              1,
-              7
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "7": 2,
-              "3": 3,
-              "1": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              6,
-              5,
-              2
-            ],
-            "finished": true,
-            "results": {
-              "5": 1,
-              "6": 2,
-              "2": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      },
-      {
-        "number": 2,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              0,
-              5,
-              6,
-              7
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "5": 2,
-              "6": 3,
-              "7": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              1,
-              2,
-              3
-            ],
-            "finished": true,
-            "results": {
-              "1": 1,
-              "2": 2,
-              "3": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      },
-      {
-        "number": 3,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              6,
-              1,
-              3,
-              5
-            ],
-            "finished": true,
-            "results": {
-              "5": 1,
-              "6": 2,
-              "1": 3,
-              "3": 3
-            },
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              2,
-              7,
-              0
-            ],
-            "finished": true,
-            "results": {
-              "0": 1,
-              "2": 2,
-              "7": 3
-            },
-            "game_scores": {}
-          }
-        ]
-      }
-    ],
-    "bracket": null
-  },
-  {
-    "id": 2,
-    "name": "DC test 2",
-    "format": "⚔️ Duel Commander",
-    "date": "30/02/1512",
+    "name": "Test Resultat",
+    "format": "🏆 AP",
+    "date": "30/06/2001",
     "max_rounds": 2,
     "archived": true,
     "podiums_recorded": false,
@@ -409,68 +12,46 @@
     "players": [
       {
         "id": 0,
-        "name": "Marfin",
-        "score": 0,
+        "name": "Martin",
+        "score": 4,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Sorin",
-        "buchholz": 0.0,
-        "sos": 0.0,
+        "commander": "",
+        "buchholz": 4.0,
+        "sos": 2.0,
         "had_bye": false
       },
       {
         "id": 1,
-        "name": "Lea<3",
-        "score": 0,
+        "name": "Lea",
+        "score": 4,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Phelia",
-        "buchholz": 0.0,
-        "sos": 0.0,
+        "commander": "",
+        "buchholz": 7.0,
+        "sos": 3.5,
         "had_bye": false
       },
       {
         "id": 2,
-        "name": "Julie",
-        "score": 6,
+        "name": "Julie$",
+        "score": 3,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Teval",
-        "buchholz": 0.0,
-        "sos": 0.0,
+        "commander": "",
+        "buchholz": 4.0,
+        "sos": 2.0,
         "had_bye": false
       },
       {
         "id": 3,
         "name": "Juliette",
-        "score": 3,
+        "score": 0,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Araorn",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 4,
-        "name": "Lyanne",
-        "score": 4,
-        "robustness": 0,
-        "reward_claimed": false,
-        "commander": "Tasigur",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false
-      },
-      {
-        "id": 5,
-        "name": "CHloé",
-        "score": 4,
-        "robustness": 0,
-        "reward_claimed": false,
-        "commander": "Lumra",
-        "buchholz": 0.0,
-        "sos": 0.0,
+        "commander": "",
+        "buchholz": 7.0,
+        "sos": 3.5,
         "had_bye": false
       }
     ],
@@ -482,17 +63,17 @@
           {
             "number": 1,
             "player_ids": [
-              5,
-              4
+              1,
+              2
             ],
             "finished": true,
             "results": {
-              "5": 2,
-              "4": 2
+              "1": 1,
+              "2": 2
             },
             "game_scores": {
-              "5": 1,
-              "4": 1
+              "1": 2,
+              "2": 0
             }
           },
           {
@@ -503,28 +84,12 @@
             ],
             "finished": true,
             "results": {
+              "0": 1,
+              "3": 2
+            },
+            "game_scores": {
               "3": 1,
               "0": 2
-            },
-            "game_scores": {
-              "3": 2,
-              "0": 0
-            }
-          },
-          {
-            "number": 3,
-            "player_ids": [
-              1,
-              2
-            ],
-            "finished": true,
-            "results": {
-              "2": 1,
-              "1": 2
-            },
-            "game_scores": {
-              "1": 0,
-              "2": 1
             }
           }
         ]
@@ -535,6 +100,22 @@
         "tables": [
           {
             "number": 1,
+            "player_ids": [
+              1,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "1": 2,
+              "0": 2
+            },
+            "game_scores": {
+              "1": 1,
+              "0": 1
+            }
+          },
+          {
+            "number": 2,
             "player_ids": [
               2,
               3
@@ -545,100 +126,83 @@
               "3": 2
             },
             "game_scores": {
-              "2": 1,
-              "3": 0
-            }
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              0,
-              4
-            ],
-            "finished": true,
-            "results": {
-              "4": 1,
-              "0": 2
-            },
-            "game_scores": {
-              "0": 0,
-              "4": 1
-            }
-          },
-          {
-            "number": 3,
-            "player_ids": [
-              1,
-              5
-            ],
-            "finished": true,
-            "results": {
-              "5": 1,
-              "1": 2
-            },
-            "game_scores": {
-              "1": 0,
-              "5": 1
+              "2": 2,
+              "3": 1
             }
           }
         ]
       }
     ],
-    "bracket": null
+    "bracket": {
+      "bracket_type": "final",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 1,
+          "player2_id": 0,
+          "winner_id": 0,
+          "finished": true,
+          "next_match_id": null
+        }
+      ],
+      "finished": true
+    }
   },
   {
-    "id": 3,
-    "name": "trszegtxfd",
+    "id": 2,
+    "name": "Dounoie Dimanche",
     "format": "⚔️ Duel Commander",
-    "date": "32/54/5546",
+    "date": "30/06/2001",
     "max_rounds": 2,
-    "archived": false,
-    "podiums_recorded": false,
+    "archived": true,
+    "podiums_recorded": true,
     "pairing_system": "swiss",
     "bye_history": [],
     "players": [
       {
-        "id": 0,
-        "name": "Martin",
-        "score": 4,
-        "robustness": 0,
-        "reward_claimed": false,
-        "commander": "sfdsf",
-        "buchholz": 4.0,
-        "sos": 2.0,
-        "had_bye": false
-      },
-      {
         "id": 1,
-        "name": "Jean",
-        "score": 3,
+        "name": "Maman",
+        "score": 1,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "ddf",
-        "buchholz": 4.0,
-        "sos": 2.0,
+        "commander": "Phelia",
+        "buchholz": 7.0,
+        "sos": 3.5,
         "had_bye": false
       },
       {
         "id": 2,
-        "name": "Eude",
-        "score": 0,
+        "name": "Papa",
+        "score": 3,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "fdfdf",
+        "commander": "Slimùe",
         "buchholz": 7.0,
         "sos": 3.5,
         "had_bye": false
       },
       {
         "id": 3,
-        "name": "Lea",
-        "score": 4,
+        "name": "Nono",
+        "score": 1,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "dfdfdf",
-        "buchholz": 7.0,
-        "sos": 3.5,
+        "commander": "Phelia",
+        "buchholz": 4.0,
+        "sos": 2.0,
+        "had_bye": false
+      },
+      {
+        "id": 4,
+        "name": "Marfin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin",
+        "buchholz": 4.0,
+        "sos": 2.0,
         "had_bye": false
       }
     ],
@@ -650,21 +214,156 @@
           {
             "number": 1,
             "player_ids": [
-              3,
-              0
+              1,
+              4
             ],
             "finished": true,
             "results": {
-              "3": 2,
-              "0": 2
+              "4": 1,
+              "1": 2
             },
             "game_scores": {
-              "3": 1,
-              "0": 1
+              "1": 1,
+              "4": 2
             }
           },
           {
             "number": 2,
+            "player_ids": [
+              3,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "3": 0,
+              "2": 2
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "2": 0,
+              "4": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              3,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "3": 2,
+              "1": 2
+            },
+            "game_scores": {
+              "3": 1,
+              "1": 1
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "final",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 4,
+          "player2_id": 2,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": null
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
+    "id": 1,
+    "name": "Test 2",
+    "format": "⚔️ Duel Commander",
+    "date": "33/07/6741",
+    "max_rounds": 2,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 1,
+        "name": "Léa",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phélia",
+        "buchholz": 9.0,
+        "sos": 4.5,
+        "had_bye": false
+      },
+      {
+        "id": 2,
+        "name": "Julie",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omo",
+        "buchholz": 3.0,
+        "sos": 1.5,
+        "had_bye": false
+      },
+      {
+        "id": 3,
+        "name": "Juliette",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omnath",
+        "buchholz": 9.0,
+        "sos": 4.5,
+        "had_bye": false
+      },
+      {
+        "id": 4,
+        "name": "Marfin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin",
+        "buchholz": 3.0,
+        "sos": 1.5,
+        "had_bye": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
             "player_ids": [
               1,
               2
@@ -678,6 +377,22 @@
               "1": 2,
               "2": 1
             }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              4,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "3": 0
+            }
           }
         ]
       },
@@ -688,21 +403,347 @@
           {
             "number": 1,
             "player_ids": [
+              4,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              3,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "3": 1,
+              "2": 2
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "demi",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "demi",
+          "position": 0,
+          "player1_id": 4,
+          "player2_id": 3,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": 2
+        },
+        {
+          "match_id": 1,
+          "round_name": "demi",
+          "position": 1,
+          "player1_id": 1,
+          "player2_id": 2,
+          "winner_id": 1,
+          "finished": true,
+          "next_match_id": 2
+        },
+        {
+          "match_id": 2,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 4,
+          "player2_id": 1,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": null
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
+    "id": 3,
+    "name": "DC etst",
+    "format": "⚔️ Duel Commander",
+    "date": "30/26/5454",
+    "max_rounds": 2,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Marfin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin",
+        "buchholz": 3.0,
+        "sos": 1.5,
+        "had_bye": false
+      },
+      {
+        "id": 1,
+        "name": "Lea",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phelia",
+        "buchholz": 3.0,
+        "sos": 1.5,
+        "had_bye": false
+      },
+      {
+        "id": 2,
+        "name": "Julie",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Slime",
+        "buchholz": 9.0,
+        "sos": 4.5,
+        "had_bye": false
+      },
+      {
+        "id": 3,
+        "name": "Juliette",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omo",
+        "buchholz": 9.0,
+        "sos": 4.5,
+        "had_bye": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              1,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "1": 1,
+              "2": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "0": 2,
+              "3": 0
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "2": 0,
+              "0": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
               1,
               3
             ],
             "finished": true,
             "results": {
-              "3": 1,
+              "1": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "1": 2,
+              "3": 0
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "demi",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "demi",
+          "position": 0,
+          "player1_id": 0,
+          "player2_id": 3,
+          "winner_id": 0,
+          "finished": true,
+          "next_match_id": 2
+        },
+        {
+          "match_id": 1,
+          "round_name": "demi",
+          "position": 1,
+          "player1_id": 2,
+          "player2_id": 1,
+          "winner_id": 1,
+          "finished": true,
+          "next_match_id": 2
+        },
+        {
+          "match_id": 2,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 0,
+          "player2_id": 1,
+          "winner_id": 1,
+          "finished": true,
+          "next_match_id": null
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
+    "id": 4,
+    "name": "Nouveau test encore",
+    "format": "⚔️ Duel Commander",
+    "date": "30/25/2154",
+    "max_rounds": 2,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Marfin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false
+      },
+      {
+        "id": 1,
+        "name": "Lea",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "CLoud",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false
+      },
+      {
+        "id": 2,
+        "name": "Julie",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omo",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false
+      },
+      {
+        "id": 3,
+        "name": "Juliette",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phelia",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
               "1": 2
             },
             "game_scores": {
-              "1": 0,
-              "3": 2
+              "0": 2,
+              "1": 1
             }
           },
           {
             "number": 2,
+            "player_ids": [
+              2,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "3": 1
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
             "player_ids": [
               0,
               2
@@ -716,6 +757,22 @@
               "0": 2,
               "2": 0
             }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              1,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "1": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "1": 2,
+              "3": 0
+            }
           }
         ]
       }
@@ -727,9 +784,9 @@
           "match_id": 0,
           "round_name": "final",
           "position": 0,
-          "player1_id": 3,
-          "player2_id": 0,
-          "winner_id": 0,
+          "player1_id": 0,
+          "player2_id": 1,
+          "winner_id": 1,
           "finished": true,
           "next_match_id": null
         }

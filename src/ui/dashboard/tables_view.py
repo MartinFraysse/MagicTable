@@ -283,6 +283,15 @@ class DashboardTablesView(QFrame):
         lbl_players.setAttribute(Qt.WA_TransparentForMouseEvents)
         layout.addWidget(lbl_players, 1)
 
+        # Double-clic et menu contextuel disponibles dans tous les cas (terminé ou non)
+        card.double_clicked.connect(
+            lambda m=match: self.edit_bracket_result_requested.emit(m)
+        )
+        card.setContextMenuPolicy(Qt.CustomContextMenu)
+        card.customContextMenuRequested.connect(
+            lambda pos, m=match: self._show_bracket_context_menu(card, pos, m)
+        )
+
         if match.finished:
             winner = players_by_id.get(match.winner_id)
             if winner:
@@ -297,14 +306,6 @@ class DashboardTablesView(QFrame):
             layout.addWidget(status_lbl)
             card.setProperty("status", "finished")
         else:
-            card.double_clicked.connect(
-                lambda m=match: self.edit_bracket_result_requested.emit(m)
-            )
-            card.setContextMenuPolicy(Qt.CustomContextMenu)
-            card.customContextMenuRequested.connect(
-                lambda pos, m=match: self._show_bracket_context_menu(card, pos, m)
-            )
-
             status_lbl = QLabel("⏳ En cours")
             status_lbl.setObjectName("TableCardRunning")
             status_lbl.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -315,7 +316,8 @@ class DashboardTablesView(QFrame):
 
     def _show_bracket_context_menu(self, card: QFrame, pos, match: BracketMatch):
         menu = QMenu(card)
-        edit_action = menu.addAction("✏️ Définir le vainqueur")
+        label = "✏️ Modifier le vainqueur" if match.finished else "✏️ Définir le vainqueur"
+        edit_action = menu.addAction(label)
         menu.addSeparator()
         menu.addAction("❌ Annuler")
         action = menu.exec(card.mapToGlobal(pos))

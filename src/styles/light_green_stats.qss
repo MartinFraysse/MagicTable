@@ -374,13 +374,93 @@
     padding: 40px;
 }
 
+#StatsHint {
+    color: #8ab0a0;
+    font-size: 12px;
+    font-style: italic;
+}
+
 #EmptyStateIcon {
     font-size: 48px;
     padding-bottom: 16px;
 }
 
+/* ======================================================
+   COMMANDER MATCHUPS DIALOG
+   ====================================================== */
+
+#CommanderMatchupsDialog {
+    background-color: #f0faf7;
+    border: 1px solid #c0e0d5;
+    border-radius: 12px;
+}
+
+#CmdMatchupTitle {
+    color: #1a3d33;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#CmdMatchupSummary {
+    color: #3d6b5e;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#CmdMatchupSep {
+    color: #c0e0d5;
+    background-color: #c0e0d5;
+    max-height: 1px;
+    border: none;
+}
+
+#CmdMatchupTable {
+    background-color: #f0faf7;
+    color: #1a3d33;
+    font-size: 13px;
+    border: none;
+    outline: none;
+}
+
+#CmdMatchupTable::item {
+    padding: 7px 10px;
+    background-color: transparent;
+}
+
+#CmdMatchupTable::item:hover {
+    background-color: #e0f5ed;
+}
+
+#CmdMatchupTable QHeaderView::section {
+    background-color: #e8f8f2;
+    color: #2d8a5e;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    border-bottom: 1px solid #2eaa6e;
+    padding: 6px 10px;
+}
+
+/* ======================================================
+   COMMANDERS VIEW
+   ====================================================== */
+
+#CommandersView {
+    background-color: #f0faf7;
+}
+
+#CommandersScroll {
+    background-color: transparent;
+    border: none;
+}
+
+#CommandersScroll QWidget {
+    background-color: transparent;
+}
+
 /* Scrollbars */
 #GlobalStatsView QScrollBar:vertical,
+#CommandersView QScrollBar:vertical,
 #HeadToHeadView QScrollBar:vertical {
     background: transparent;
     width: 8px;
@@ -388,6 +468,7 @@
 }
 
 #GlobalStatsView QScrollBar::handle:vertical,
+#CommandersView QScrollBar::handle:vertical,
 #HeadToHeadView QScrollBar::handle:vertical {
     background-color: rgba(46, 170, 110, 0.4);
     border-radius: 4px;
@@ -395,12 +476,15 @@
 }
 
 #GlobalStatsView QScrollBar::handle:vertical:hover,
+#CommandersView QScrollBar::handle:vertical:hover,
 #HeadToHeadView QScrollBar::handle:vertical:hover {
     background-color: rgba(46, 170, 110, 0.6);
 }
 
 #GlobalStatsView QScrollBar::add-line:vertical,
 #GlobalStatsView QScrollBar::sub-line:vertical,
+#CommandersView QScrollBar::add-line:vertical,
+#CommandersView QScrollBar::sub-line:vertical,
 #HeadToHeadView QScrollBar::add-line:vertical,
 #HeadToHeadView QScrollBar::sub-line:vertical {
     height: 0;
@@ -409,6 +493,8 @@
 
 #GlobalStatsView QScrollBar::add-page:vertical,
 #GlobalStatsView QScrollBar::sub-page:vertical,
+#CommandersView QScrollBar::add-page:vertical,
+#CommandersView QScrollBar::sub-page:vertical,
 #HeadToHeadView QScrollBar::add-page:vertical,
 #HeadToHeadView QScrollBar::sub-page:vertical {
     background: none;
