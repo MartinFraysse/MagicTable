@@ -44,12 +44,14 @@ class BracketMatch:
     """Un match dans le bracket d'elimination."""
     match_id: int
     round_name: BracketRoundName
-    position: int                          # Position dans le round (0-based)
+    position: int                              # Position dans le round (0-based)
     player1_id: int | None = None
     player2_id: int | None = None
     winner_id: int | None = None
     finished: bool = False
-    next_match_id: int | None = None       # Match ou le gagnant est envoye
+    next_match_id: int | None = None           # Match ou le gagnant est envoye
+    loser_next_match_id: int | None = None     # Match ou le perdant est envoye (petite finale)
+    is_third_place: bool = False               # True si ce match est la petite finale
 
     def to_dict(self) -> Dict:
         return {
@@ -61,6 +63,8 @@ class BracketMatch:
             "winner_id": self.winner_id,
             "finished": self.finished,
             "next_match_id": self.next_match_id,
+            "loser_next_match_id": self.loser_next_match_id,
+            "is_third_place": self.is_third_place,
         }
 
     @classmethod
@@ -74,6 +78,8 @@ class BracketMatch:
             winner_id=data.get("winner_id"),
             finished=data.get("finished", False),
             next_match_id=data.get("next_match_id"),
+            loser_next_match_id=data.get("loser_next_match_id"),
+            is_third_place=data.get("is_third_place", False),
         )
 
 
@@ -110,7 +116,7 @@ class Bracket:
         match.winner_id = winner_id
         match.finished = True
 
-        # Propager le gagnant vers le match suivant
+        # Propager le gagnant vers le match suivant (grande finale)
         if match.next_match_id is not None:
             next_match = next(
                 (m for m in self.matches if m.match_id == match.next_match_id),
@@ -121,6 +127,21 @@ class Bracket:
                     next_match.player1_id = winner_id
                 else:
                     next_match.player2_id = winner_id
+
+        # Propager le perdant vers la petite finale
+        if match.loser_next_match_id is not None:
+            loser_id = (
+                match.player2_id if winner_id == match.player1_id else match.player1_id
+            )
+            petite_match = next(
+                (m for m in self.matches if m.match_id == match.loser_next_match_id),
+                None,
+            )
+            if petite_match and loser_id is not None:
+                if petite_match.player1_id is None:
+                    petite_match.player1_id = loser_id
+                else:
+                    petite_match.player2_id = loser_id
 
         # Verifier si le bracket est termine
         final_matches = self.get_matches_for_round(BracketRoundName.FINAL)
@@ -137,28 +158,39 @@ class Bracket:
             return
 
         old_winner_id = match.winner_id
+        old_loser_id = (
+            match.player2_id if old_winner_id == match.player1_id else match.player1_id
+        ) if old_winner_id is not None else None
+
         match.winner_id = None
         match.finished = False
         self.finished = False
 
-        if match.next_match_id is None:
-            return
+        # Retirer le vainqueur du match suivant (grande finale)
+        if match.next_match_id is not None:
+            next_match = next(
+                (m for m in self.matches if m.match_id == match.next_match_id), None
+            )
+            if next_match:
+                if next_match.player1_id == old_winner_id:
+                    next_match.player1_id = None
+                elif next_match.player2_id == old_winner_id:
+                    next_match.player2_id = None
+                if next_match.finished:
+                    self.reset_result(next_match.match_id)
 
-        next_match = next(
-            (m for m in self.matches if m.match_id == match.next_match_id), None
-        )
-        if not next_match:
-            return
-
-        # Retirer l'ancien vainqueur du slot correspondant dans le match suivant
-        if next_match.player1_id == old_winner_id:
-            next_match.player1_id = None
-        elif next_match.player2_id == old_winner_id:
-            next_match.player2_id = None
-
-        # Cascade : si le match suivant avait déjà un résultat, le réinitialiser aussi
-        if next_match.finished:
-            self.reset_result(next_match.match_id)
+        # Retirer le perdant de la petite finale
+        if match.loser_next_match_id is not None and old_loser_id is not None:
+            petite_match = next(
+                (m for m in self.matches if m.match_id == match.loser_next_match_id), None
+            )
+            if petite_match:
+                if petite_match.player1_id == old_loser_id:
+                    petite_match.player1_id = None
+                elif petite_match.player2_id == old_loser_id:
+                    petite_match.player2_id = None
+                if petite_match.finished:
+                    self.reset_result(petite_match.match_id)
 
     def get_round_order(self) -> list[BracketRoundName]:
         return _ROUND_ORDER[self.bracket_type]
@@ -219,9 +251,10 @@ def get_bracket_final_ranking(bracket: "Bracket", swiss_seeded_ids: list[int]) -
     result: list[int] = []
     already_ranked: set[int] = set()
 
-    # ── Finale ──────────────────────────────────────────────────────────────
+    # ── Grande Finale ────────────────────────────────────────────────────────
     final_matches = bracket.get_matches_for_round(BracketRoundName.FINAL)
-    final_match = final_matches[0] if final_matches else None
+    # Grande finale = le match non-petite-finale (ou le seul match s'il n'y a pas de petite finale)
+    final_match = next((m for m in final_matches if not m.is_third_place), None)
 
     if final_match and final_match.finished and final_match.winner_id is not None:
         # Finale jouée : vainqueur puis finaliste
@@ -241,8 +274,34 @@ def get_bracket_final_ranking(bracket: "Bracket", swiss_seeded_ids: list[int]) -
         finalists = [pid for pid in [final_match.player1_id, final_match.player2_id] if pid is not None]
         add_group(finalists)
 
-    # ── Perdants des demi-finales (rangs 3-4) ────────────────────────────────
-    if bracket.bracket_type in (BracketType.QUART_DE_FINALE, BracketType.DEMI_FINALE):
+    # ── 3ème et 4ème place ───────────────────────────────────────────────────
+    petite_finale = next(
+        (m for m in bracket.get_matches_for_round(BracketRoundName.FINAL) if m.is_third_place),
+        None,
+    )
+    if petite_finale:
+        if petite_finale.finished and petite_finale.winner_id is not None:
+            pf_winner = petite_finale.winner_id
+            pf_loser = (
+                petite_finale.player2_id
+                if petite_finale.winner_id == petite_finale.player1_id
+                else petite_finale.player1_id
+            )
+            if pf_winner not in already_ranked:
+                result.append(pf_winner)
+                already_ranked.add(pf_winner)
+            if pf_loser is not None and pf_loser not in already_ranked:
+                result.append(pf_loser)
+                already_ranked.add(pf_loser)
+        else:
+            # Petite finale pas encore jouée → participants triés par Swiss
+            participants = [
+                pid for pid in [petite_finale.player1_id, petite_finale.player2_id]
+                if pid is not None and pid not in already_ranked
+            ]
+            add_group(participants)
+    elif bracket.bracket_type in (BracketType.QUART_DE_FINALE, BracketType.DEMI_FINALE):
+        # Compatibilité anciens brackets sauvegardés sans petite finale
         semi_losers = []
         for m in bracket.get_matches_for_round(BracketRoundName.DEMI):
             if m.finished and m.winner_id is not None:
@@ -296,23 +355,31 @@ def create_bracket_matches(
                 player2_id=seeded_player_ids[b],
                 next_match_id=4 + i // 2,
             ))
-        # Demi-finales (match_id 4, 5)
+        # Demi-finales (match_id 4, 5) → gagnants vers finale (7), perdants vers petite finale (6)
         for i in range(2):
             matches.append(BracketMatch(
                 match_id=4 + i,
                 round_name=BracketRoundName.DEMI,
                 position=i,
-                next_match_id=6,
+                next_match_id=7,
+                loser_next_match_id=6,
             ))
-        # Finale (match_id 6)
+        # Petite finale / 3ème place (match_id 6)
         matches.append(BracketMatch(
             match_id=6,
             round_name=BracketRoundName.FINAL,
             position=0,
+            is_third_place=True,
+        ))
+        # Grande finale (match_id 7)
+        matches.append(BracketMatch(
+            match_id=7,
+            round_name=BracketRoundName.FINAL,
+            position=1,
         ))
 
     elif bracket_type == BracketType.DEMI_FINALE:
-        # Demi: 1v4, 2v3
+        # Demi: 1v4, 2v3 → gagnants vers finale (3), perdants vers petite finale (2)
         demi_pairings = [(0, 3), (1, 2)]
         for i, (a, b) in enumerate(demi_pairings):
             matches.append(BracketMatch(
@@ -321,23 +388,50 @@ def create_bracket_matches(
                 position=i,
                 player1_id=seeded_player_ids[a],
                 player2_id=seeded_player_ids[b],
-                next_match_id=2,
+                next_match_id=3,
+                loser_next_match_id=2,
             ))
-        # Finale (match_id 2)
+        # Petite finale / 3ème place (match_id 2)
         matches.append(BracketMatch(
             match_id=2,
             round_name=BracketRoundName.FINAL,
             position=0,
+            is_third_place=True,
+        ))
+        # Grande finale (match_id 3)
+        matches.append(BracketMatch(
+            match_id=3,
+            round_name=BracketRoundName.FINAL,
+            position=1,
         ))
 
     elif bracket_type == BracketType.FINAL:
-        # Finale: 1v2
-        matches.append(BracketMatch(
-            match_id=0,
-            round_name=BracketRoundName.FINAL,
-            position=0,
-            player1_id=seeded_player_ids[0],
-            player2_id=seeded_player_ids[1],
-        ))
+        if len(seeded_player_ids) >= 4:
+            # Petite finale (match_id 0): 3ème vs 4ème
+            matches.append(BracketMatch(
+                match_id=0,
+                round_name=BracketRoundName.FINAL,
+                position=0,
+                player1_id=seeded_player_ids[2],
+                player2_id=seeded_player_ids[3],
+                is_third_place=True,
+            ))
+            # Grande finale (match_id 1): 1er vs 2ème
+            matches.append(BracketMatch(
+                match_id=1,
+                round_name=BracketRoundName.FINAL,
+                position=1,
+                player1_id=seeded_player_ids[0],
+                player2_id=seeded_player_ids[1],
+            ))
+        else:
+            # Seulement 2 joueurs : juste la finale
+            matches.append(BracketMatch(
+                match_id=0,
+                round_name=BracketRoundName.FINAL,
+                position=0,
+                player1_id=seeded_player_ids[0],
+                player2_id=seeded_player_ids[1],
+            ))
 
     return matches

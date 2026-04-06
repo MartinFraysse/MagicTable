@@ -525,6 +525,25 @@
     background: #1a2f29;
 }
 
+#LaunchBrowseButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    padding: 0 10px;
+    min-height: 0;
+    min-width: 0;
+    max-height: 32px;
+    font-size: 15px;
+}
+#LaunchBrowseButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+    border-color: #7fd9bb;
+}
+#LaunchBrowseButton:pressed {
+    background: #1a2f29;
+}
+
 /* Player input */
 #LaunchPlayerInput {
     min-height: 32px;

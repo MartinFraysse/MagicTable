@@ -67,6 +67,7 @@ class CreatePlayerDialog(QDialog):
         self.pseudo_input.setPlaceholderText("Pseudo du joueur")
         self.pseudo_input.setObjectName("DialogInput")
         self.pseudo_input.textChanged.connect(self._clear_error)
+        self.pseudo_input.returnPressed.connect(self._validate_and_accept)
         form.addRow("Pseudo *", self.pseudo_input)
 
         # Label d'erreur
@@ -78,12 +79,14 @@ class CreatePlayerDialog(QDialog):
         self.full_name_input = QLineEdit()
         self.full_name_input.setPlaceholderText("Nom complet (optionnel)")
         self.full_name_input.setObjectName("DialogInput")
+        self.full_name_input.returnPressed.connect(self._validate_and_accept)
         form.addRow("Nom complet", self.full_name_input)
 
         self.phone_input = QLineEdit()
         self.phone_input.setPlaceholderText("Optionnel - max 10 chiffres")
         self.phone_input.setObjectName("DialogInput")
         self.phone_input.textChanged.connect(self._format_phone_input)
+        self.phone_input.returnPressed.connect(self._validate_and_accept)
         form.addRow("Téléphone", self.phone_input)
 
         layout.addLayout(form)

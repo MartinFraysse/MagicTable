@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt, Signal, QRect, QModelIndex, QEvent
 from PySide6.QtGui import QPainter, QBrush, QColor
 from PySide6.QtWidgets import (
     QWidget,
+    QDialog,
     QListWidgetItem,
     QLineEdit,
     QVBoxLayout,
@@ -66,6 +67,101 @@ class PlayerListDelegate(QStyledItemDelegate):
         super().paint(painter, option, index)
 
 
+class BrowsePlayersDialog(QDialog):
+    """Dialog pour parcourir et ajouter directement des joueurs permanents au tournoi."""
+
+    def __init__(self, parent, regular_players: list, tournament):
+        super().__init__(parent)
+        self.setWindowTitle("Joueurs permanents")
+        self.setModal(True)
+        self.setObjectName("BrowsePlayersDialog")
+        self.setMinimumWidth(280)
+        self.setMinimumHeight(400)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+
+        self._regular_players = sorted(regular_players, key=lambda p: p.pseudo.lower())
+        self._tournament = tournament
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        layout.setContentsMargins(16, 16, 16, 14)
+
+        # ── Titre ─────────────────────────────────────────────────────
+        title = QLabel("👥 Joueurs permanents")
+        title.setObjectName("LaunchSectionTitle")
+        layout.addWidget(title)
+
+        # ── Filtre ────────────────────────────────────────────────────
+        self.filter_input = QLineEdit()
+        self.filter_input.setObjectName("LaunchPlayerInput")
+        self.filter_input.setPlaceholderText("Filtrer…")
+        self.filter_input.textChanged.connect(self._refresh_list)
+        layout.addWidget(self.filter_input)
+
+        # ── Liste ─────────────────────────────────────────────────────
+        self.list_widget = QListWidget()
+        self.list_widget.setObjectName("LaunchPlayersList")
+        self.list_widget.setSpacing(2)
+        self.list_widget.setMouseTracking(True)
+        self.list_widget.viewport().setMouseTracking(True)
+        self.list_widget.itemClicked.connect(self._on_item_clicked)
+        layout.addWidget(self.list_widget, 1)
+
+        hint = QLabel("Cliquer pour ajouter  •  ✔ déjà inscrit")
+        hint.setObjectName("BracketRoundSubtitle")
+        hint.setAlignment(Qt.AlignCenter)
+        layout.addWidget(hint)
+
+        # ── Fermer ────────────────────────────────────────────────────
+        close_btn = QPushButton("Fermer")
+        close_btn.setObjectName("BracketCancelButton")
+        close_btn.setFixedHeight(28)
+        close_btn.setCursor(Qt.PointingHandCursor)
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn, alignment=Qt.AlignCenter)
+
+        self._refresh_list()
+
+    def _in_tournament(self) -> dict:
+        """Retourne {nom_lowercase: player_id} pour les joueurs inscrits."""
+        return {p.name.lower().strip(): p.id for p in self._tournament.players}
+
+    def _refresh_list(self):
+        f = self.filter_input.text().lower().strip()
+        in_t = self._in_tournament()
+
+        self.list_widget.clear()
+        for player in self._regular_players:
+            if f and f not in player.pseudo.lower():
+                continue
+            player_id = in_t.get(player.pseudo.lower().strip())
+            already = player_id is not None
+            if already:
+                item = QListWidgetItem(f"✔  {player.pseudo}")
+                item.setForeground(QBrush(QColor(130, 130, 130)))
+            else:
+                item = QListWidgetItem(player.pseudo)
+            # UserRole = pseudo, UserRole+1 = player_id si inscrit (None sinon)
+            item.setData(Qt.UserRole, player.pseudo)
+            item.setData(Qt.UserRole + 1, player_id)
+            self.list_widget.addItem(item)
+
+    def _on_item_clicked(self, item: QListWidgetItem):
+        pseudo = item.data(Qt.UserRole)
+        player_id = item.data(Qt.UserRole + 1)
+        if player_id is not None:
+            # Déjà inscrit → retirer du tournoi
+            self._tournament.remove_player(player_id)
+        else:
+            # Pas encore inscrit → ajouter
+            self._tournament.add_player(pseudo)
+        self._refresh_list()
+
+    def _add_player(self, name: str):
+        self._tournament.add_player(name)
+        self._refresh_list()
+
+
 class LaunchView(QWidget):
     """
     Vue de lancement d’un tournoi.
@@ -85,6 +181,7 @@ class LaunchView(QWidget):
         self._current_tournament: Tournament | None = None
         self._regular_players: list[RegularPlayer] = []
         self._completer_search_text: str = ""  # Texte original pour l'autocomplétion
+        self._completer_current_row: int = -1  # Index courant dans le cycle Tab
 
         self.setObjectName("LaunchView")
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -112,6 +209,9 @@ class LaunchView(QWidget):
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.setFilterMode(Qt.MatchContains)
         self.player_input.setCompleter(completer)
+        # Installer le filtre sur le popup pour intercepter Tab/Enter
+        # (quand le popup est visible, les events clavier lui sont envoyés, pas au champ)
+        completer.popup().installEventFilter(self)
 
     def refresh_regular_players(self):
         """Rafraîchit la liste des joueurs réguliers (appelé après ajout)."""
@@ -268,8 +368,16 @@ class LaunchView(QWidget):
         add_btn.setObjectName("LaunchPrimaryButton")
         add_btn.clicked.connect(self._add_player_manual)
 
+        browse_btn = QPushButton("👥")
+        browse_btn.setObjectName("LaunchBrowseButton")
+        browse_btn.setToolTip("Parcourir les joueurs permanents")
+        browse_btn.setFixedHeight(32)
+        browse_btn.setCursor(Qt.PointingHandCursor)
+        browse_btn.clicked.connect(self._browse_regular_players)
+
         row.addWidget(self.player_input)
         row.addWidget(add_btn)
+        row.addWidget(browse_btn)
         prep_layout.addLayout(row)
 
         self.reco_rounds_label = QLabel("")
@@ -440,6 +548,16 @@ class LaunchView(QWidget):
         self._save_all()
         self._refresh_players_ui()
 
+    def _browse_regular_players(self):
+        """Ouvre le dialog de parcours des joueurs permanents."""
+        if not self._current_tournament:
+            return
+        self._load_regular_players()
+        dialog = BrowsePlayersDialog(self, self._regular_players, self._current_tournament)
+        dialog.exec()
+        self._save_all()
+        self._refresh_players_ui()
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete and self.players_list.hasFocus():
             self._delete_selected_player()
@@ -449,48 +567,79 @@ class LaunchView(QWidget):
         super().keyPressEvent(event)
 
     def eventFilter(self, obj, event):
-        """Gère le focus et la touche Tab pour l'autocomplétion."""
-        if obj == self.player_input:
+        """Intercepte Tab et Enter sur le popup ET le champ de saisie."""
+        completer = self.player_input.completer()
+        popup = completer.popup() if completer else None
+
+        # ── Événements reçus par le POPUP (visible après frappe) ─────
+        if popup is not None and obj is popup and event.type() == QEvent.KeyPress:
+            key = event.key()
+
+            if key == Qt.Key_Tab:
+                # Initialiser la recherche au premier Tab sur ce popup
+                if not self._completer_search_text:
+                    self._completer_search_text = self.player_input.text()
+                    self._completer_current_row = -1
+
+                completer.setCompletionPrefix(self._completer_search_text)
+                row_count = completer.completionCount()
+                if row_count > 0:
+                    # Avancer dans le cycle (% pour boucler)
+                    self._completer_current_row = (self._completer_current_row + 1) % row_count
+                    idx = completer.completionModel().index(self._completer_current_row, 0)
+                    completion = completer.completionModel().data(idx)
+                    if completion:
+                        self.player_input.blockSignals(True)
+                        self.player_input.setText(completion)
+                        self.player_input.selectAll()
+                        self.player_input.blockSignals(False)
+                    # Restaurer le prefix puis ré-appliquer la sélection visuelle
+                    completer.setCompletionPrefix(self._completer_search_text)
+                    idx = completer.completionModel().index(self._completer_current_row, 0)
+                    popup.setCurrentIndex(idx)
+                return True  # Consommer Tab — ne pas déplacer le focus
+
+            if key in (Qt.Key_Return, Qt.Key_Enter):
+                cur = popup.currentIndex()
+                if cur.isValid():
+                    completion = completer.completionModel().data(cur)
+                    if completion:
+                        self.player_input.setText(completion)
+                self._completer_search_text = ""
+                self._completer_current_row = -1
+                popup.hide()
+                self._add_player_manual()
+                return True
+
+        # ── Événements reçus par le CHAMP de saisie ──────────────────
+        if obj is self.player_input:
             if event.type() == QEvent.FocusIn:
                 self._load_regular_players()
                 self._setup_completer()
+            elif event.type() == QEvent.FocusOut:
+                self._completer_search_text = ""
+                self._completer_current_row = -1
             elif event.type() == QEvent.KeyPress and event.key() == Qt.Key_Tab:
-                # Bloquer Tab si le champ a du texte (pour l'autocomplétion)
-                if self.player_input.text().strip():
-                    completer = self.player_input.completer()
-                    if completer:
-                        popup = completer.popup()
-
-                        # Première pression de Tab : stocker le texte original
-                        if not popup.isVisible():
-                            self._completer_search_text = self.player_input.text()
-
-                        # Utiliser le texte original pour filtrer
+                # Popup pas encore ouvert : l'ouvrir et sélectionner le 1er résultat
+                if self.player_input.text().strip() and completer:
+                    self._completer_search_text = self.player_input.text()
+                    self._completer_current_row = 0
+                    completer.setCompletionPrefix(self._completer_search_text)
+                    if completer.completionCount() > 0:
+                        completer.complete()
+                        idx = completer.completionModel().index(0, 0)
+                        completer.popup().setCurrentIndex(idx)
+                        completion = completer.completionModel().data(idx)
+                        if completion:
+                            self.player_input.blockSignals(True)
+                            self.player_input.setText(completion)
+                            self.player_input.selectAll()
+                            self.player_input.blockSignals(False)
                         completer.setCompletionPrefix(self._completer_search_text)
-                        row_count = completer.completionCount()
+                        idx = completer.completionModel().index(0, 0)
+                        completer.popup().setCurrentIndex(idx)
+                return True  # Consommer Tab dans tous les cas
 
-                        if row_count > 0:
-                            # Afficher le popup si pas encore visible
-                            if not popup.isVisible():
-                                completer.complete()
-
-                            current_index = popup.currentIndex()
-
-                            if current_index.isValid():
-                                next_row = (current_index.row() + 1) % row_count
-                            else:
-                                next_row = 0
-
-                            next_index = completer.completionModel().index(next_row, 0)
-                            popup.setCurrentIndex(next_index)
-
-                            # Mettre à jour le texte avec la suggestion sélectionnée
-                            completion = completer.completionModel().data(next_index)
-                            if completion:
-                                self.player_input.setText(completion)
-                                self.player_input.selectAll()
-
-                    return True  # Toujours consommer Tab si le champ a du texte
         return super().eventFilter(obj, event)
 
     def _on_player_double_clicked(self, item: QListWidgetItem):

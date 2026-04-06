@@ -121,7 +121,7 @@ class DashboardRoundControlsView(QWidget):
         self.reset_btn.setMinimumHeight(34)
         self.reset_btn.clicked.connect(self.reset_requested)
 
-        # 🚪 Quitter
+        # 🚪 Quitter le tournoi
         self.quit_btn = QPushButton("🚪  Quitter le tournoi")
         self.quit_btn.setObjectName("SecondaryButton")
         self.quit_btn.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)

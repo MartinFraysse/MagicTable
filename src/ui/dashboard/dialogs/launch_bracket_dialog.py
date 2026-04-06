@@ -10,7 +10,7 @@ _OPTIONS = [
         BracketType.FINAL,
         "🥇",
         "Top 2",
-        "Finale directe",
+        "Finale directe  +  Petite Finale",
         2,
     ),
     (

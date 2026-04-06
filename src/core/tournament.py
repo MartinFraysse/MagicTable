@@ -380,16 +380,16 @@ class Tournament:
     # Swiss Pairing System
     # =====================
 
-    def create_round_swiss(self, allow_rematch: bool = False, allow_large_gap: bool = False) -> Round:
+    def create_round_swiss(self, allow_rematch: bool = False) -> Round:
         """
         Crée un round avec appariement Swiss officiel.
         Uniquement valide pour les formats 1v1.
-        Lève ValueError("rematch_forced") ou ValueError("large_gap") si non autorisé.
+        Lève ValueError("rematch_forced") si rematches inévitables et non autorisés.
         """
         round_number = len(self.rounds) + 1
         opponents_map = self.get_opponents_map()
 
-        # Ordre du classement actuel pour attribuer le bye au dernier
+        # Ordre standings complet (match_points → OMW% → GW% → OGW%)
         standings = build_standings(self)
         standings_order = [e.player_id for e in standings]
 
@@ -402,8 +402,6 @@ class Tournament:
 
         if result.rematch_forced and not allow_rematch:
             raise ValueError("rematch_forced")
-        if result.large_gap and not allow_large_gap:
-            raise ValueError("large_gap")
 
         tables: list[Table] = []
         for i, (p1, p2) in enumerate(result.pairings, 1):
@@ -483,11 +481,11 @@ class Tournament:
         seeded_ids = [e.player_id for e in standings]
 
         required = {
-            BracketType.FINAL: 2,
+            BracketType.FINAL: 4,  # Top 4 pour permettre la petite finale (3ème place)
             BracketType.DEMI_FINALE: 4,
             BracketType.QUART_DE_FINALE: 8,
         }
-        n = required[bracket_type]
+        n = min(required[bracket_type], len(seeded_ids))
         seeded_ids = seeded_ids[:n]
 
         matches = create_bracket_matches(bracket_type, seeded_ids)

@@ -2,12 +2,56 @@
   {
     "id": 1,
     "pseudo": "Marfin",
-    "full_name": "Martin Fraysse",
-    "phone": "07 68 88 76 90",
-    "top_1": 2,
-    "top_2": 1,
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
     "top_3": 0,
-    "points": 24,
-    "tournaments_played": 4
+    "points": 0,
+    "tournaments_played": 0
+  },
+  {
+    "id": 3,
+    "pseudo": "Pedro",
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
+  },
+  {
+    "id": 2,
+    "pseudo": "Seb",
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
+  },
+  {
+    "id": 4,
+    "pseudo": "Sebastien",
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
+  },
+  {
+    "id": 5,
+    "pseudo": "Léa",
+    "full_name": "",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
   }
 ]

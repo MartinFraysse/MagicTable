@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QFrame,
     QButtonGroup, QSizePolicy
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QStackedWidget
 from PySide6.QtGui import QPixmap
 import os
@@ -148,15 +148,32 @@ class MainWindow(QMainWindow):
 
         layout.addStretch()
 
+        self.fullscreen_btn = QPushButton("🖥  Plein écran")
+        self.fullscreen_btn.setObjectName("QuitButton")
+        self.fullscreen_btn.setMinimumHeight(44)
+        self.fullscreen_btn.setCursor(Qt.PointingHandCursor)
+        self.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
+        layout.addWidget(self.fullscreen_btn)
+
         quit_btn = QPushButton("⏻  Quitter")
         quit_btn.setObjectName("QuitButton")
         quit_btn.setMinimumHeight(44)
         quit_btn.setCursor(Qt.PointingHandCursor)
         quit_btn.clicked.connect(self.close)
-
         layout.addWidget(quit_btn)
 
         return sidebar
+
+    def _toggle_fullscreen(self):
+        """Bascule entre plein écran et fenêtre normale."""
+        if self.isFullScreen():
+            self.showNormal()
+            self.fullscreen_btn.setText("🖥  Plein écran")
+            QTimer.singleShot(50, lambda: self.setMaximumSize(1380, 920))
+        else:
+            self.setMaximumSize(16777215, 16777215)
+            self.showFullScreen()
+            self.fullscreen_btn.setText("🪟  Fenêtre normale")
 
     # ========================
     # Content container

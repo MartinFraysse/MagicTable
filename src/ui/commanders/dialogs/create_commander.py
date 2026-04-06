@@ -1,25 +1,25 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QLabel, QLineEdit, QComboBox, QCheckBox,
-    QPushButton, QFrame,
+    QLabel, QLineEdit, QButtonGroup,
+    QPushButton, QWidget,
 )
 
 from core.commander import Commander
 
 
 _COLORS = [
-    ("W", "☀️", "#f5f5dc", "#333333"),
-    ("U", "💧", "#4a90d9", "#ffffff"),
-    ("B", "💀", "#2a2a2a", "#ffffff"),
-    ("R", "🔥", "#d9534f", "#ffffff"),
-    ("G", "🌿", "#2e7d32", "#ffffff"),
+    ("W", "☀️  W"),
+    ("U", "💧  U"),
+    ("B", "💀  B"),
+    ("R", "🔥  R"),
+    ("G", "🌿  G"),
 ]
 
 _FORMAT_OPTIONS = [
+    ("duel",      "⚔️  Duel"),
+    ("commander", "👑  Multi"),
     ("both",      "Les deux"),
-    ("commander", "👑 Commander Multi"),
-    ("duel",      "⚔️ Duel Commander"),
 ]
 
 
@@ -42,7 +42,7 @@ class CreateCommanderDialog(QDialog):
 
         self.setWindowTitle("Modifier le commandant" if self._is_edit else "Nouveau commandant")
         self.setModal(True)
-        self.setFixedSize(400, 290)
+        self.setFixedSize(460, 310)
         self.setObjectName("CreateCommanderDialog")
 
         self._build_ui()
@@ -50,8 +50,8 @@ class CreateCommanderDialog(QDialog):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-        layout.setContentsMargins(20, 16, 20, 16)
+        layout.setSpacing(14)
+        layout.setContentsMargins(24, 18, 24, 18)
 
         # Titre
         title = QLabel("✏️ Modifier le commandant" if self._is_edit else "➕ Nouveau commandant")
@@ -61,13 +61,15 @@ class CreateCommanderDialog(QDialog):
 
         # Formulaire
         form = QFormLayout()
-        form.setSpacing(8)
-        form.setLabelAlignment(Qt.AlignRight)
+        form.setSpacing(10)
+        form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("Nom du commandant")
         self.name_input.setObjectName("DialogInput")
         self.name_input.textChanged.connect(self._clear_error)
+        self.name_input.returnPressed.connect(self._validate_and_accept)
         form.addRow("Nom *", self.name_input)
 
         self.error_label = QLabel("")
@@ -75,36 +77,51 @@ class CreateCommanderDialog(QDialog):
         self.error_label.hide()
         form.addRow("", self.error_label)
 
-        self.format_combo = QComboBox()
-        self.format_combo.setObjectName("DialogInput")
+        # Format — 3 boutons exclusifs
+        fmt_widget = QWidget()
+        fmt_layout = QHBoxLayout(fmt_widget)
+        fmt_layout.setContentsMargins(0, 0, 0, 0)
+        fmt_layout.setSpacing(8)
+
+        self._format_group = QButtonGroup(self)
+        self._format_group.setExclusive(True)
+        self._format_btns: dict[str, QPushButton] = {}
+
         for key, label in _FORMAT_OPTIONS:
-            self.format_combo.addItem(label, key)
-        form.addRow("Format", self.format_combo)
+            btn = QPushButton(label)
+            btn.setObjectName("FormatButton")
+            btn.setCheckable(True)
+            btn.setCursor(Qt.PointingHandCursor)
+            self._format_group.addButton(btn)
+            self._format_btns[key] = btn
+            fmt_layout.addWidget(btn)
+
+        fmt_layout.addStretch()
+        form.addRow("Format", fmt_widget)
+
+        # Couleurs — 5 boutons carrés MTG
+        color_widget = QWidget()
+        color_layout = QHBoxLayout(color_widget)
+        color_layout.setContentsMargins(0, 0, 0, 0)
+        color_layout.setSpacing(8)
+
+        self._color_btns: dict[str, QPushButton] = {}
+        for letter, label in _COLORS:
+            btn = QPushButton(label)
+            btn.setObjectName(f"ColorBtn_{letter}")
+            btn.setCheckable(True)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setFixedSize(62, 52)
+            self._color_btns[letter] = btn
+            color_layout.addWidget(btn)
+
+        color_layout.addStretch()
+        form.addRow("Couleurs", color_widget)
 
         layout.addLayout(form)
-
-        # Couleurs
-        colors_row = QHBoxLayout()
-        colors_row.setSpacing(6)
-        colors_label = QLabel("Couleurs")
-        colors_label.setObjectName("FormLabel")
-        colors_label.setFixedWidth(80)
-        colors_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        colors_row.addWidget(colors_label)
-
-        self._color_checks: dict[str, QCheckBox] = {}
-        for letter, emoji, bg, fg in _COLORS:
-            cb = QCheckBox(f" {emoji} {letter}")
-            cb.setObjectName("ColorCheckBox")
-            self._color_checks[letter] = cb
-            colors_row.addWidget(cb)
-
-        colors_row.addStretch()
-        layout.addLayout(colors_row)
-
         layout.addStretch()
 
-        # Boutons
+        # Boutons d'action
         buttons = QHBoxLayout()
         buttons.setSpacing(12)
 
@@ -123,15 +140,18 @@ class CreateCommanderDialog(QDialog):
 
         self.name_input.setFocus()
 
+        # Format par défaut : "Les deux"
+        self._format_btns["both"].setChecked(True)
+
     def _load_data(self):
         if not self._commander:
             return
         self.name_input.setText(self._commander.name)
-        idx = self.format_combo.findData(self._commander.format)
-        if idx >= 0:
-            self.format_combo.setCurrentIndex(idx)
-        for letter, cb in self._color_checks.items():
-            cb.setChecked(letter in self._commander.colors.upper())
+        fmt = self._commander.format
+        if fmt in self._format_btns:
+            self._format_btns[fmt].setChecked(True)
+        for letter, btn in self._color_btns.items():
+            btn.setChecked(letter in self._commander.colors.upper())
 
     def _clear_error(self):
         self.error_label.hide()
@@ -158,11 +178,16 @@ class CreateCommanderDialog(QDialog):
         self.accept()
 
     def get_data(self) -> dict:
-        colors = "".join(l for l, cb in self._color_checks.items() if cb.isChecked())
+        fmt = "both"
+        for key, btn in self._format_btns.items():
+            if btn.isChecked():
+                fmt = key
+                break
+        colors = "".join(l for l, btn in self._color_btns.items() if btn.isChecked())
         return {
             "name":   self.name_input.text().strip(),
             "colors": colors,
-            "format": self.format_combo.currentData(),
+            "format": fmt,
         }
 
     def apply_changes(self):

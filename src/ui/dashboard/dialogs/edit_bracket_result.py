@@ -11,6 +11,7 @@ _ROUND_LABELS = {
     BracketRoundName.DEMI:  "Demi-finale",
     BracketRoundName.FINAL: "Finale",
 }
+_THIRD_PLACE_LABEL = "Petite Finale (3ème place)"
 
 
 class EditBracketResultDialog(QDialog):
@@ -35,7 +36,8 @@ class EditBracketResultDialog(QDialog):
         layout.setSizeConstraint(QLayout.SetFixedSize)
 
         # ── Sous-titre round ─────────────────────────────────────────
-        round_lbl = QLabel(_ROUND_LABELS.get(match.round_name, "Match"))
+        round_label = _THIRD_PLACE_LABEL if match.is_third_place else _ROUND_LABELS.get(match.round_name, "Match")
+        round_lbl = QLabel(round_label)
         round_lbl.setObjectName("BracketRoundSubtitle")
         round_lbl.setAlignment(Qt.AlignCenter)
         layout.addWidget(round_lbl)

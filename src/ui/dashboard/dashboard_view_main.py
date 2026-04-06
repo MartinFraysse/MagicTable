@@ -306,25 +306,14 @@ class DashboardViewMain(QWidget):
         # Utiliser l'algorithme approprié selon le système d'appariement
         if self.current_tournament.is_swiss_format():
             allow_rematch = False
-            allow_large_gap = False
-            for _ in range(3):  # au plus 2 alertes possibles (large_gap puis rematch)
+            for _ in range(2):
                 try:
-                    self.current_tournament.create_round_swiss(
-                        allow_rematch=allow_rematch,
-                        allow_large_gap=allow_large_gap,
-                    )
+                    self.current_tournament.create_round_swiss(allow_rematch=allow_rematch)
                     break
-                except ValueError as e:
-                    if str(e) == "large_gap":
-                        choice = self._show_large_gap_dialog()
-                    else:
-                        choice = self._show_rematch_dialog()
-
+                except ValueError:
+                    choice = self._show_rematch_dialog()
                     if choice == "continue":
-                        if str(e) == "large_gap":
-                            allow_large_gap = True
-                        else:
-                            allow_rematch = True
+                        allow_rematch = True
                     elif choice == "finish":
                         self._finish_tournament()
                         return
@@ -391,74 +380,6 @@ class DashboardViewMain(QWidget):
         btn_continue = QPushButton("▶  Continuer  (avec rematches)")
         btn_continue.setObjectName("RematchDialogContinue")
         btn_finish   = QPushButton("🏁  Terminer le tournoi")
-        btn_finish.setObjectName("RematchDialogFinish")
-
-        def on_continue(): choice[0] = "continue"; dialog.accept()
-        def on_finish():   choice[0] = "finish";   dialog.accept()
-
-        btn_continue.clicked.connect(on_continue)
-        btn_finish.clicked.connect(on_finish)
-        layout.addWidget(btn_continue)
-        layout.addWidget(btn_finish)
-
-        if can_bracket:
-            btn_bracket = QPushButton("🏆  Passer en bracket final")
-            btn_bracket.setObjectName("RematchDialogBracket")
-            def on_bracket(): choice[0] = "bracket"; dialog.accept()
-            btn_bracket.clicked.connect(on_bracket)
-            layout.addWidget(btn_bracket)
-
-        layout.addSpacing(2)
-        btn_cancel = QPushButton("Annuler")
-        btn_cancel.setObjectName("RematchDialogCancel")
-        btn_cancel.clicked.connect(dialog.reject)
-        layout.addWidget(btn_cancel)
-
-        dialog.adjustSize()
-        dialog.setFixedSize(dialog.sizeHint())
-        dialog.exec()
-        return choice[0]
-
-    def _show_large_gap_dialog(self) -> str:
-        """
-        Affiche le dialog quand les pairings présentent un écart de rang trop grand.
-        Retourne : 'continue', 'finish', 'bracket', ou 'cancel'.
-        """
-        from PySide6.QtWidgets import QSizePolicy
-
-        tournament = self.current_tournament
-        can_bracket = (
-            tournament.is_1v1_format()
-            and len(tournament.players) >= 4
-            and tournament.bracket is None
-        )
-
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Pairings déséquilibrés")
-        dialog.setObjectName("RematchDialog")
-        dialog.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
-        dialog.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        layout = QVBoxLayout(dialog)
-        layout.setSpacing(8)
-        layout.setContentsMargins(20, 20, 20, 16)
-
-        msg = QLabel(
-            "⚠️  Les pairings de ce round sont déséquilibrés.\n"
-            "Un joueur bien classé devrait affronter un adversaire\n"
-            "classé trop loin (manque d'adversaires disponibles).\n\n"
-            "Que souhaitez-vous faire ?"
-        )
-        msg.setObjectName("RematchDialogMessage")
-        layout.addWidget(msg)
-
-        layout.addSpacing(4)
-
-        choice = ["cancel"]
-
-        btn_continue = QPushButton("▶  Continuer  (avec ces pairings)")
-        btn_continue.setObjectName("RematchDialogContinue")
-        btn_finish = QPushButton("🏁  Terminer le tournoi")
         btn_finish.setObjectName("RematchDialogFinish")
 
         def on_continue(): choice[0] = "continue"; dialog.accept()
@@ -744,7 +665,7 @@ class DashboardViewMain(QWidget):
         ROUND_LABELS = {
             "quart": "Quarts de finale",
             "demi": "Demi-finales",
-            "final": "Finale",
+            "final": "Finales",
         }
         round_val = self._bracket_displayed_round.value if self._bracket_displayed_round else "?"
         label = ROUND_LABELS.get(round_val, round_val)

@@ -7,7 +7,7 @@ from PySide6.QtGui import QMouseEvent
 
 from core.round import Round
 from core.table import Table
-from core.bracket import BracketMatch
+from core.bracket import BracketMatch, BracketRoundName
 from ui.widgets.horizontal_scroll_area import HorizontalScrollArea
 
 
@@ -257,8 +257,16 @@ class DashboardTablesView(QFrame):
         layout = QVBoxLayout(card)
         layout.setSpacing(6)
 
-        pos_labels = ["Match A", "Match B", "Match C", "Match D"]
-        pos_text = pos_labels[match.position] if match.position < len(pos_labels) else f"Match {match.position + 1}"
+        if match.is_third_place:
+            pos_text = "3ème place"
+        elif match.round_name == BracketRoundName.FINAL:
+            pos_text = "Finale"
+        elif match.round_name == BracketRoundName.DEMI:
+            pos_labels = ["Demi A", "Demi B"]
+            pos_text = pos_labels[match.position] if match.position < len(pos_labels) else f"Demi {match.position + 1}"
+        else:
+            pos_labels = ["Match A", "Match B", "Match C", "Match D"]
+            pos_text = pos_labels[match.position] if match.position < len(pos_labels) else f"Match {match.position + 1}"
         lbl_id = QLabel(pos_text)
         lbl_id.setObjectName("TableCardTitle")
         lbl_id.setAttribute(Qt.WA_TransparentForMouseEvents)

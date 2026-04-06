@@ -1,14 +1,15 @@
 """
 Système d'appariement Swiss officiel.
 
-Règles implémentées:
+Règles implémentées :
+- Tri par standings complets : match_points → OMW% → GW% → OGW%
 - Appariement par bracket de score (joueurs de même score s'affrontent)
-- Pas de rematches (deux joueurs ne se rencontrent qu'une fois)
-- Bye automatique pour nombre impair (joueur avec plus bas score sans bye précédent)
-- Floaters: joueurs non appariés descendent au bracket inférieur
+- Dans chaque bracket : rang le plus proche d'abord (1vs2, 3vs4, ...)
+- Anti-rematch : backtracking pour trouver le swap le plus proche
+- Floaters : joueurs non appariés descendent au bracket inférieur (comportement normal)
+- Bye : joueur le moins bien classé sans bye précédent
 """
 import math
-import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -22,19 +23,17 @@ class SwissPairingResult:
     pairings: list[tuple["Player", "Player"]]
     bye_player: "Player | None"
     rematch_forced: bool = False
-    large_gap: bool = False  # True si au moins un pairing a un écart de rang trop important
 
 
 def compute_recommended_rounds(player_count: int) -> int:
     """
     Calcule le nombre de rounds recommandé pour un tournoi Swiss.
-    Formule: ceil(log2(n))
+    Formule : ceil(log2(n))
 
-    Exemples:
-    - 4-8 joueurs: 3 rounds
-    - 9-16 joueurs: 4 rounds
-    - 17-32 joueurs: 5 rounds
-    - 33-64 joueurs: 6 rounds
+    Exemples :
+    - 4-8 joueurs  → 3 rounds
+    - 9-16 joueurs → 4 rounds
+    - 17-32 joueurs → 5 rounds
     """
     if player_count < 2:
         return 0
@@ -50,136 +49,115 @@ def generate_swiss_pairings(
     """
     Génère les appariements Swiss pour un round.
 
-    Algorithme:
-    1. Si nombre impair: assigner bye au dernier joueur du classement
-       qui n'a pas encore reçu de bye
-    2. Grouper les joueurs restants par bracket de score
-    3. Dans chaque bracket (du plus haut au plus bas):
-       - Apparier les joueurs en évitant les rematches
-       - Les joueurs non appariés "flottent" vers le bracket inférieur
-    4. Forcer l'appariement des floaters restants (rematches si nécessaire)
+    Algorithme :
+    1. Trier les joueurs par standings_order (match_points + OMW% + GW% + OGW%)
+    2. Si nombre impair : bye au joueur le moins bien classé sans bye précédent
+    3. Grouper par bracket de score (match_points identiques)
+    4. Dans chaque bracket (du plus haut au plus bas) :
+       - Combiner les floaters du bracket précédent + joueurs du bracket actuel
+       - Trier le groupe combiné par rang
+       - Apparier rang 1 vs rang 2, rang 3 vs rang 4, etc. (anti-rematch via backtracking)
+       - Les joueurs non appariés « flottent » vers le bracket inférieur
+    5. Forcer l'appariement des floaters restants (rematches inévitables)
 
-    Args:
-        players: Liste des joueurs à apparier
-        opponents_map: Dict {player_id: set(opponent_ids déjà rencontrés)}
-        bye_history: Set des player_ids ayant déjà reçu un bye
-        standings_order: Liste d'IDs joueurs du meilleur au moins bon (pour le bye)
+    Args :
+        players        : Liste des joueurs à apparier.
+        opponents_map  : {player_id → set(opponent_ids déjà rencontrés)}.
+        bye_history    : Set des player_ids ayant déjà reçu un bye.
+        standings_order: Liste d'IDs du meilleur (index 0) au moins bon — produite
+                         par build_standings() : match_points → OMW% → GW% → OGW%.
 
-    Returns:
-        SwissPairingResult avec les pairings et le joueur bye (si applicable)
+    Returns :
+        SwissPairingResult avec pairings et bye_player éventuel.
     """
-    bye_player = None
-    active_players = players[:]
+    # Construire la table rang → index (plus petit = meilleur)
+    rank_map: dict[int, int] = (
+        {pid: idx for idx, pid in enumerate(standings_order)}
+        if standings_order
+        else {}
+    )
 
-    # Gérer nombre impair - assigner bye
+    def rank(p: "Player") -> int:
+        return rank_map.get(p.id, len(players))
+
+    # --- Étape 1 : trier par standings ---
+    active_players = sorted(players, key=rank)
+
+    # --- Étape 2 : bye (nombre impair) ---
+    bye_player: "Player | None" = None
+
     if len(active_players) % 2 == 1:
-        player_map = {p.id: p for p in active_players}
-
-        if standings_order:
-            # Itérer du dernier au premier dans le classement
-            candidates = [
-                player_map[pid]
-                for pid in reversed(standings_order)
-                if pid in player_map
-            ]
-        else:
-            # Fallback : trier par score croissant
-            candidates = sorted(active_players, key=lambda p: (p.score, random.random()))
-
-        # Trouver le premier candidat sans bye précédent
-        for player in candidates:
-            if player.id not in bye_history:
-                bye_player = player
-                active_players.remove(player)
+        # Chercher depuis le bas du classement le premier sans bye
+        for p in reversed(active_players):
+            if p.id not in bye_history:
+                bye_player = p
+                active_players.remove(p)
                 break
 
-        # Si tous ont eu un bye, donner au dernier du classement
-        if bye_player is None and candidates:
-            bye_player = candidates[0]
-            active_players.remove(bye_player)
+        # Si tous ont déjà eu un bye → dernier du classement
+        if bye_player is None:
+            bye_player = active_players.pop()
 
-    # Grouper par score brackets
+    # --- Étape 3 : grouper par bracket de score ---
+    # active_players est déjà trié → chaque bracket conserve l'ordre standings
     score_brackets: dict[int, list["Player"]] = {}
-    for player in active_players:
-        if player.score not in score_brackets:
-            score_brackets[player.score] = []
-        score_brackets[player.score].append(player)
+    for p in active_players:
+        score_brackets.setdefault(p.score, []).append(p)
 
-    # Apparier par bracket (du plus haut score au plus bas)
+    # --- Étape 4 : apparier bracket par bracket ---
     pairings: list[tuple["Player", "Player"]] = []
     floaters: list["Player"] = []
+    rematch_forced = False
 
     for score in sorted(score_brackets.keys(), reverse=True):
-        # Combiner floaters du bracket précédent avec le bracket actuel
-        bracket_players = floaters + score_brackets[score]
-        random.shuffle(bracket_players)  # Randomiser l'ordre dans le bracket
+        # Floaters du bracket précédent + joueurs du bracket actuel, re-triés par rang
+        group = sorted(floaters + score_brackets[score], key=rank)
         floaters = []
 
-        # Apparier dans ce bracket
-        paired, unpaired = _pair_bracket(bracket_players, opponents_map)
+        paired, unpaired = _pair_group(group, opponents_map)
         pairings.extend(paired)
         floaters = unpaired
 
-    # Si des floaters restent, les rematches sont inévitables — on les force et on signale
+    # --- Étape 5 : floaters restants (rematches inévitables) ---
     if len(floaters) >= 2:
         for i in range(0, len(floaters) - 1, 2):
             pairings.append((floaters[i], floaters[i + 1]))
-        return SwissPairingResult(pairings=pairings, bye_player=bye_player, rematch_forced=True)
+        rematch_forced = True
 
-    large_gap = _has_large_gap(pairings, standings_order)
-    return SwissPairingResult(pairings=pairings, bye_player=bye_player, large_gap=large_gap)
-
-
-def _has_large_gap(
-    pairings: list[tuple["Player", "Player"]],
-    standings_order: list[int] | None,
-) -> bool:
-    """
-    Retourne True si au moins un pairing présente un écart de rang trop important.
-    Seuil : gap > max(2, nb_joueurs // 2).
-    """
-    if not standings_order or not pairings:
-        return False
-
-    rank_map = {pid: idx for idx, pid in enumerate(standings_order)}
-    threshold = max(2, len(standings_order) // 2)
-
-    for p1, p2 in pairings:
-        r1 = rank_map.get(p1.id)
-        r2 = rank_map.get(p2.id)
-        if r1 is not None and r2 is not None and abs(r1 - r2) > threshold:
-            return True
-    return False
+    return SwissPairingResult(
+        pairings=pairings,
+        bye_player=bye_player,
+        rematch_forced=rematch_forced,
+    )
 
 
-def _pair_bracket(
+def _pair_group(
     players: list["Player"],
-    opponents_map: dict[int, set[int]]
+    opponents_map: dict[int, set[int]],
 ) -> tuple[list[tuple["Player", "Player"]], list["Player"]]:
     """
-    Apparie les joueurs d'un bracket en évitant les rematches.
+    Apparie les joueurs d'un groupe (déjà triés par rang standings).
 
-    Utilise un backtracking pour maximiser les appariements sans rematch :
-    - Pour chaque joueur, on essaie tous ses partenaires valides (sans rematch)
-    - Si aucun partenaire valide n'existe, le joueur devient floater
-    - On garde la solution avec le moins de floaters possible
+    Utilise un backtracking pour minimiser le nombre de floaters tout en
+    préférant les pairings les plus proches en rang (l'ordre d'exploration
+    est naturellement rang 1 vs rang 2, puis 3 vs 4, etc.).
 
-    Args:
-        players: Joueurs du bracket à apparier
-        opponents_map: Historique des adversaires
-
-    Returns:
-        (pairings, unpaired) - Les appariements réussis et les joueurs non appariés
+    Returns :
+        (pairings, floaters) — appariements réussis et joueurs non appariés.
     """
     if len(players) < 2:
-        return [], players
+        return [], list(players)
 
     n = len(players)
     best_floater_count = [n + 1]
     best_result: list[tuple[list, list] | None] = [None]
 
-    def backtrack(available: list[int], pairings: list[tuple[int, int]], floaters: list[int]) -> None:
-        # Élagage: impossible de faire mieux que le meilleur connu
+    def backtrack(
+        available: list[int],
+        pairings: list[tuple[int, int]],
+        floaters: list[int],
+    ) -> None:
+        # Élagage : impossible de faire mieux que le meilleur connu
         if len(floaters) >= best_floater_count[0]:
             return
 
@@ -190,7 +168,7 @@ def _pair_bracket(
                 best_result[0] = (pairings[:], all_floaters[:])
             return
 
-        # Solution optimale déjà trouvée
+        # Court-circuit : solution optimale déjà trouvée
         if best_floater_count[0] == 0:
             return
 
@@ -198,6 +176,7 @@ def _pair_bracket(
         rest = available[1:]
         has_valid_partner = False
 
+        # Essayer les partenaires dans l'ordre du rang (le plus proche d'abord)
         for k, j in enumerate(rest):
             if players[j].id not in opponents_map.get(players[i].id, set()):
                 has_valid_partner = True
@@ -208,14 +187,14 @@ def _pair_bracket(
                 if best_floater_count[0] == 0:
                     return
 
-        # Si aucun partenaire valide, i doit forcément flotter
+        # Aucun partenaire valide dans ce groupe → i devient floater
         if not has_valid_partner:
             backtrack(rest, pairings, floaters + [i])
 
     backtrack(list(range(n)), [], [])
 
     if best_result[0] is None:
-        return [], players
+        return [], list(players)
 
     pairings_idx, floaters_idx = best_result[0]
     result_pairings = [(players[i], players[j]) for i, j in pairings_idx]
