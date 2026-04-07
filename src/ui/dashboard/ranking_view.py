@@ -15,6 +15,8 @@ from ui.dashboard.dialogs.round_summary_dialog import RoundSummaryDialog
 class DashboardRankingView(QFrame):
     # Signal émis quand un joueur est ajouté aux joueurs permanents
     player_added_to_regulars = Signal(str)  # pseudo du joueur
+    # Signal émis quand on veut retirer un joueur du tournoi
+    player_remove_requested = Signal(int)   # player_id
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -179,10 +181,20 @@ class DashboardRankingView(QFrame):
         else:
             self._fill_table_standard(tournament, previous_ranks, override_order=ordered_player_ids)
 
+    def _apply_dropped_style(self, row: int):
+        """Grise toutes les cellules d'une ligne (joueur abandonné)."""
+        table = self.ranking_table
+        drop_color = QColor("#555555")
+        for col in range(table.columnCount()):
+            item = table.item(row, col)
+            if item:
+                item.setForeground(drop_color)
+
     def _fill_table_1v1(self, tournament, previous_ranks, override_order=None):
         """Remplit le tableau avec les standings 1v1 (OMW%, W-D-L)."""
         table = self.ranking_table
         standings = build_standings(tournament)
+        dropped_ids = {p.id for p in tournament.players if p.dropped}
 
         if override_order:
             entries_by_id = {e.player_id: e for e in standings}
@@ -193,26 +205,28 @@ class DashboardRankingView(QFrame):
         self._player_ids_by_row = {}
 
         for row, entry in enumerate(standings):
+            is_dropped = entry.player_id in dropped_ids
             current_rank = row + 1
             self._player_ids_by_row[row] = entry.player_id
 
-            # --- Position (#)
+            # --- Position (#) — le droppé garde son rang
             item_pos = QTableWidgetItem(str(current_rank))
             item_pos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 0, item_pos)
 
             # --- Nom joueur
-            item_name = QTableWidgetItem(entry.player_name)
+            name_text = f"🚫 {entry.player_name}" if is_dropped else entry.player_name
+            item_name = QTableWidgetItem(name_text)
             item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 1, item_name)
 
-            # --- Score avec évolution colorée
+            # --- Score
             score_text = f"{entry.match_points} pts"
             item_score = QTableWidgetItem(score_text)
             item_score.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
             prev_rank = previous_ranks.get(entry.player_id)
-            if prev_rank is None or len(tournament.rounds) <= 1:
+            if is_dropped or prev_rank is None or len(tournament.rounds) <= 1:
                 item_score.setForeground(QColor("#aaaaaa"))
             elif current_rank < prev_rank:
                 item_score.setForeground(QColor("#3fd27d"))
@@ -244,6 +258,9 @@ class DashboardRankingView(QFrame):
             item_wdl.setForeground(QColor("#aaaaaa"))
             table.setItem(row, 5, item_wdl)
 
+            if is_dropped:
+                self._apply_dropped_style(row)
+
         table.blockSignals(False)
 
     def _fill_table_standard(self, tournament, previous_ranks, override_order=None):
@@ -252,30 +269,32 @@ class DashboardRankingView(QFrame):
 
         if override_order:
             players_by_id = {p.id: p for p in tournament.players}
-            players = [players_by_id[pid] for pid in override_order if pid in players_by_id]
+            all_players = [players_by_id[pid] for pid in override_order if pid in players_by_id]
         elif self._swiss_mode:
-            players = tournament.sort_players_swiss()
+            all_players = tournament.sort_players_swiss()
         else:
-            players = sorted(
+            all_players = sorted(
                 tournament.players,
                 key=lambda p: (-p.score, -p.robustness, p.name)
             )
 
         table.blockSignals(True)
-        table.setRowCount(len(players))
+        table.setRowCount(len(all_players))
         self._player_ids_by_row = {}
 
-        for row, player in enumerate(players):
+        for row, player in enumerate(all_players):
+            is_dropped = player.dropped
             current_rank = row + 1
             self._player_ids_by_row[row] = player.id
 
-            # --- Position (#)
+            # --- Position (#) — le droppé garde son rang
             item_pos = QTableWidgetItem(str(current_rank))
             item_pos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 0, item_pos)
 
             # --- Nom joueur
-            item_name = QTableWidgetItem(player.name)
+            name_text = f"🚫 {player.name}" if is_dropped else player.name
+            item_name = QTableWidgetItem(name_text)
             item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             table.setItem(row, 1, item_name)
 
@@ -284,16 +303,7 @@ class DashboardRankingView(QFrame):
             item_score = QTableWidgetItem(score_text)
             item_score.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
-            prev_rank = previous_ranks.get(player.id)
-            if prev_rank is None or len(tournament.rounds) <= 1:
-                item_score.setForeground(QColor("#aaaaaa"))
-            elif current_rank < prev_rank:
-                item_score.setForeground(QColor("#3fd27d"))
-            elif current_rank > prev_rank:
-                item_score.setForeground(QColor("#e74c3c"))
-            else:
-                item_score.setForeground(QColor("#aaaaaa"))
-
+            item_score.setForeground(QColor("#aaaaaa"))
             table.setItem(row, 2, item_score)
 
             # --- Colonnes de départage Commander
@@ -308,11 +318,13 @@ class DashboardRankingView(QFrame):
                 item_sos.setForeground(QColor("#aaaaaa"))
                 table.setItem(row, 4, item_sos)
             else:
-                # Commander standard : robustesse (somme pondérée du rang des adversaires)
                 item_rob = QTableWidgetItem(str(player.robustness))
                 item_rob.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
                 item_rob.setForeground(QColor("#aaaaaa"))
                 table.setItem(row, 3, item_rob)
+
+            if is_dropped:
+                self._apply_dropped_style(row)
 
         table.blockSignals(False)
 
@@ -396,12 +408,17 @@ class DashboardRankingView(QFrame):
         else:
             add_action = menu.addAction("➕ Ajouter aux joueurs permanents")
 
+        menu.addSeparator()
+        remove_action = menu.addAction("🚪 Retirer du tournoi")
+
         action = menu.exec(self.ranking_table.viewport().mapToGlobal(pos))
 
         if action == summary_action:
             self._show_round_summary(player_id)
         elif add_action and action == add_action:
             self._add_to_regular_players(player.name)
+        elif action == remove_action:
+            self.player_remove_requested.emit(player_id)
 
     def _show_round_summary(self, player_id: int):
         if not self._tournament:

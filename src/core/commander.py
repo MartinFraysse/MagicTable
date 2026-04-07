@@ -1,40 +1,55 @@
 from dataclasses import dataclass, field
 
 
-_COLOR_EMOJI = {"W": "☀️", "U": "💧", "B": "💀", "R": "🔥", "G": "🌿"}
+MTG_COLORS = ["W", "U", "B", "R", "G"]
 
-_FORMAT_LABELS = {
-    "both":       "Les deux",
-    "commander":  "👑 Commander Multi",
-    "duel":       "⚔️ Duel Commander",
+COLOR_LABELS = {
+    "W": "Blanc",
+    "U": "Bleu",
+    "B": "Noir",
+    "R": "Rouge",
+    "G": "Vert",
+}
+
+COLOR_SYMBOLS = {
+    "W": "☀",
+    "U": "💧",
+    "B": "💀",
+    "R": "🔥",
+    "G": "🌿",
+}
+
+COLOR_HEX = {
+    "W": "#f9f6e8",
+    "U": "#4a90d9",
+    "B": "#9b9b9b",
+    "R": "#e05a3a",
+    "G": "#4caf75",
 }
 
 
 @dataclass
 class Commander:
-    """Commandant enregistré dans la base de données."""
+    """Représente un commandant MTG jouable."""
 
     id: int
     name: str
-    colors: str = ""    # sous-ensemble de "WUBRG", ex: "WUB"
-    format: str = "both"  # "both", "commander", "duel"
+    colors: list[str] = field(default_factory=list)
 
     @property
-    def format_label(self) -> str:
-        return _FORMAT_LABELS.get(self.format, self.format)
+    def color_identity(self) -> str:
+        """Retourne l'identité de couleur triée selon l'ordre WUBRG."""
+        return "".join(c for c in MTG_COLORS if c in self.colors)
 
     @property
-    def colors_display(self) -> str:
-        if not self.colors:
-            return "—"
-        return " ".join(_COLOR_EMOJI.get(c.upper(), c) for c in self.colors.upper() if c in _COLOR_EMOJI)
+    def is_colorless(self) -> bool:
+        return len(self.colors) == 0
 
     def to_dict(self) -> dict:
         return {
-            "id":     self.id,
-            "name":   self.name,
+            "id": self.id,
+            "name": self.name,
             "colors": self.colors,
-            "format": self.format,
         }
 
     @classmethod
@@ -42,6 +57,5 @@ class Commander:
         return cls(
             id=data["id"],
             name=data["name"],
-            colors=data.get("colors", ""),
-            format=data.get("format", "both"),
+            colors=data.get("colors", []),
         )

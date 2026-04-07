@@ -43,6 +43,24 @@
     background: #1e8f55;
 }
 
+#PlayersSearchInput {
+    min-height: 32px;
+    padding: 6px 12px;
+    background: #f5fcfa;
+    border: 1px solid #90cdb5;
+    border-radius: 8px;
+    color: #1a3d33;
+    font-size: 13px;
+    font-weight: 500;
+}
+#PlayersSearchInput::placeholder {
+    color: #7ab09a;
+}
+#PlayersSearchInput:focus {
+    background: #eaf7f2;
+    border-color: #2eaa6e;
+}
+
 #PlayersTable {
     background-color: #ffffff;
     border: 1px solid #c0e0d5;

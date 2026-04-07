@@ -19,6 +19,9 @@ class Player:
     sos: float = 0.0           # Strength of Schedule (moyenne des scores adverses)
     had_bye: bool = False      # A reçu un bye dans ce tournoi
 
+    # Drop / forfait
+    dropped: bool = False      # Joueur qui a abandonné le tournoi
+
     def add_score(self, points: int) -> None:
         self.score += points
 

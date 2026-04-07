@@ -192,6 +192,26 @@ class Bracket:
                 if petite_match.finished:
                     self.reset_result(petite_match.match_id)
 
+    def auto_resolve_dropped(self, dropped_ids: set[int]) -> list[int]:
+        """
+        Pour tout match non terminé dont l'un des joueurs a droppé ou est absent (None),
+        donne automatiquement la victoire à l'adversaire.
+        Retourne la liste des match_ids auto-résolus.
+        """
+        resolved = []
+        for match in self.matches:
+            if match.finished:
+                continue
+            p1_absent = match.player1_id is None or match.player1_id in dropped_ids
+            p2_absent = match.player2_id is None or match.player2_id in dropped_ids
+            if p1_absent and match.player2_id is not None and match.player2_id not in dropped_ids:
+                self.record_result(match.match_id, match.player2_id)
+                resolved.append(match.match_id)
+            elif p2_absent and match.player1_id is not None and match.player1_id not in dropped_ids:
+                self.record_result(match.match_id, match.player1_id)
+                resolved.append(match.match_id)
+        return resolved
+
     def get_round_order(self) -> list[BracketRoundName]:
         return _ROUND_ORDER[self.bracket_type]
 
@@ -339,7 +359,12 @@ def create_bracket_matches(
     Cree les matches du bracket a partir des IDs de joueurs tries par seed.
 
     seeded_player_ids : liste ordonnee [1er, 2eme, ..., Neme]
+    Les slots manquants (joueurs droppés ou pas assez de joueurs) sont None → bye automatique.
     """
+
+    def _sid(i: int) -> int | None:
+        return seeded_player_ids[i] if i < len(seeded_player_ids) else None
+
     matches: list[BracketMatch] = []
 
     if bracket_type == BracketType.QUART_DE_FINALE:
@@ -351,8 +376,8 @@ def create_bracket_matches(
                 match_id=i,
                 round_name=BracketRoundName.QUART,
                 position=i,
-                player1_id=seeded_player_ids[a],
-                player2_id=seeded_player_ids[b],
+                player1_id=_sid(a),
+                player2_id=_sid(b),
                 next_match_id=4 + i // 2,
             ))
         # Demi-finales (match_id 4, 5) → gagnants vers finale (7), perdants vers petite finale (6)
@@ -386,8 +411,8 @@ def create_bracket_matches(
                 match_id=i,
                 round_name=BracketRoundName.DEMI,
                 position=i,
-                player1_id=seeded_player_ids[a],
-                player2_id=seeded_player_ids[b],
+                player1_id=_sid(a),
+                player2_id=_sid(b),
                 next_match_id=3,
                 loser_next_match_id=2,
             ))
@@ -412,8 +437,8 @@ def create_bracket_matches(
                 match_id=0,
                 round_name=BracketRoundName.FINAL,
                 position=0,
-                player1_id=seeded_player_ids[2],
-                player2_id=seeded_player_ids[3],
+                player1_id=_sid(2),
+                player2_id=_sid(3),
                 is_third_place=True,
             ))
             # Grande finale (match_id 1): 1er vs 2ème
@@ -421,8 +446,8 @@ def create_bracket_matches(
                 match_id=1,
                 round_name=BracketRoundName.FINAL,
                 position=1,
-                player1_id=seeded_player_ids[0],
-                player2_id=seeded_player_ids[1],
+                player1_id=_sid(0),
+                player2_id=_sid(1),
             ))
         else:
             # Seulement 2 joueurs : juste la finale
@@ -430,8 +455,8 @@ def create_bracket_matches(
                 match_id=0,
                 round_name=BracketRoundName.FINAL,
                 position=0,
-                player1_id=seeded_player_ids[0],
-                player2_id=seeded_player_ids[1],
+                player1_id=_sid(0),
+                player2_id=_sid(1),
             ))
 
     return matches

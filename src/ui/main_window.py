@@ -12,10 +12,10 @@ import os
 from core.tournament import Tournament
 from ui.tournaments.tournaments_view_main import TournamentViewMain
 from ui.players.players_view_main import PlayersViewMain
-from ui.commanders.commanders_view_main import CommandersViewMain
 from ui.stats.stats_view_main import StatsViewMain
 from ui.settings_view import SettingsView
 from ui.dashboard.dashboard_view_main import DashboardViewMain
+from ui.commanders.commanders_view_main import CommandersViewMain
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
             ("📊", "Dashboard"),
             ("🏆", "Tournois"),
             ("👥", "Joueurs"),
-            ("🧙", "Commandants"),
+            ("👑", "Commandants"),
             ("📈", "Stats"),
             ("⚙️", "Paramètres"),
         ]:

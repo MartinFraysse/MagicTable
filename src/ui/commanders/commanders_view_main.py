@@ -1,302 +1,352 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QModelIndex, QRectF
+from PySide6.QtGui import QPalette, QColor, QPainter, QBrush, QPen, QFont, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QGridLayout, QMenu, QMessageBox,
-    QSizePolicy,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QFrame,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QMessageBox,
+    QMenu,
+    QAbstractItemView,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
+    QStyle,
+    QLineEdit,
 )
-from PySide6.QtGui import QKeySequence, QShortcut
 
-from core.commander import Commander
-from core.theme_manager import theme_manager
+from core.commander import Commander, MTG_COLORS, COLOR_SYMBOLS, COLOR_HEX, COLOR_LABELS
 from storage.commanders import CommanderStorage
 from ui.commanders.dialogs.create_commander import CreateCommanderDialog
 
 
-# ── Couleurs ──────────────────────────────────────────────────────────────────
-
-_PIP_STYLE = {
-    "W": ("background:#e8e4cc; color:#333333;",),
-    "U": ("background:#2e6ec0; color:#ffffff;",),
-    "B": ("background:#1a1a2e; color:#bbbbbb; border:1px solid #444;",),
-    "R": ("background:#c0392b; color:#ffffff;",),
-    "G": ("background:#1e7a40; color:#ffffff;",),
-}
-
-_BADGE_STYLE = {
-    "commander": "background:rgba(58,214,138,0.18); color:#3ad68a; border:1px solid rgba(58,214,138,0.4);",
-    "duel":      "background:rgba(91,160,224,0.18); color:#5ba0e0; border:1px solid rgba(91,160,224,0.4);",
-    "both":      "background:rgba(168,127,220,0.18); color:#a87fdc; border:1px solid rgba(168,127,220,0.4);",
-}
-
-_CARD_DARK = {
-    "bg":      "qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #184a39,stop:1 #0f2f25)",
-    "border":  "#2a5e45",
-    "name":    "#eafff6",
-    "none":    "#4a6e5a",
-}
-
-_CARD_LIGHT = {
-    "bg":      "qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #ffffff,stop:1 #f0faf7)",
-    "border":  "#c0e0d5",
-    "name":    "#1a3d33",
-    "none":    "#8ab0a0",
-}
-
-
-# ── Carte commandant ──────────────────────────────────────────────────────────
-
-class _CommanderCard(QFrame):
-    edit_requested   = Signal()
-    delete_requested = Signal()
-
-    def __init__(self, commander: Commander, is_dark: bool, parent=None):
+class RowBackgroundDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setCursor(Qt.PointingHandCursor)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_menu)
-        self._cmd = commander
+        self._hover_color = QColor(20, 53, 38)
+        self._selected_color = QColor(24, 70, 48)
 
-        c = _CARD_DARK if is_dark else _CARD_LIGHT
-        self.setStyleSheet(f"""
-            QFrame {{
-                background: {c['bg']};
-                border: 1px solid {c['border']};
-                border-radius: 12px;
-            }}
-            QFrame:hover {{
-                border-color: rgba(58,214,138,0.65);
-            }}
-            QLabel#CardName {{
-                color: {c['name']};
-                font-size: 14px;
-                font-weight: 700;
-                background: transparent;
-                border: none;
-            }}
-            QLabel#CardNone {{
-                color: {c['none']};
-                font-size: 11px;
-                font-style: italic;
-                background: transparent;
-                border: none;
-            }}
-        """)
-        self._build()
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        table = option.widget
+        if table is None:
+            super().paint(painter, option, index)
+            return
 
-    def _build(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(14, 10, 14, 10)
-        layout.setSpacing(6)
+        col = index.column()
+        row = index.row()
+        col_count = table.columnCount()
 
-        # Nom
-        name = QLabel(self._cmd.name)
-        name.setObjectName("CardName")
-        name.setWordWrap(True)
-        layout.addWidget(name)
+        is_selected = table.selectionModel().isRowSelected(row, index.parent())
+        cursor_pos = table.viewport().mapFromGlobal(table.cursor().pos())
+        hovered_index = table.indexAt(cursor_pos)
+        is_hovered = hovered_index.isValid() and hovered_index.row() == row and not is_selected
 
-        # Ligne du bas : pips à gauche, badge à droite
-        bottom = QHBoxLayout()
-        bottom.setSpacing(6)
-        bottom.setContentsMargins(0, 0, 0, 0)
+        if is_selected or is_hovered:
+            painter.save()
+            painter.setRenderHint(QPainter.Antialiasing)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(self._selected_color if is_selected else self._hover_color))
 
-        # Pips de couleur
-        if self._cmd.colors:
-            for c in self._cmd.colors.upper():
-                if c in _PIP_STYLE:
-                    pip = QLabel(c)
-                    pip.setAlignment(Qt.AlignCenter)
-                    pip.setFixedSize(20, 20)
-                    style = _PIP_STYLE[c][0]
-                    pip.setStyleSheet(
-                        f"QLabel {{ {style} border-radius:10px; font-size:9px; font-weight:800; }}"
-                    )
-                    bottom.addWidget(pip)
-        else:
-            none_lbl = QLabel("Incolore")
-            none_lbl.setObjectName("CardNone")
-            bottom.addWidget(none_lbl)
+            cell_rect = option.rect.adjusted(0, 2, 0, -2)
+            if col == 0:
+                cell_rect.setLeft(cell_rect.left() + 4)
+            if col == col_count - 1:
+                cell_rect.setRight(cell_rect.right() - 4)
 
-        bottom.addStretch()
+            if col == 0 and col == col_count - 1:
+                painter.drawRoundedRect(cell_rect, 6, 6)
+            elif col == 0:
+                painter.setClipRect(cell_rect)
+                painter.drawRoundedRect(cell_rect.adjusted(0, 0, 10, 0), 6, 6)
+            elif col == col_count - 1:
+                painter.setClipRect(cell_rect)
+                painter.drawRoundedRect(cell_rect.adjusted(-10, 0, 0, 0), 6, 6)
+            else:
+                painter.drawRect(cell_rect)
 
-        # Badge format aligné à droite
-        badge_style = _BADGE_STYLE.get(self._cmd.format, "")
-        badge = QLabel(self._cmd.format_label)
-        badge.setStyleSheet(
-            f"QLabel {{ {badge_style} border-radius:5px; padding:2px 8px;"
-            f" font-size:10px; font-weight:600; }}"
-        )
-        badge.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        bottom.addWidget(badge)
+            painter.restore()
 
-        layout.addLayout(bottom)
-
-    def mouseDoubleClickEvent(self, event):
-        self.edit_requested.emit()
-        super().mouseDoubleClickEvent(event)
-
-    def _show_menu(self, pos):
-        menu = QMenu(self)
-        edit_action   = menu.addAction("✏️ Modifier")
-        menu.addSeparator()
-        delete_action = menu.addAction("🗑️ Supprimer")
-        action = menu.exec(self.mapToGlobal(pos))
-        if action == edit_action:
-            self.edit_requested.emit()
-        elif action == delete_action:
-            self.delete_requested.emit()
+        opt = QStyleOptionViewItem(option)
+        opt.state &= ~QStyle.State_Selected
+        opt.state &= ~QStyle.State_MouseOver
+        super().paint(painter, opt, index)
 
 
-# ── Vue principale ────────────────────────────────────────────────────────────
+class CommanderTableDelegate(RowBackgroundDelegate):
+    _D = 26   # diamètre des cercles
+    _SP = 6   # espacement
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        super().paint(painter, option, index)
+
+        if index.column() != 1:
+            return
+
+        colors = index.data(Qt.UserRole + 1)
+        if not colors:
+            return
+
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        r = self._D / 2
+        x = option.rect.left() + 14
+        cy = option.rect.center().y()
+
+        font = QFont()
+        font.setPixelSize(14)
+        painter.setFont(font)
+
+        for code in colors:
+            rect = QRectF(x, cy - r, self._D, self._D)
+
+            painter.setBrush(QBrush(QColor(COLOR_HEX[code])))
+            painter.setPen(QPen(QColor(0, 0, 0, 90), 1.5))
+            painter.drawEllipse(rect)
+
+            text_color = QColor("#1a1a1a") if code == "W" else QColor("#ffffff")
+            painter.setPen(text_color)
+            painter.drawText(rect, Qt.AlignCenter, COLOR_SYMBOLS[code])
+
+            x += self._D + self._SP
+
+        painter.restore()
+
 
 class CommandersViewMain(QWidget):
-    _COLS = 3
+    """Vue principale — liste des commandants jouables."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("CommandersViewMain")
+
+        self.setObjectName("PlayersViewMain")
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         self._commanders: list[Commander] = []
         self._next_id = 1
+        self._search_text: str = ""
 
         self._build_ui()
-        self._load()
+        self._load_commanders()
 
     def _build_ui(self):
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(20, 20, 20, 20)
-        outer.setSpacing(20)
-        outer.addWidget(self._build_header())
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
 
-        scroll = QScrollArea()
-        scroll.setObjectName("CommandersScroll")
-        scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setFrameShape(QFrame.NoFrame)
-
-        self._content = QWidget()
-        self._content.setObjectName("CommandersContent")
-        self._content.setAttribute(Qt.WA_StyledBackground, True)
-
-        self._grid = QGridLayout(self._content)
-        self._grid.setContentsMargins(0, 0, 0, 0)
-        self._grid.setSpacing(16)
-        for col in range(self._COLS):
-            self._grid.setColumnStretch(col, 1)
-
-        scroll.setWidget(self._content)
-        outer.addWidget(scroll, 1)
+        layout.addWidget(self._build_header())
+        self.table = self._build_table()
+        layout.addWidget(self.table, 1)
 
     def _build_header(self) -> QFrame:
         frame = QFrame()
-        frame.setObjectName("CommandersHeader")
+        frame.setObjectName("PlayersHeader")
 
         layout = QHBoxLayout(frame)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel("🧙 Commandants")
+        title = QLabel("👑 Commandants")
         title.setObjectName("SectionTitle")
 
-        self._count_label = QLabel("")
-        self._count_label.setObjectName("CountLabel")
+        self.count_label = QLabel("")
+        self.count_label.setObjectName("CountLabel")
+
+        self.search_input = QLineEdit()
+        self.search_input.setObjectName("PlayersSearchInput")
+        self.search_input.setPlaceholderText("🔍 Rechercher un commandant…")
+        self.search_input.setFixedWidth(260)
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.textChanged.connect(self._on_search_changed)
 
         add_btn = QPushButton("➕ Ajouter un commandant")
         add_btn.setObjectName("PrimaryButton")
         add_btn.setCursor(Qt.PointingHandCursor)
-        add_btn.clicked.connect(self._add)
+        add_btn.clicked.connect(self._add_commander)
 
         layout.addWidget(title)
-        layout.addWidget(self._count_label)
+        layout.addWidget(self.count_label)
         layout.addStretch()
+        layout.addWidget(self.search_input)
         layout.addWidget(add_btn)
+
         return frame
 
-    # ── Storage ───────────────────────────────────────────────────────────────
+    def _build_table(self) -> QTableWidget:
+        table = QTableWidget()
+        table.setObjectName("PlayersTable")
 
-    def _load(self):
+        columns = ["Nom du commandant", "Couleurs"]
+        table.setColumnCount(len(columns))
+        table.setHorizontalHeaderLabels(columns)
+
+        table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SingleSelection)
+        table.setAlternatingRowColors(False)
+        table.verticalHeader().setVisible(False)
+        table.setShowGrid(False)
+        table.setFrameShape(QFrame.NoFrame)
+        table.verticalHeader().setDefaultSectionSize(44)
+
+        palette = table.palette()
+        palette.setColor(QPalette.Base, QColor("#0f241d"))
+        palette.setColor(QPalette.Highlight, QColor("#0f241d"))
+        palette.setColor(QPalette.HighlightedText, QColor("#ffffff"))
+        table.setPalette(palette)
+        table.viewport().setAutoFillBackground(True)
+
+        table.setItemDelegate(CommanderTableDelegate(table))
+        table.setMouseTracking(True)
+        table.viewport().setMouseTracking(True)
+
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.Fixed)
+        table.setColumnWidth(1, 170)
+
+        table.setContextMenuPolicy(Qt.CustomContextMenu)
+        table.customContextMenuRequested.connect(self._show_context_menu)
+        table.doubleClicked.connect(self._edit_selected)
+
+        QShortcut(QKeySequence(Qt.Key_Delete), table).activated.connect(self._delete_selected)
+
+        return table
+
+    def _load_commanders(self):
         raw = CommanderStorage.load()
         self._commanders = [Commander.from_dict(d) for d in raw]
         if self._commanders:
             self._next_id = max(c.id for c in self._commanders) + 1
-        self._refresh_grid()
+        self._refresh_table()
 
-    def _save(self):
+    def _save_commanders(self):
         CommanderStorage.save([c.to_dict() for c in self._commanders])
 
-    def refresh(self):
-        self._load()
+    def _on_search_changed(self, text: str):
+        self._search_text = text.strip().lower()
+        self._refresh_table()
 
-    # ── Grille ────────────────────────────────────────────────────────────────
-
-    def _clear_grid(self):
-        while self._grid.count():
-            item = self._grid.takeAt(0)
-            w = item.widget()
-            if w:
-                w.deleteLater()
-
-    def _refresh_grid(self):
-        self._clear_grid()
+    def _refresh_table(self):
         self._commanders.sort(key=lambda c: c.name.lower())
 
-        count = len(self._commanders)
-        self._count_label.setText(f"({count})" if count else "")
+        filtered = self._commanders
+        if self._search_text:
+            filtered = [c for c in self._commanders if self._search_text in c.name.lower()]
 
-        is_dark = theme_manager.get_theme() == "dark"
+        self.table.setRowCount(len(filtered))
+        for row, commander in enumerate(filtered):
+            self._set_row(row, commander)
 
-        if not self._commanders:
-            empty = QLabel("Aucun commandant enregistré.\nCliquez sur « Ajouter un commandant » pour commencer.")
-            empty.setObjectName("CommandersEmptyState")
-            empty.setAlignment(Qt.AlignCenter)
-            self._grid.addWidget(empty, 0, 0, 1, self._COLS)
-            self._grid.setRowStretch(1, 1)
-            return
+        total = len(self._commanders)
+        shown = len(filtered)
+        if self._search_text and shown < total:
+            self.count_label.setText(f"({shown}/{total})")
+        else:
+            self.count_label.setText(f"({total})" if total > 0 else "")
 
-        for i, cmd in enumerate(self._commanders):
-            row, col = divmod(i, self._COLS)
-            card = _CommanderCard(cmd, is_dark, self)
-            card.edit_requested.connect(lambda c=cmd: self._edit(c))
-            card.delete_requested.connect(lambda c=cmd: self._delete(c))
-            self._grid.addWidget(card, row, col)
+    def refresh(self):
+        self._load_commanders()
 
-        last_row = (count - 1) // self._COLS + 1
-        self._grid.setRowStretch(last_row, 1)
+    def _format_colors(self, commander: Commander) -> str:
+        """Formate les couleurs pour l'affichage dans le tableau."""
+        if commander.is_colorless:
+            return "Incolore"
+        return "  ".join(
+            f"{COLOR_SYMBOLS[c]} {COLOR_LABELS[c]}"
+            for c in MTG_COLORS
+            if c in commander.colors
+        )
 
-    # ── Actions ───────────────────────────────────────────────────────────────
+    def _set_row(self, row: int, commander: Commander):
+        name_item = QTableWidgetItem(commander.name)
+        name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+        name_item.setData(Qt.UserRole, commander.id)
+        self.table.setItem(row, 0, name_item)
 
-    def _existing_names(self) -> list[str]:
+        if commander.is_colorless:
+            colors_item = QTableWidgetItem("Incolore")
+        else:
+            colors_item = QTableWidgetItem("")
+            colors_item.setData(Qt.UserRole + 1, [c for c in MTG_COLORS if c in commander.colors])
+        colors_item.setFlags(colors_item.flags() & ~Qt.ItemIsEditable)
+        self.table.setItem(row, 1, colors_item)
+
+    def _get_existing_names(self) -> list[str]:
         return [c.name for c in self._commanders]
 
-    def _add(self):
-        dialog = CreateCommanderDialog(self, existing_names=self._existing_names())
+    def _add_commander(self):
+        dialog = CreateCommanderDialog(self, existing_names=self._get_existing_names())
         if not dialog.exec():
             return
+
         data = dialog.get_data()
-        cmd = Commander(id=self._next_id, **data)
+        commander = Commander(id=self._next_id, name=data["name"], colors=data["colors"])
         self._next_id += 1
-        self._commanders.append(cmd)
-        self._save()
-        self._refresh_grid()
+        self._commanders.append(commander)
+        self._save_commanders()
+        self._refresh_table()
 
-    def _edit(self, cmd: Commander):
-        dialog = CreateCommanderDialog(self, commander=cmd, existing_names=self._existing_names())
+    def _get_selected_commander(self) -> Commander | None:
+        row = self.table.currentRow()
+        if row < 0:
+            return None
+        item = self.table.item(row, 0)
+        if not item:
+            return None
+        commander_id = item.data(Qt.UserRole)
+        return next((c for c in self._commanders if c.id == commander_id), None)
+
+    def _edit_selected(self):
+        commander = self._get_selected_commander()
+        if not commander:
+            return
+
+        dialog = CreateCommanderDialog(
+            self,
+            commander=commander,
+            existing_names=self._get_existing_names(),
+        )
         if not dialog.exec():
             return
-        dialog.apply_changes()
-        self._save()
-        self._refresh_grid()
 
-    def _delete(self, cmd: Commander):
+        dialog.apply_changes()
+        self._save_commanders()
+        self._refresh_table()
+
+    def _delete_selected(self):
+        commander = self._get_selected_commander()
+        if not commander:
+            return
+
         reply = QMessageBox.question(
             self,
             "Supprimer le commandant",
-            f"Supprimer définitivement « {cmd.name} » ?",
+            f"Supprimer définitivement « {commander.name} » ?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
         if reply != QMessageBox.Yes:
             return
-        self._commanders = [c for c in self._commanders if c.id != cmd.id]
-        self._save()
-        self._refresh_grid()
+
+        self._commanders = [c for c in self._commanders if c.id != commander.id]
+        self._save_commanders()
+        self._refresh_table()
+
+    def _show_context_menu(self, pos):
+        item = self.table.itemAt(pos)
+        if not item:
+            return
+
+        menu = QMenu(self)
+        edit_action = menu.addAction("✏️ Modifier")
+        menu.addSeparator()
+        delete_action = menu.addAction("🗑️ Supprimer")
+
+        action = menu.exec(self.table.viewport().mapToGlobal(pos))
+        if action == edit_action:
+            self._edit_selected()
+        elif action == delete_action:
+            self._delete_selected()

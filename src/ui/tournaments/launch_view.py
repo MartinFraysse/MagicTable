@@ -75,8 +75,7 @@ class BrowsePlayersDialog(QDialog):
         self.setWindowTitle("Joueurs permanents")
         self.setModal(True)
         self.setObjectName("BrowsePlayersDialog")
-        self.setMinimumWidth(280)
-        self.setMinimumHeight(400)
+        self.setFixedSize(400, 480)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         self._regular_players = sorted(regular_players, key=lambda p: p.pseudo.lower())

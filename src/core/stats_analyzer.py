@@ -9,49 +9,6 @@ from core.standings import build_standings
 from core.bracket import get_bracket_final_ranking
 
 
-@dataclass
-class CommanderEntry:
-    """Commandant joue par un joueur dans un tournoi."""
-    commander_name: str
-    format: str
-    tournament_name: str
-    tournament_date: str
-    rank: int = 0
-    matches_played: int = 0   # matchs individuels joués dans ce tournoi
-    matches_won: int = 0      # matchs individuels gagnés dans ce tournoi
-
-
-@dataclass
-class CommanderStats:
-    """Statistiques agrégées d'un commandant pour un joueur."""
-    commander_name: str
-    played: int = 0           # tournois joués
-    top1: int = 0
-    top2: int = 0
-    top3: int = 0
-    matches_played: int = 0   # total matchs individuels
-    matches_won: int = 0      # total matchs individuels gagnés
-
-    @property
-    def winrate(self) -> float:
-        if self.matches_played == 0:
-            return 0.0
-        return (self.matches_won / self.matches_played) * 100
-
-
-@dataclass
-class CommanderMatchup:
-    """Confrontation d'un commandant contre un commandant adverse."""
-    opponent_commander: str
-    matches_played: int = 0
-    matches_won: int = 0
-
-    @property
-    def winrate(self) -> float:
-        if self.matches_played == 0:
-            return 0.0
-        return (self.matches_won / self.matches_played) * 100
-
 
 @dataclass
 class HeadToHeadResult:
@@ -100,8 +57,6 @@ class PlayerStats:
     top_2: int = 0
     top_3: int = 0
     total_points: int = 0
-    commanders: list[CommanderEntry] = field(default_factory=list)
-
     @property
     def total_podiums(self) -> int:
         return self.top_1 + self.top_2 + self.top_3
@@ -193,18 +148,6 @@ class StatsAnalyzer:
 
             p_played, p_won = player_match_stats.get(player.id, (0, 0))
             stats.total_matches += p_played
-
-            # Collecter le commandant joue
-            if player.commander:
-                stats.commanders.append(CommanderEntry(
-                    commander_name=player.commander,
-                    format=tournament.format,
-                    tournament_name=tournament.name,
-                    tournament_date=tournament.date,
-                    rank=rank,
-                    matches_played=p_played,
-                    matches_won=p_won,
-                ))
 
     def get_global_stats(self) -> dict:
         """Retourne les statistiques globales."""
@@ -366,191 +309,6 @@ class StatsAnalyzer:
         result = list(matchups.values())
         result.sort(key=lambda m: (-m.total_matches, -m.wins, m.opponent_name.lower()))
         return result
-
-    def get_player_commander_stats(self, player_name: str, fmt: str) -> list[CommanderStats]:
-        """
-        Retourne les stats agrégées par commandant pour un joueur dans un format donné.
-        Triées par nombre de parties jouées décroissant, puis win rate décroissant.
-        """
-        player_key = self._normalize_name(player_name)
-        player_stats = self._player_stats.get(player_key)
-        if not player_stats:
-            return []
-
-        agg: dict[str, CommanderStats] = {}
-        for entry in player_stats.commanders:
-            if entry.format != fmt:
-                continue
-            cmd = entry.commander_name
-            if cmd not in agg:
-                agg[cmd] = CommanderStats(commander_name=cmd)
-            s = agg[cmd]
-            s.played += 1
-            s.matches_played += entry.matches_played
-            s.matches_won += entry.matches_won
-            if entry.rank == 1:
-                s.top1 += 1
-            elif entry.rank == 2:
-                s.top2 += 1
-            elif entry.rank == 3:
-                s.top3 += 1
-
-        result = list(agg.values())
-        result.sort(key=lambda x: (-x.winrate, -x.played, x.commander_name.lower()))
-        return result
-
-    def get_global_commander_stats(self, fmt: str) -> list[CommanderStats]:
-        """
-        Retourne les stats agrégées de TOUS les commandants pour un format donné,
-        tous joueurs confondus.
-        Win rate basé sur les matchs individuels (pas le classement final).
-        Triées par win rate décroissant, puis matchs joués décroissant.
-        """
-        agg: dict[str, CommanderStats] = {}
-        for player_stats in self._player_stats.values():
-            for entry in player_stats.commanders:
-                if entry.format != fmt:
-                    continue
-                cmd = entry.commander_name
-                if cmd not in agg:
-                    agg[cmd] = CommanderStats(commander_name=cmd)
-                s = agg[cmd]
-                s.played += 1
-                s.matches_played += entry.matches_played
-                s.matches_won += entry.matches_won
-                if entry.rank == 1:
-                    s.top1 += 1
-                elif entry.rank == 2:
-                    s.top2 += 1
-                elif entry.rank == 3:
-                    s.top3 += 1
-
-        result = list(agg.values())
-        result.sort(key=lambda x: (-x.winrate, -x.matches_played, x.commander_name.lower()))
-        return result
-
-    def get_commander_matchups(self, commander_name: str, fmt: str) -> list[CommanderMatchup]:
-        """
-        Retourne les confrontations d'un commandant contre tous les commandants adverses,
-        dans un format donné. Win rate basé sur les matchs individuels.
-        """
-        cmd_key = self._normalize_name(commander_name)
-        agg: dict[str, CommanderMatchup] = {}
-
-        for tournament in self._tournaments:
-            if tournament.format != fmt:
-                continue
-
-            players_by_id = {p.id: p for p in tournament.players}
-
-            # Rounds Swiss / standard
-            for rnd in tournament.rounds:
-                for table in rnd.tables:
-                    if len(table.players) < 2:
-                        continue  # BYE
-
-                    # Trouver si notre commandant est à cette table
-                    our_player = next(
-                        (p for p in table.players
-                         if p.commander and self._normalize_name(p.commander) == cmd_key),
-                        None,
-                    )
-                    if our_player is None:
-                        continue
-
-                    our_win = table.results.get(our_player.id, 99) == 1
-
-                    for opp in table.players:
-                        if opp.id == our_player.id or not opp.commander:
-                            continue
-                        opp_cmd = opp.commander
-                        if opp_cmd not in agg:
-                            agg[opp_cmd] = CommanderMatchup(opponent_commander=opp_cmd)
-                        m = agg[opp_cmd]
-                        m.matches_played += 1
-                        if our_win:
-                            m.matches_won += 1
-
-            # Bracket
-            if tournament.bracket:
-                for match in tournament.bracket.matches:
-                    if not match.finished:
-                        continue
-                    p1 = players_by_id.get(match.player1_id)
-                    p2 = players_by_id.get(match.player2_id)
-                    if not p1 or not p2:
-                        continue
-
-                    if p1.commander and self._normalize_name(p1.commander) == cmd_key:
-                        our_player, opp = p1, p2
-                    elif p2.commander and self._normalize_name(p2.commander) == cmd_key:
-                        our_player, opp = p2, p1
-                    else:
-                        continue
-
-                    if not opp.commander:
-                        continue
-                    opp_cmd = opp.commander
-                    if opp_cmd not in agg:
-                        agg[opp_cmd] = CommanderMatchup(opponent_commander=opp_cmd)
-                    m = agg[opp_cmd]
-                    m.matches_played += 1
-                    if match.winner_id == our_player.id:
-                        m.matches_won += 1
-
-        result = list(agg.values())
-        result.sort(key=lambda x: (-x.matches_played, -x.winrate, x.opponent_commander.lower()))
-        return result
-
-    def get_commander_highlights(self, format_name: str) -> dict:
-        """
-        Retourne le commandant le plus joué et le plus victorieux pour un format donné.
-        Retourne {"most_played": (name, count) | None, "most_wins": (name, count) | None}
-        """
-        play_count: dict[str, int] = defaultdict(int)
-        win_count: dict[str, int] = defaultdict(int)
-
-        for tournament in self._tournaments:
-            if tournament.format != format_name:
-                continue
-
-            players_by_id = {p.id: p for p in tournament.players}
-
-            if tournament.is_1v1_format():
-                standings = build_standings(tournament)
-                swiss_ordered = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
-            else:
-                swiss_ordered = sorted(
-                    tournament.players,
-                    key=lambda p: (-p.score, -p.robustness, p.name),
-                )
-
-            if tournament.bracket:
-                swiss_ids = [p.id for p in swiss_ordered]
-                final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
-                ranked = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
-            else:
-                ranked = swiss_ordered
-
-            for rank, player in enumerate(ranked, 1):
-                if not player.commander:
-                    continue
-                cmd = player.commander
-                play_count[cmd] += 1
-                if rank == 1:
-                    win_count[cmd] += 1
-
-        most_played = None
-        if play_count:
-            name = max(play_count, key=play_count.get)
-            most_played = (name, play_count[name])
-
-        most_wins = None
-        if win_count:
-            name = max(win_count, key=win_count.get)
-            most_wins = (name, win_count[name])
-
-        return {"most_played": most_played, "most_wins": most_wins}
 
     def get_head_to_head(self, player_name: str, opponent_name: str) -> MatchupStats | None:
         """Retourne les stats détaillées entre deux joueurs."""

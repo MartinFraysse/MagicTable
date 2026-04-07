@@ -81,6 +81,7 @@ class DashboardViewMain(QWidget):
         # === CLASSEMENT
         self.ranking_view = DashboardRankingView(self)
         root.addWidget(self.ranking_view, 0)
+        self.ranking_view.player_remove_requested.connect(self._remove_player_from_tournament)
 
         # === TABLES
         self.tables_view = DashboardTablesView(self)
@@ -565,6 +566,105 @@ class DashboardViewMain(QWidget):
 
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
+
+    # ======================================================
+    # Drop player from tournament (abandon / forfait)
+    # ======================================================
+    def _remove_player_from_tournament(self, player_id: int):
+        if not self.current_tournament:
+            return
+
+        player = next((p for p in self.current_tournament.players if p.id == player_id), None)
+        if not player:
+            return
+
+        if player.dropped:
+            QMessageBox.information(
+                self, "Abandon",
+                f"« {player.name} » a déjà abandonné le tournoi."
+            )
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Abandon du joueur",
+            f"Marquer « {player.name} » comme abandon ?\n\n"
+            "Il conserve ses résultats passés mais ne participera plus aux rounds suivants.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        # Marquer comme droppé
+        player.dropped = True
+        dropped_ids = {p.id for p in self.current_tournament.players if p.dropped}
+
+        bracket = self.current_tournament.bracket
+
+        if bracket:
+            # ── Phase bracket : auto-forfait des matchs impliquant ce joueur ──
+            resolved = bracket.auto_resolve_dropped(dropped_ids)
+            if resolved:
+                self._refresh_bracket_ui()
+                # Vérifier si tous les matchs du round bracket sont terminés
+                if self._all_bracket_round_matches_finished():
+                    self.round_controls.set_next_enabled(True)
+                    round_order = bracket.get_round_order()
+                    is_last = self._bracket_displayed_round == round_order[-1]
+                    self.round_controls.set_finish_mode(is_last)
+        else:
+            # ── Phase Swiss : gérer le round en cours ─────────────────────────
+            if self.current_round and self.current_round.tables:
+                for table in self.current_round.tables:
+                    if player not in table.players or table.finished:
+                        continue
+
+                    if len(table.players) == 2:
+                        # 1v1 : victoire par forfait pour l'adversaire
+                        other = next(p for p in table.players if p.id != player_id)
+                        table.results = {other.id: 1, player_id: 2}
+                        table.game_scores = {other.id: 2, player_id: 0}
+                        table.finished = True
+                    elif len(table.players) >= 3:
+                        # Commander : dernière place automatique, les autres continuent
+                        n = len(table.players)
+                        table.results[player_id] = n
+                    break
+
+            # Recalculer les scores
+            if self.current_tournament.is_1v1_format():
+                self._apply_1v1_standings()
+            else:
+                self.current_tournament.recalculate_robustness()
+
+            if self.current_round:
+                self.tables_view.set_round(self.current_round)
+
+            # Vérifier si tous les matchs Swiss sont maintenant terminés
+            if self.current_round and self._all_tables_finished():
+                if not self.current_tournament.is_1v1_format():
+                    self.current_tournament.recalculate_robustness()
+                self.round_controls.set_next_enabled(True)
+                if self.current_tournament.can_create_round():
+                    self.round_controls.set_finish_mode(False)
+                else:
+                    self.round_controls.set_finish_mode(True)
+
+        self.ranking_view.set_tournament(self.current_tournament)
+        self._update_projection()
+        self.tournament_changed.emit()
+
+    def _refresh_bracket_ui(self):
+        """Rafraîchit l'affichage du bracket après un changement."""
+        bracket = self.current_tournament.bracket
+        if not bracket or not self._bracket_displayed_round:
+            return
+        players_by_id = {p.id: p for p in self.current_tournament.players}
+        matches = bracket.get_matches_for_round(self._bracket_displayed_round)
+        self.tables_view.set_bracket_round(matches, players_by_id)
+        self.ranking_view.set_tournament(self.current_tournament)
+        self._update_bracket_tiles()
 
     def _apply_table_scores(self, table: Table):
         """Applique les scores aux joueurs et affiche le résultat."""

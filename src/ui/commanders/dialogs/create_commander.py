@@ -1,26 +1,18 @@
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QLabel, QLineEdit, QButtonGroup,
-    QPushButton, QWidget,
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QFormLayout,
+    QCheckBox,
+    QFrame,
 )
 
-from core.commander import Commander
-
-
-_COLORS = [
-    ("W", "☀️  W"),
-    ("U", "💧  U"),
-    ("B", "💀  B"),
-    ("R", "🔥  R"),
-    ("G", "🌿  G"),
-]
-
-_FORMAT_OPTIONS = [
-    ("duel",      "⚔️  Duel"),
-    ("commander", "👑  Multi"),
-    ("both",      "Les deux"),
-]
+from core.commander import Commander, MTG_COLORS, COLOR_LABELS, COLOR_SYMBOLS, COLOR_HEX
 
 
 class CreateCommanderDialog(QDialog):
@@ -37,21 +29,31 @@ class CreateCommanderDialog(QDialog):
         self._commander = commander
         self._is_edit = commander is not None
         self._existing_names = [n.lower() for n in (existing_names or [])]
+
         if self._is_edit and commander:
-            self._existing_names = [n for n in self._existing_names if n != commander.name.lower()]
+            self._existing_names = [
+                n for n in self._existing_names if n != commander.name.lower()
+            ]
 
         self.setWindowTitle("Modifier le commandant" if self._is_edit else "Nouveau commandant")
         self.setModal(True)
-        self.setFixedSize(460, 310)
-        self.setObjectName("CreateCommanderDialog")
+        self.setFixedSize(420, 320)
+        self.setObjectName("CreatePlayerDialog")
+
+        self.setAttribute(Qt.WA_TranslucentBackground, False)
+        palette = self.palette()
+        palette.setColor(QPalette.Window, QColor("#0f241d"))
+        self.setPalette(palette)
+
+        self._color_checkboxes: dict[str, QPushButton] = {}
 
         self._build_ui()
         self._load_data()
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(14)
-        layout.setContentsMargins(24, 18, 24, 18)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 20, 24, 20)
 
         # Titre
         title = QLabel("✏️ Modifier le commandant" if self._is_edit else "➕ Nouveau commandant")
@@ -59,14 +61,12 @@ class CreateCommanderDialog(QDialog):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
 
-        # Formulaire
+        # Formulaire nom
         form = QFormLayout()
-        form.setSpacing(10)
-        form.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        form.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        form.setSpacing(8)
 
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Nom du commandant")
+        self.name_input.setPlaceholderText("Ex : Atraxa, Praetors' Voice")
         self.name_input.setObjectName("DialogInput")
         self.name_input.textChanged.connect(self._clear_error)
         self.name_input.returnPressed.connect(self._validate_and_accept)
@@ -77,51 +77,42 @@ class CreateCommanderDialog(QDialog):
         self.error_label.hide()
         form.addRow("", self.error_label)
 
-        # Format — 3 boutons exclusifs
-        fmt_widget = QWidget()
-        fmt_layout = QHBoxLayout(fmt_widget)
-        fmt_layout.setContentsMargins(0, 0, 0, 0)
-        fmt_layout.setSpacing(8)
-
-        self._format_group = QButtonGroup(self)
-        self._format_group.setExclusive(True)
-        self._format_btns: dict[str, QPushButton] = {}
-
-        for key, label in _FORMAT_OPTIONS:
-            btn = QPushButton(label)
-            btn.setObjectName("FormatButton")
-            btn.setCheckable(True)
-            btn.setCursor(Qt.PointingHandCursor)
-            self._format_group.addButton(btn)
-            self._format_btns[key] = btn
-            fmt_layout.addWidget(btn)
-
-        fmt_layout.addStretch()
-        form.addRow("Format", fmt_widget)
-
-        # Couleurs — 5 boutons carrés MTG
-        color_widget = QWidget()
-        color_layout = QHBoxLayout(color_widget)
-        color_layout.setContentsMargins(0, 0, 0, 0)
-        color_layout.setSpacing(8)
-
-        self._color_btns: dict[str, QPushButton] = {}
-        for letter, label in _COLORS:
-            btn = QPushButton(label)
-            btn.setObjectName(f"ColorBtn_{letter}")
-            btn.setCheckable(True)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.setFixedSize(62, 52)
-            self._color_btns[letter] = btn
-            color_layout.addWidget(btn)
-
-        color_layout.addStretch()
-        form.addRow("Couleurs", color_widget)
-
         layout.addLayout(form)
+
+        # Section couleurs
+        colors_label = QLabel("Couleurs")
+        colors_label.setObjectName("StatsLabel")
+        layout.addWidget(colors_label)
+
+        colors_row = QHBoxLayout()
+        colors_row.setSpacing(10)
+        colors_row.setAlignment(Qt.AlignCenter)
+
+        for code in MTG_COLORS:
+            btn = QPushButton(COLOR_SYMBOLS[code])
+            btn.setCheckable(True)
+            btn.setObjectName("ColorToggleButton")
+            btn.setFixedSize(38, 38)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setToolTip(COLOR_LABELS[code])
+            btn.setProperty("colorCode", code)
+            btn.setStyleSheet(self._get_color_btn_style(code, False))
+            btn.toggled.connect(lambda checked, b=btn, c=code: self._on_color_toggled(b, c, checked))
+
+            self._color_checkboxes[code] = btn
+            colors_row.addWidget(btn)
+
+        layout.addLayout(colors_row)
+
+        # Aperçu incolore
+        self.colorless_label = QLabel("Incolore")
+        self.colorless_label.setObjectName("StatsLabel")
+        self.colorless_label.hide()
+        layout.addWidget(self.colorless_label)
+
         layout.addStretch()
 
-        # Boutons d'action
+        # Boutons
         buttons = QHBoxLayout()
         buttons.setSpacing(12)
 
@@ -136,22 +127,57 @@ class CreateCommanderDialog(QDialog):
         buttons.addStretch()
         buttons.addWidget(cancel_btn)
         buttons.addWidget(self.save_btn)
+
         layout.addLayout(buttons)
 
         self.name_input.setFocus()
 
-        # Format par défaut : "Les deux"
-        self._format_btns["both"].setChecked(True)
+    def _get_color_btn_style(self, code: str, checked: bool) -> str:
+        hex_color = COLOR_HEX[code]
+        size = "min-width:38px;max-width:38px;min-height:38px;max-height:38px;padding:0px;"
+        if checked:
+            text_color = "#1a1a1a" if code == "W" else "#ffffff"
+            return (
+                f"QPushButton {{"
+                f"  {size}"
+                f"  background-color: {hex_color};"
+                f"  color: {text_color};"
+                f"  border: 3px solid rgba(255,255,255,0.85);"
+                f"  border-radius: 19px;"
+                f"  font-size: 18px;"
+                f"}}"
+                f"QPushButton:hover {{"
+                f"  border: 3px solid rgba(255,255,255,1);"
+                f"}}"
+            )
+        else:
+            return (
+                f"QPushButton {{"
+                f"  {size}"
+                f"  background-color: #132f26;"
+                f"  color: {hex_color};"
+                f"  border: 2px solid {hex_color}99;"
+                f"  border-radius: 19px;"
+                f"  font-size: 18px;"
+                f"}}"
+                f"QPushButton:hover {{"
+                f"  background-color: {hex_color}22;"
+                f"  border: 2px solid {hex_color};"
+                f"}}"
+            )
+
+    def _on_color_toggled(self, btn: QPushButton, code: str, checked: bool):
+        btn.setStyleSheet(self._get_color_btn_style(code, checked))
+
+        any_checked = any(b.isChecked() for b in self._color_checkboxes.values())
+        self.colorless_label.setVisible(not any_checked)
 
     def _load_data(self):
         if not self._commander:
             return
         self.name_input.setText(self._commander.name)
-        fmt = self._commander.format
-        if fmt in self._format_btns:
-            self._format_btns[fmt].setChecked(True)
-        for letter, btn in self._color_btns.items():
-            btn.setChecked(letter in self._commander.colors.upper())
+        for code, btn in self._color_checkboxes.items():
+            btn.setChecked(code in self._commander.colors)
 
     def _clear_error(self):
         self.error_label.hide()
@@ -178,22 +204,15 @@ class CreateCommanderDialog(QDialog):
         self.accept()
 
     def get_data(self) -> dict:
-        fmt = "both"
-        for key, btn in self._format_btns.items():
-            if btn.isChecked():
-                fmt = key
-                break
-        colors = "".join(l for l, btn in self._color_btns.items() if btn.isChecked())
+        colors = [code for code, btn in self._color_checkboxes.items() if btn.isChecked()]
         return {
-            "name":   self.name_input.text().strip(),
+            "name": self.name_input.text().strip(),
             "colors": colors,
-            "format": fmt,
         }
 
     def apply_changes(self):
         if not self._commander:
             return
         data = self.get_data()
-        self._commander.name   = data["name"]
+        self._commander.name = data["name"]
         self._commander.colors = data["colors"]
-        self._commander.format = data["format"]

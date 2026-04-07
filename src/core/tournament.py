@@ -122,7 +122,8 @@ class Tournament:
         """
         Génère les tables à partir des scores et de la robustesse.
         """
-        player_count = len(self.players)
+        active_players = [p for p in self.players if not p.dropped]
+        player_count = len(active_players)
 
         table_sizes = self.compute_table_sizes(player_count)
 
@@ -188,15 +189,16 @@ class Tournament:
 
     def sort_players(self) -> list[Player]:
         """
-        Trie les joueurs selon les règles métier.
+        Trie les joueurs actifs (non droppés) selon les règles métier.
         """
-        if all(p.score == 0 for p in self.players):
-            shuffled = self.players[:]
+        active = [p for p in self.players if not p.dropped]
+        if all(p.score == 0 for p in active):
+            shuffled = active[:]
             random.shuffle(shuffled)
             return shuffled
 
         return sorted(
-            self.players,
+            active,
             key=lambda p: (p.score, p.robustness),
             reverse=True
         )
@@ -278,8 +280,9 @@ class Tournament:
         Vérifie si la prochaine génération de tables par score aurait des répétitions.
         Retourne (has_repetitions, repetition_rate).
         """
-        # Simuler la génération de tables par score
-        table_sizes = self.compute_table_sizes(len(self.players))
+        # Simuler la génération de tables par score (joueurs actifs uniquement)
+        active_count = sum(1 for p in self.players if not p.dropped)
+        table_sizes = self.compute_table_sizes(active_count)
         if table_sizes is None:
             return False, 0.0
 
@@ -321,12 +324,13 @@ class Tournament:
         """
         Génère des tables en minimisant les répétitions et diversifiant la robustesse.
         """
-        table_sizes = self.compute_table_sizes(len(self.players))
+        active_players = [p for p in self.players if not p.dropped]
+        table_sizes = self.compute_table_sizes(len(active_players))
         if table_sizes is None:
             return []
 
         opponents_map = self.get_opponents_map()
-        available_players = self.players[:]
+        available_players = active_players[:]
         random.shuffle(available_players)  # Mélanger pour ajouter de l'aléatoire
 
         tables: list[Table] = []
@@ -393,8 +397,9 @@ class Tournament:
         standings = build_standings(self)
         standings_order = [e.player_id for e in standings]
 
+        active_players = [p for p in self.players if not p.dropped]
         result = generate_swiss_pairings(
-            self.players,
+            active_players,
             opponents_map,
             self.bye_history,
             standings_order=standings_order,
@@ -476,20 +481,30 @@ class Tournament:
         self.max_rounds = max_rounds
 
     def start_bracket(self, bracket_type: BracketType) -> Bracket:
-        """Lance la phase de bracket d'élimination à partir du classement actuel."""
+        """Lance la phase de bracket d'élimination à partir du classement actuel.
+        Les joueurs droppés sont exclus du seeding ; on recrute plus loin dans le classement
+        pour toujours remplir le bracket.
+        """
         standings = build_standings(self)
-        seeded_ids = [e.player_id for e in standings]
+        dropped_ids = {p.id for p in self.players if p.dropped}
+
+        # Exclure les droppés du seeding, on prend le nombre requis parmi les actifs
+        active_seeded_ids = [e.player_id for e in standings if e.player_id not in dropped_ids]
 
         required = {
-            BracketType.FINAL: 4,  # Top 4 pour permettre la petite finale (3ème place)
+            BracketType.FINAL: 4,
             BracketType.DEMI_FINALE: 4,
             BracketType.QUART_DE_FINALE: 8,
         }
-        n = min(required[bracket_type], len(seeded_ids))
-        seeded_ids = seeded_ids[:n]
+        n = min(required[bracket_type], len(active_seeded_ids))
+        seeded_ids = active_seeded_ids[:n]
 
         matches = create_bracket_matches(bracket_type, seeded_ids)
         self.bracket = Bracket(bracket_type=bracket_type, matches=matches)
+
+        # Auto-résoudre les byes (slots vides ou joueurs droppés) dès la création
+        self.bracket.auto_resolve_dropped(dropped_ids)
+
         return self.bracket
 
     @property
@@ -603,6 +618,7 @@ class Tournament:
                     "buchholz": p.buchholz,
                     "sos": p.sos,
                     "had_bye": p.had_bye,
+                    "dropped": p.dropped,
                 }
                 for p in self.players
             ],
@@ -639,6 +655,7 @@ class Tournament:
                 buchholz=p.get("buchholz", 0.0),
                 sos=p.get("sos", 0.0),
                 had_bye=p.get("had_bye", False),
+                dropped=p.get("dropped", False),
             )
             tournament.players.append(player)
             tournament._next_player_id = max(

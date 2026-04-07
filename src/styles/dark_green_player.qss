@@ -56,6 +56,28 @@
 }
 
 /* =======================================================================
+   SEARCH INPUT
+   ======================================================================= */
+
+#PlayersSearchInput {
+    min-height: 32px;
+    padding: 6px 12px;
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #132f26, stop:1 #0f241d);
+    border: 1px solid #5fa693;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 500;
+}
+#PlayersSearchInput::placeholder {
+    color: #9fcab8;
+}
+#PlayersSearchInput:focus {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #153a2e, stop:1 #132f26);
+    border-color: #7fd9bb;
+}
+
+/* =======================================================================
    PLAYERS TABLE
    ======================================================================= */
 

@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QStyledItemDelegate,
     QStyleOptionViewItem,
     QStyle,
+    QLineEdit,
 )
 
 from core.regular_player import RegularPlayer
@@ -115,6 +116,7 @@ class PlayersViewMain(QWidget):
         self._next_id = 1
         self._calculated_points: dict[str, int] = {}  # pseudo.lower() -> points calculés
         self._analyzer: StatsAnalyzer | None = None
+        self._search_text: str = ""
 
         self._build_ui()
         self._load_players()
@@ -145,6 +147,13 @@ class PlayersViewMain(QWidget):
         self.count_label = QLabel("")
         self.count_label.setObjectName("CountLabel")
 
+        self.search_input = QLineEdit()
+        self.search_input.setObjectName("PlayersSearchInput")
+        self.search_input.setPlaceholderText("🔍 Rechercher un joueur…")
+        self.search_input.setFixedWidth(240)
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.textChanged.connect(self._on_search_changed)
+
         add_btn = QPushButton("➕ Ajouter un joueur")
         add_btn.setObjectName("PrimaryButton")
         add_btn.setCursor(Qt.PointingHandCursor)
@@ -153,6 +162,7 @@ class PlayersViewMain(QWidget):
         layout.addWidget(title)
         layout.addWidget(self.count_label)
         layout.addStretch()
+        layout.addWidget(self.search_input)
         layout.addWidget(add_btn)
 
         return frame
@@ -251,19 +261,36 @@ class PlayersViewMain(QWidget):
         """Retourne les points calculés pour un joueur."""
         return self._calculated_points.get(player.pseudo.lower().strip(), 0)
 
+    def _on_search_changed(self, text: str):
+        self._search_text = text.strip().lower()
+        self._refresh_table()
+
     def _refresh_table(self):
         """Rafraîchit la table des joueurs."""
         # Trier par points calculés décroissants, puis par pseudo
         self._players.sort(key=lambda p: (-self._get_player_points(p), p.pseudo.lower()))
 
-        self.table.setRowCount(len(self._players))
+        # Filtrer selon la recherche
+        filtered = self._players
+        if self._search_text:
+            filtered = [
+                p for p in self._players
+                if self._search_text in p.pseudo.lower()
+                or self._search_text in p.full_name.lower()
+            ]
 
-        for row, player in enumerate(self._players):
+        self.table.setRowCount(len(filtered))
+
+        for row, player in enumerate(filtered):
             self._set_row(row, player)
 
         # Mise à jour du compteur
-        count = len(self._players)
-        self.count_label.setText(f"({count})" if count > 0 else "")
+        total = len(self._players)
+        shown = len(filtered)
+        if self._search_text and shown < total:
+            self.count_label.setText(f"({shown}/{total})")
+        else:
+            self.count_label.setText(f"({total})" if total > 0 else "")
 
     def refresh(self):
         """Recharge les joueurs depuis le storage et rafraîchit la table."""

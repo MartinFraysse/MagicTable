@@ -58,7 +58,6 @@ class ThemeManager:
             f"{prefix}_dashboard.qss",
             f"{prefix}_tournament.qss",
             f"{prefix}_player.qss",
-            f"{prefix}_commander.qss",
             f"{prefix}_stats.qss",
             f"{prefix}_setting.qss",
             f"{prefix}_widget.qss",

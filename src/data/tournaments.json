@@ -9,8 +9,84 @@
     "podiums_recorded": false,
     "pairing_system": "swiss",
     "bye_history": [],
-    "players": [],
-    "rounds": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Joueur",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Marfin",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omo",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Nouveau",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Test",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 7,
+        "name": "Léa",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Fef",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              7
+            ],
+            "finished": false,
+            "results": {},
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              3
+            ],
+            "finished": false,
+            "results": {},
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
     "bracket": null
   }
 ]
