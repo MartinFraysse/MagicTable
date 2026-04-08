@@ -139,6 +139,101 @@
     background: none;
 }
 
+/* Scryfall dropdown */
+#ScryfallDropdown {
+    background-color: #ffffff;
+    border: 1px solid #2eaa6e;
+    border-radius: 6px;
+    outline: none;
+}
+
+#ScryfallDropdown::item {
+    color: #1a3d33;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+#ScryfallDropdown::item:hover,
+#ScryfallDropdown::item:selected {
+    background-color: rgba(46, 170, 110, 0.15);
+    color: #1a3d33;
+}
+
+/* Commander Grid */
+#CommanderGridScroll {
+    background-color: transparent;
+    border: none;
+}
+
+#CommanderGridContent {
+    background-color: transparent;
+}
+
+#CommanderGridScroll QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#CommanderGridScroll QScrollBar::handle:vertical {
+    background-color: rgba(46, 170, 110, 0.4);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#CommanderGridScroll QScrollBar::handle:vertical:hover {
+    background-color: rgba(46, 170, 110, 0.7);
+}
+
+#CommanderGridScroll QScrollBar::add-line:vertical,
+#CommanderGridScroll QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#CommanderGridScroll QScrollBar::add-page:vertical,
+#CommanderGridScroll QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Image picker (light) */
+#CreatePlayerDialog #ImageNameLabel {
+    color: #2d6e52;
+    font-size: 12px;
+    padding: 0 8px;
+    background-color: #f0faf5;
+    border: 1px solid #90cdb5;
+    border-radius: 6px;
+}
+
+#CreatePlayerDialog #ImagePickerButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #d6f0e6, stop:1 #bde0d0);
+    color: #1a5e42;
+    border: 1px solid #90cdb5;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#CreatePlayerDialog #ImagePickerButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #c0e8d5, stop:1 #a8d4be);
+}
+
+#CreatePlayerDialog #ImageClearButton {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    border: 1px solid rgba(192, 57, 43, 0.4);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#CreatePlayerDialog #ImageClearButton:hover {
+    background-color: rgba(231, 76, 60, 0.2);
+}
+
 /* Dialog styles */
 #CreatePlayerDialog {
     background-color: #ffffff;

@@ -163,6 +163,110 @@
 }
 
 /* =======================================================================
+   COMMANDER GRID
+   ======================================================================= */
+
+#CommanderGridScroll {
+    background-color: transparent;
+    border: none;
+}
+
+#CommanderGridContent {
+    background-color: transparent;
+}
+
+#CommanderGridScroll QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 4px 2px;
+}
+
+#CommanderGridScroll QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#CommanderGridScroll QScrollBar::handle:vertical:hover {
+    background-color: rgba(150, 240, 200, 0.75);
+}
+
+#CommanderGridScroll QScrollBar::add-line:vertical,
+#CommanderGridScroll QScrollBar::sub-line:vertical {
+    height: 0;
+    background: none;
+}
+
+#CommanderGridScroll QScrollBar::add-page:vertical,
+#CommanderGridScroll QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* =======================================================================
+   CREATE PLAYER DIALOG — IMAGE PICKER
+   ======================================================================= */
+
+#CreatePlayerDialog #ImageNameLabel {
+    color: #8fcfb5;
+    font-size: 12px;
+    padding: 0 8px;
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 6px;
+}
+
+#CreatePlayerDialog #ImagePickerButton {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #2f4f46, stop:1 #1f352f);
+    color: #d3e6df;
+    border: 1px solid #5fa693;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#CreatePlayerDialog #ImagePickerButton:hover {
+    background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #3b6b5f, stop:1 #26443d);
+}
+
+#CreatePlayerDialog #ImageClearButton {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.4);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#CreatePlayerDialog #ImageClearButton:hover {
+    background-color: rgba(231, 76, 60, 0.3);
+}
+
+/* =======================================================================
+   SCRYFALL DROPDOWN (autocomplete)
+   ======================================================================= */
+
+#ScryfallDropdown {
+    background-color: #0f241d;
+    border: 1px solid #3ad68a;
+    border-radius: 6px;
+    outline: none;
+}
+
+#ScryfallDropdown::item {
+    color: #eafff6;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+#ScryfallDropdown::item:hover,
+#ScryfallDropdown::item:selected {
+    background-color: rgba(58, 214, 138, 0.18);
+    color: #ffffff;
+}
+
+/* =======================================================================
    CREATE PLAYER DIALOG
    ======================================================================= */
 

@@ -1,9 +1,94 @@
 [
   {
+    "id": 7,
+    "name": "Celes, Rune Knight",
+    "colors": [
+      "W",
+      "B",
+      "R"
+    ],
+    "image_path": "commander_images/9cb4893e211a4804804a93d336cf53fe.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Lightning, Army of One",
+    "colors": [
+      "W",
+      "R"
+    ],
+    "image_path": "commander_images/981c1ff64ff54548bea95fe861f2ecd3.jpg"
+  },
+  {
+    "id": 9,
+    "name": "Lumra, Bellow of the Wood",
+    "colors": [
+      "G"
+    ],
+    "image_path": "commander_images/e52406e13fb4493da93995e3273d62d1.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Omo, Queen of Vesuva",
+    "colors": [
+      "U",
+      "G"
+    ],
+    "image_path": "commander_images/37ae38ee7e3047fa99b8f5772112d731.jpg"
+  },
+  {
     "id": 1,
-    "name": "Phelia",
+    "name": "Phelia, Exuberant Shepherd",
     "colors": [
       "W"
-    ]
+    ],
+    "image_path": "commander_images/7da2e18762b34a16a1ecf09a858ec81a.jpg"
+  },
+  {
+    "id": 8,
+    "name": "Slimefoot and Squee",
+    "colors": [
+      "B",
+      "R",
+      "G"
+    ],
+    "image_path": "commander_images/b89ebecb281f4c129d89f0aba88e3329.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Sorin of House Karlov",
+    "colors": [
+      "W",
+      "B"
+    ],
+    "image_path": "commander_images/532a798179e542b19625f6de2e6c04f9.jpg"
+  },
+  {
+    "id": 10,
+    "name": "Terra, Magical Adept // Esper Terra",
+    "colors": [
+      "W",
+      "U",
+      "B",
+      "R",
+      "G"
+    ],
+    "image_path": "commander_images/890ef2f44ee14d10a3f365ad2b1b655b.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Zurgo Bellstriker",
+    "colors": [
+      "R"
+    ],
+    "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg"
+  },
+  {
+    "id": 11,
+    "name": "Spider-Man 2099",
+    "colors": [
+      "U",
+      "R"
+    ],
+    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg"
   }
 ]

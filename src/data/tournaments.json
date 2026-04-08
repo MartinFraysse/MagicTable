@@ -1,10 +1,10 @@
 [
   {
     "id": 0,
-    "name": "DC",
+    "name": "Dc Lundi",
     "format": "⚔️ Duel Commander",
-    "date": "30/06/2001",
-    "max_rounds": 2,
+    "date": "30/06/2201",
+    "max_rounds": 3,
     "archived": false,
     "podiums_recorded": false,
     "pairing_system": "swiss",
@@ -12,11 +12,23 @@
     "players": [
       {
         "id": 0,
-        "name": "Joueur",
+        "name": "Sebito",
         "score": 0,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Sorin",
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Rounard",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -24,11 +36,11 @@
       },
       {
         "id": 2,
-        "name": "Marfin",
+        "name": "Pedro",
         "score": 0,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Omo",
+        "commander": "",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -36,57 +48,18 @@
       },
       {
         "id": 3,
-        "name": "Nouveau",
+        "name": "Marfin",
         "score": 0,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "Test",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false,
-        "dropped": false
-      },
-      {
-        "id": 7,
-        "name": "Léa",
-        "score": 0,
-        "robustness": 0,
-        "reward_claimed": false,
-        "commander": "Fef",
+        "commander": "",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
         "dropped": false
       }
     ],
-    "rounds": [
-      {
-        "number": 1,
-        "state": "preparation",
-        "tables": [
-          {
-            "number": 1,
-            "player_ids": [
-              0,
-              7
-            ],
-            "finished": false,
-            "results": {},
-            "game_scores": {}
-          },
-          {
-            "number": 2,
-            "player_ids": [
-              2,
-              3
-            ],
-            "finished": false,
-            "results": {},
-            "game_scores": {}
-          }
-        ]
-      }
-    ],
+    "rounds": [],
     "bracket": null
   }
 ]

@@ -1,27 +1,5 @@
 [
   {
-    "id": 7,
-    "pseudo": "Joueur",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
-    "id": 5,
-    "pseudo": "Léa",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
     "id": 1,
     "pseudo": "Marfin",
     "full_name": "",
@@ -33,8 +11,8 @@
     "tournaments_played": 0
   },
   {
-    "id": 8,
-    "pseudo": "Nouveau",
+    "id": 2,
+    "pseudo": "Rounard",
     "full_name": "",
     "phone": "",
     "top_1": 0,
@@ -45,29 +23,7 @@
   },
   {
     "id": 3,
-    "pseudo": "Pedro",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
-    "id": 9,
-    "pseudo": "Pour",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
-    "id": 2,
-    "pseudo": "Seb",
+    "pseudo": "Sebito",
     "full_name": "",
     "phone": "",
     "top_1": 0,
@@ -78,29 +34,7 @@
   },
   {
     "id": 4,
-    "pseudo": "Sebastien",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
-    "id": 6,
-    "pseudo": "Test",
-    "full_name": "",
-    "phone": "",
-    "top_1": 0,
-    "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
-  },
-  {
-    "id": 10,
-    "pseudo": "Scrool barre",
+    "pseudo": "Pedro",
     "full_name": "",
     "phone": "",
     "top_1": 0,

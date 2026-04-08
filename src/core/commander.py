@@ -35,6 +35,7 @@ class Commander:
     id: int
     name: str
     colors: list[str] = field(default_factory=list)
+    image_path: str | None = field(default=None)
 
     @property
     def color_identity(self) -> str:
@@ -50,6 +51,7 @@ class Commander:
             "id": self.id,
             "name": self.name,
             "colors": self.colors,
+            "image_path": self.image_path,
         }
 
     @classmethod
@@ -58,4 +60,5 @@ class Commander:
             id=data["id"],
             name=data["name"],
             colors=data.get("colors", []),
+            image_path=data.get("image_path"),
         )
