@@ -515,3 +515,55 @@
     border: none;
     padding: 6px 8px;
 }
+
+/* ── Onglets statistiques commandant ─────────────────────────────────── */
+#PlayerStatsDialog #StatsTabWidget {
+    background-color: transparent;
+    border: none;
+}
+
+#PlayerStatsDialog #StatsTabWidget::pane {
+    background-color: #0f241d;
+    border: 1px solid #2f6f55;
+    border-radius: 10px;
+    border-top-left-radius: 0px;
+    top: -1px;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar {
+    background: transparent;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab {
+    background-color: #0b1f18;
+    color: #7fd9bb;
+    border: 1px solid #2f6f55;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 3px;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:selected {
+    background-color: #0f241d;
+    color: #3fd27d;
+    border-color: #2f6f55;
+    border-bottom: 1px solid #0f241d;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:hover:!selected {
+    background-color: #132f26;
+    color: #aef5d8;
+}
+
+#PlayerStatsDialog #StatsTabWidget QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#PlayerStatsDialog #StatsTabWidget QScrollArea QWidget {
+    background-color: transparent;
+}

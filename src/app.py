@@ -44,10 +44,14 @@ def main():
     app.setApplicationName("MagicTable")
     app.setDesktopFileName("MagicTable")
 
-    if sys.platform != "win32":
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("MagicTable")
+    else:
         install_desktop_entry()
 
-    app.setWindowIcon(QIcon(str(APP_DIR / "assets" / "MT_logo.png")))
+    icon = QIcon(str(APP_DIR / "assets" / "MT_logo.png"))
+    app.setWindowIcon(icon)
 
     # Charger le thème
     app.setStyleSheet(load_qss(

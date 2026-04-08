@@ -113,23 +113,34 @@ class CreateCommanderDialog(QDialog):
             return
         self._ac_query = query
 
-        def fetch(q: str):
+        # Lire les couleurs cochées dans le thread principal
+        selected_colors = "".join(
+            code for code, btn in self._color_checkboxes.items() if btn.isChecked()
+        )
+        color_filter = f" id>={selected_colors}" if selected_colors else ""
+
+        def fetch(q: str, color_filter: str):
             try:
-                encoded = urllib.parse.quote(q)
+                # Filtre : créatures légendaires, véhicules légendaires,
+                # et planeswalkers pouvant être commandant + couleurs sélectionnées
+                encoded = urllib.parse.quote(f"{q} is:commander{color_filter}")
                 req = urllib.request.Request(
-                    f"https://api.scryfall.com/cards/autocomplete?q={encoded}",
-                    headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"},
+                    f"https://api.scryfall.com/cards/search?q={encoded}&order=name&unique=cards",
+                    headers={"User-Agent": "MagicTable/1.0", "Accept": "application/json"},
                 )
                 with urllib.request.urlopen(req, timeout=4) as resp:
                     data = json.loads(resp.read().decode())
-                names = data.get("data", [])
+                names = [card["name"] for card in data.get("data", [])]
+            except urllib.error.HTTPError:
+                # 404 = aucun résultat, autres codes = erreur réseau
+                names = []
             except Exception:
                 names = []
             # Only emit if the query is still current (avoids stale responses)
             if self._ac_query == q:
                 self._suggestions_ready.emit(names)
 
-        threading.Thread(target=fetch, args=(query,), daemon=True).start()
+        threading.Thread(target=fetch, args=(query, color_filter), daemon=True).start()
 
     def _show_dropdown(self, names: list):
         if not names:
@@ -320,6 +331,9 @@ class CreateCommanderDialog(QDialog):
         btn.setStyleSheet(self._get_color_btn_style(code, checked))
         any_checked = any(b.isChecked() for b in self._color_checkboxes.values())
         self.colorless_label.setVisible(not any_checked)
+        # Relancer l'autocomplétion si le champ est assez rempli
+        if len(self.name_input.text().strip()) >= 2:
+            self._ac_timer.start()
 
     # ------------------------------------------------------------------
     # Image

@@ -6,8 +6,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QStackedWidget
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QIcon
 import os
+from pathlib import Path
 
 from core.tournament import Tournament
 from ui.tournaments.tournaments_view_main import TournamentViewMain
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         self.setWindowTitle("MagicTable — Tournament Manager")
+        self.setWindowIcon(QIcon(str(Path(__file__).parent.parent / "assets" / "MT_logo.png")))
 
         self.resize(1380, 920)
         self.setMinimumSize(1024, 710)

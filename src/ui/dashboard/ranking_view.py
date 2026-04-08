@@ -2,14 +2,83 @@ from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem,
     QHeaderView, QSizePolicy,
-    QMenu, QMessageBox
+    QMenu, QMessageBox,
+    QStyledItemDelegate, QStyleOptionViewItem,
 )
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, Signal, QModelIndex, QRect
+from PySide6.QtGui import QColor, QPainter, QPixmap, QLinearGradient, QBrush
+from core.commander import Commander
 from core.regular_player import RegularPlayer
 from core.standings import build_standings
+from storage.base import DATA_DIR
+from storage.commanders import CommanderStorage
 from storage.regular_players import RegularPlayerStorage
 from ui.dashboard.dialogs.round_summary_dialog import RoundSummaryDialog
+
+
+def _build_commanders_map() -> dict[str, str]:
+    """Retourne {nom_commandant: image_path} pour tous les commandants."""
+    raw = CommanderStorage.load()
+    return {
+        c.name: c.image_path
+        for c in (Commander.from_dict(d) for d in raw)
+        if c.image_path
+    }
+
+
+_TABLE_BG = QColor(0x0b, 0x2f, 0x23)  # fond DashboardCard
+
+
+class _NameCellDelegate(QStyledItemDelegate):
+    """Affiche l'image du commandant en fond avec fondu dans la cellule de nom."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._cache: dict[str, QPixmap | None] = {}
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        image_path = index.data(Qt.UserRole)
+        if image_path:
+            full_path = str(DATA_DIR / image_path)
+            if full_path not in self._cache:
+                px = QPixmap(full_path)
+                self._cache[full_path] = px if not px.isNull() else None
+            px = self._cache.get(full_path)
+            if px:
+                rect = option.rect
+
+                # 1. Remplir le fond avec la couleur de la cellule
+                painter.fillRect(rect, _TABLE_BG)
+
+                # 2. Image sur la moitié droite uniquement
+                half_x = rect.left() + rect.width() // 2
+                img_rect = QRect(half_x, rect.top(), rect.width() - rect.width() // 2, rect.height())
+
+                scaled = px.scaled(
+                    img_rect.width(), img_rect.height(),
+                    Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation
+                )
+                src_x = max(0, (scaled.width() - img_rect.width()) // 2)
+                src_y = max(0, (scaled.height() - img_rect.height()) // 5)
+                src_rect = QRect(src_x, src_y, img_rect.width(), img_rect.height())
+
+                painter.save()
+                painter.setOpacity(0.60)
+                painter.drawPixmap(img_rect, scaled, src_rect)
+                painter.setOpacity(1.0)
+                painter.restore()
+
+                # 3. Gradient : opaque à gauche, fondu progressif, image nette à droite
+                fade_start = half_x - rect.width() // 10
+                grad = QLinearGradient(fade_start, 0, rect.right(), 0)
+                grad.setColorAt(0.00, QColor(0x0b, 0x2f, 0x23, 255))
+                grad.setColorAt(0.45, QColor(0x0b, 0x2f, 0x23, 230))
+                grad.setColorAt(0.68, QColor(0x0b, 0x2f, 0x23, 120))
+                grad.setColorAt(0.85, QColor(0x0b, 0x2f, 0x23, 30))
+                grad.setColorAt(1.00, QColor(0x0b, 0x2f, 0x23, 0))
+                painter.fillRect(QRect(fade_start, rect.top(), rect.right() - fade_start, rect.height()), QBrush(grad))
+
+        super().paint(painter, option, index)
 
 
 class DashboardRankingView(QFrame):
@@ -81,6 +150,9 @@ class DashboardRankingView(QFrame):
         self.ranking_viewport = table.viewport()
 
         self._player_ids_by_row = {}
+        self._name_delegate = _NameCellDelegate(table)
+        table.setItemDelegateForColumn(1, self._name_delegate)
+        table.verticalHeader().setDefaultSectionSize(40)
 
     # =================================================
     # Public API
@@ -195,6 +267,8 @@ class DashboardRankingView(QFrame):
         table = self.ranking_table
         standings = build_standings(tournament)
         dropped_ids = {p.id for p in tournament.players if p.dropped}
+        commanders_map = _build_commanders_map()
+        players_by_id = {p.id: p for p in tournament.players}
 
         if override_order:
             entries_by_id = {e.player_id: e for e in standings}
@@ -218,6 +292,11 @@ class DashboardRankingView(QFrame):
             name_text = f"🚫 {entry.player_name}" if is_dropped else entry.player_name
             item_name = QTableWidgetItem(name_text)
             item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            player = players_by_id.get(entry.player_id)
+            if player and player.commander:
+                img_path = commanders_map.get(player.commander)
+                if img_path:
+                    item_name.setData(Qt.UserRole, img_path)
             table.setItem(row, 1, item_name)
 
             # --- Score
@@ -266,6 +345,7 @@ class DashboardRankingView(QFrame):
     def _fill_table_standard(self, tournament, previous_ranks, override_order=None):
         """Remplit le tableau avec le classement standard (Commander/autres)."""
         table = self.ranking_table
+        commanders_map = _build_commanders_map()
 
         if override_order:
             players_by_id = {p.id: p for p in tournament.players}
@@ -296,6 +376,10 @@ class DashboardRankingView(QFrame):
             name_text = f"🚫 {player.name}" if is_dropped else player.name
             item_name = QTableWidgetItem(name_text)
             item_name.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            if player.commander:
+                img_path = commanders_map.get(player.commander)
+                if img_path:
+                    item_name.setData(Qt.UserRole, img_path)
             table.setItem(row, 1, item_name)
 
             # --- Score avec évolution colorée

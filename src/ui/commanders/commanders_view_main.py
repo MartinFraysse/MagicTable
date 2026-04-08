@@ -17,6 +17,7 @@ from core.commander import Commander
 from storage.commanders import CommanderStorage
 from ui.commanders.commander_card import CommanderCard
 from ui.commanders.dialogs.create_commander import CreateCommanderDialog
+from ui.commanders.dialogs.commander_stats import CommanderStatsDialog
 from ui.widgets.flow_layout import FlowLayout
 
 
@@ -160,7 +161,9 @@ class CommandersViewMain(QWidget):
 
     def _on_card_double_clicked(self, commander_id: int):
         self._selected_id = commander_id
-        self._edit_selected()
+        commander = self._get_selected_commander()
+        if commander:
+            CommanderStatsDialog(commander, self).exec()
 
     def _on_card_context_menu(self, commander_id: int, pos: QPoint):
         self._selected_id = commander_id

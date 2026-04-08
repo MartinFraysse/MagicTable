@@ -2,10 +2,101 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QFrame, QPushButton, QSizePolicy, QScrollArea
 )
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, Signal, QTimer, QRect
+from PySide6.QtGui import QFont, QPainter, QPixmap, QLinearGradient, QBrush, QColor
 
+from core.commander import Commander
 from core.round import Round
+from storage.base import DATA_DIR
+from storage.commanders import CommanderStorage
+
+
+def _load_commanders_map() -> dict[str, str]:
+    """Retourne {nom_commandant: image_path}."""
+    raw = CommanderStorage.load()
+    return {
+        c.name: c.image_path
+        for c in (Commander.from_dict(d) for d in raw)
+        if c.image_path
+    }
+
+
+_ROW_BG = QColor(0x16, 0x16, 0x16)
+
+
+class _PairingRow(QFrame):
+    """Ligne de pairing avec images des commandants en fond."""
+
+    def __init__(self, img_paths: list[str | None], parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self._pixmaps: list[QPixmap | None] = []
+        for path in img_paths:
+            if path:
+                px = QPixmap(str(DATA_DIR / path))
+                self._pixmaps.append(px if not px.isNull() else None)
+            else:
+                self._pixmaps.append(None)
+
+    def paintEvent(self, event):
+        # 1. Fond QSS en premier
+        super().paintEvent(event)
+
+        visible = [px for px in self._pixmaps if px is not None]
+        if not visible:
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        rect = self.rect()
+        n = len(self._pixmaps)
+        slot_w = rect.width() // n
+
+        for i, px in enumerate(self._pixmaps):
+            if px is None:
+                continue
+
+            slot = QRect(i * slot_w, 0, slot_w if i < n - 1 else rect.width() - i * slot_w, rect.height())
+
+            # Image plein-cadre sur le slot
+            scaled = px.scaled(slot.width(), slot.height(),
+                               Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            src_x = max(0, (scaled.width() - slot.width()) // 2)
+            src_y = max(0, (scaled.height() - slot.height()) // 5)
+            src_rect = QRect(src_x, src_y, slot.width(), slot.height())
+
+            painter.save()
+            painter.setOpacity(0.65)
+            painter.drawPixmap(slot, scaled, src_rect)
+            painter.setOpacity(1.0)
+            painter.restore()
+
+            # Gradient : fondu sur le bord intérieur (vers le centre)
+            grad = QLinearGradient(slot.left(), 0, slot.right(), 0)
+            if i == 0:
+                # Image gauche : visible à gauche, fondu vers la droite
+                grad.setColorAt(0.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 0))
+                grad.setColorAt(0.55, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 80))
+                grad.setColorAt(0.75, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 200))
+                grad.setColorAt(1.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 255))
+            elif i == n - 1:
+                # Image droite : fondu depuis la gauche, visible à droite
+                grad.setColorAt(0.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 255))
+                grad.setColorAt(0.25, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 200))
+                grad.setColorAt(0.45, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 80))
+                grad.setColorAt(1.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 0))
+            else:
+                # Image centrale (multiplayer) : fondu des deux côtés
+                grad.setColorAt(0.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 255))
+                grad.setColorAt(0.20, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 80))
+                grad.setColorAt(0.50, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 0))
+                grad.setColorAt(0.80, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 80))
+                grad.setColorAt(1.00, QColor(_ROW_BG.red(), _ROW_BG.green(), _ROW_BG.blue(), 255))
+
+            painter.fillRect(slot, QBrush(grad))
+
+        painter.end()
 
 
 class PairingsWindow(QWidget):
@@ -262,16 +353,21 @@ class PairingsWindow(QWidget):
         if not self._round or not self._round.tables:
             return
 
+        commanders_map = _load_commanders_map()
         for table in self._round.tables:
-            row = self._create_table_row(table)
+            row = self._create_table_row(table, commanders_map)
             self.pairings_layout.addWidget(row)
 
         # Spacer en bas
         self.pairings_layout.addStretch()
 
-    def _create_table_row(self, table) -> QFrame:
+    def _create_table_row(self, table, commanders_map: dict | None = None) -> QFrame:
         """Crée une ligne pour une table."""
-        row = QFrame()
+        img_paths = []
+        if commanders_map:
+            for player in table.players:
+                img_paths.append(commanders_map.get(player.commander, None) if player.commander else None)
+        row = _PairingRow(img_paths)
         row.setObjectName("TableRow")
         row.setMinimumHeight(70)
         row.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
