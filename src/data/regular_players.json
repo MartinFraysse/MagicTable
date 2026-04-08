@@ -4,11 +4,11 @@
     "pseudo": "Marfin",
     "full_name": "",
     "phone": "",
-    "top_1": 0,
-    "top_2": 0,
+    "top_1": 1,
+    "top_2": 1,
     "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
+    "points": 14,
+    "tournaments_played": 2
   },
   {
     "id": 2,
@@ -18,8 +18,8 @@
     "top_1": 0,
     "top_2": 0,
     "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
+    "points": 8,
+    "tournaments_played": 2
   },
   {
     "id": 3,
@@ -28,9 +28,9 @@
     "phone": "",
     "top_1": 0,
     "top_2": 0,
-    "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
+    "top_3": 1,
+    "points": 6,
+    "tournaments_played": 2
   },
   {
     "id": 4,
@@ -40,7 +40,18 @@
     "top_1": 0,
     "top_2": 0,
     "top_3": 0,
-    "points": 0,
-    "tournaments_played": 0
+    "points": 11,
+    "tournaments_played": 2
+  },
+  {
+    "id": 5,
+    "pseudo": "Léa",
+    "full_name": "",
+    "phone": "",
+    "top_1": 1,
+    "top_2": 1,
+    "top_3": 0,
+    "points": 15,
+    "tournaments_played": 2
   }
 ]

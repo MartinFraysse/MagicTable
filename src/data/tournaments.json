@@ -5,18 +5,274 @@
     "format": "⚔️ Duel Commander",
     "date": "30/06/2201",
     "max_rounds": 3,
-    "archived": false,
-    "podiums_recorded": false,
+    "archived": true,
+    "podiums_recorded": true,
     "pairing_system": "swiss",
-    "bye_history": [],
+    "bye_history": [
+      0,
+      1,
+      2
+    ],
     "players": [
       {
         "id": 0,
         "name": "Sebito",
-        "score": 0,
+        "score": 3,
         "robustness": 0,
         "reward_claimed": false,
-        "commander": "",
+        "commander": "Raph & Mikey, Troublemakers",
+        "buchholz": 14.0,
+        "sos": 7.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Rounard",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+        "buchholz": 13.0,
+        "sos": 6.5,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Pedro",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Aragorn, King of Gondor",
+        "buchholz": 10.0,
+        "sos": 5.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Marfin",
+        "score": 7,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin of House Karlov",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Léa",
+        "score": 7,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phelia, Exuberant Shepherd",
+        "buchholz": 13.0,
+        "sos": 4.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              4,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "0": 0,
+              "3": 2
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              3,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "3": 2,
+              "4": 2
+            },
+            "game_scores": {
+              "3": 1,
+              "4": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              0
+            ],
+            "finished": true,
+            "results": {
+              "0": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "2": 1,
+              "3": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              4,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "0": 0
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              1
+            ],
+            "finished": true,
+            "results": {
+              "1": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "final",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 2,
+          "player2_id": 0,
+          "winner_id": 0,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": true
+        },
+        {
+          "match_id": 1,
+          "round_name": "final",
+          "position": 1,
+          "player1_id": 3,
+          "player2_id": 4,
+          "winner_id": 3,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": false
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
+    "id": 1,
+    "name": "Multi",
+    "format": "👑 Commander",
+    "date": "24/54/1002",
+    "max_rounds": 3,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "standard",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Léa",
+        "score": 8,
+        "robustness": 29,
+        "reward_claimed": false,
+        "commander": "Aragorn, King of Gondor",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -24,11 +280,11 @@
       },
       {
         "id": 1,
-        "name": "Rounard",
-        "score": 0,
-        "robustness": 0,
+        "name": "Marfin",
+        "score": 7,
+        "robustness": 25,
         "reward_claimed": false,
-        "commander": "",
+        "commander": "Celes, Rune Knight",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -37,10 +293,10 @@
       {
         "id": 2,
         "name": "Pedro",
-        "score": 0,
-        "robustness": 0,
+        "score": 5,
+        "robustness": 34,
         "reward_claimed": false,
-        "commander": "",
+        "commander": "Lightning, Army of One",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -48,18 +304,169 @@
       },
       {
         "id": 3,
-        "name": "Marfin",
-        "score": 0,
-        "robustness": 0,
+        "name": "Rounard",
+        "score": 5,
+        "robustness": 20,
         "reward_claimed": false,
-        "commander": "",
+        "commander": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Sebito",
+        "score": 3,
+        "robustness": 16,
+        "reward_claimed": false,
+        "commander": "Raph & Mikey, Troublemakers",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 5,
+        "name": "Julie",
+        "score": 6,
+        "robustness": 24,
+        "reward_claimed": false,
+        "commander": "Terra, Magical Adept // Esper Terra",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 6,
+        "name": "Juliette",
+        "score": 5,
+        "robustness": 25,
+        "reward_claimed": false,
+        "commander": "Zurgo Bellstriker",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
         "dropped": false
       }
     ],
-    "rounds": [],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              5,
+              6,
+              3,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "5": 2,
+              "6": 3,
+              "3": 3
+            },
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              4,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2,
+              "4": 3
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              2,
+              5,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "1": 1,
+              "0": 2,
+              "2": 3,
+              "5": 3
+            },
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              3,
+              6,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "6": 1,
+              "3": 2,
+              "4": 3
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              1,
+              2,
+              6
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "1": 2,
+              "2": 3,
+              "6": 3
+            },
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              5,
+              3,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "5": 1,
+              "3": 2,
+              "4": 3
+            },
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
     "bracket": null
   }
 ]

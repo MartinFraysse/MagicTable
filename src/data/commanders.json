@@ -1,5 +1,34 @@
 [
   {
+    "id": 12,
+    "name": "Aragorn, King of Gondor",
+    "colors": [
+      "W",
+      "U",
+      "R"
+    ],
+    "image_path": "commander_images/ae10a15ad3ee44d69c94865097b041ff.jpg"
+  },
+  {
+    "id": 14,
+    "name": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+    "colors": [
+      "W",
+      "G"
+    ],
+    "image_path": "commander_images/b7aab2082fb1471bab2de9d8bf8512c4.jpg"
+  },
+  {
+    "id": 16,
+    "name": "Caesar, Legion's Emperor",
+    "colors": [
+      "W",
+      "B",
+      "R"
+    ],
+    "image_path": "commander_images/7445a3edb61a4090ae0f5f7fd31173fa.jpg"
+  },
+  {
     "id": 7,
     "name": "Celes, Rune Knight",
     "colors": [
@@ -8,6 +37,33 @@
       "R"
     ],
     "image_path": "commander_images/9cb4893e211a4804804a93d336cf53fe.jpg"
+  },
+  {
+    "id": 18,
+    "name": "Judith, Carnage Connoisseur",
+    "colors": [
+      "B",
+      "R"
+    ],
+    "image_path": "commander_images/78e3fc10a5764767b8013b5b2c68d851.jpg"
+  },
+  {
+    "id": 17,
+    "name": "Juri, Master of the Revue",
+    "colors": [
+      "B",
+      "R"
+    ],
+    "image_path": "commander_images/436a15ce568e4c75b5e83ed2a1e8cd3f.jpg"
+  },
+  {
+    "id": 15,
+    "name": "Kenessos, Priest of Thassa",
+    "colors": [
+      "U",
+      "G"
+    ],
+    "image_path": "commander_images/220807871bd2478eb76f8d92253fdf47.jpg"
   },
   {
     "id": 5,
@@ -44,6 +100,15 @@
     "image_path": "commander_images/7da2e18762b34a16a1ecf09a858ec81a.jpg"
   },
   {
+    "id": 13,
+    "name": "Raph & Mikey, Troublemakers",
+    "colors": [
+      "R",
+      "G"
+    ],
+    "image_path": "commander_images/905a3137f1364e729f39044e93f203d2.jpg"
+  },
+  {
     "id": 8,
     "name": "Slimefoot and Squee",
     "colors": [
@@ -61,6 +126,15 @@
       "B"
     ],
     "image_path": "commander_images/532a798179e542b19625f6de2e6c04f9.jpg"
+  },
+  {
+    "id": 11,
+    "name": "Spider-Man 2099",
+    "colors": [
+      "U",
+      "R"
+    ],
+    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg"
   },
   {
     "id": 10,
@@ -83,12 +157,11 @@
     "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg"
   },
   {
-    "id": 11,
-    "name": "Spider-Man 2099",
+    "id": 19,
+    "name": "Braids, Conjurer Adept",
     "colors": [
-      "U",
-      "R"
+      "U"
     ],
-    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg"
+    "image_path": "commander_images/33c46031c0734cb2a7c7a8141b597144.jpg"
   }
 ]

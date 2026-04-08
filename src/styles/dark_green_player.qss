@@ -536,27 +536,54 @@
 
 #PlayerStatsDialog #StatsTabWidget QTabBar::tab {
     background-color: #0b1f18;
-    color: #7fd9bb;
+    color: #7a9e90;
     border: 1px solid #2f6f55;
     border-bottom: none;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    padding: 8px 24px;
+    padding: 8px 28px;
     font-size: 13px;
     font-weight: 600;
     margin-right: 3px;
+    min-width: 90px;
 }
 
-#PlayerStatsDialog #StatsTabWidget QTabBar::tab:selected {
+/* Onglet Duel (1er) — accent rouge/or */
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:first {
+    border-top: 3px solid #0b1f18;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:first:selected {
     background-color: #0f241d;
-    color: #3fd27d;
+    color: #e8880a;
     border-color: #2f6f55;
+    border-top: 3px solid #e8880a;
     border-bottom: 1px solid #0f241d;
 }
 
-#PlayerStatsDialog #StatsTabWidget QTabBar::tab:hover:!selected {
-    background-color: #132f26;
-    color: #aef5d8;
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:first:hover:!selected {
+    background-color: #1a2a1a;
+    color: #e8880a;
+    border-top: 3px solid #7a4400;
+}
+
+/* Onglet Multi (2ème) — accent vert */
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:last {
+    border-top: 3px solid #0b1f18;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:last:selected {
+    background-color: #0f241d;
+    color: #3fd27d;
+    border-color: #2f6f55;
+    border-top: 3px solid #3fd27d;
+    border-bottom: 1px solid #0f241d;
+}
+
+#PlayerStatsDialog #StatsTabWidget QTabBar::tab:last:hover:!selected {
+    background-color: #1a2a1a;
+    color: #3fd27d;
+    border-top: 3px solid #1f6b45;
 }
 
 #PlayerStatsDialog #StatsTabWidget QScrollArea {
@@ -566,4 +593,99 @@
 
 #PlayerStatsDialog #StatsTabWidget QScrollArea QWidget {
     background-color: transparent;
+}
+
+/* ── Bouton Matchup ───────────────────────────────────────────────────── */
+#PlayerStatsDialog #MatchupButton {
+    background-color: #1a2e1a;
+    color: #e8880a;
+    border: 1px solid #e8880a;
+    border-radius: 8px;
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#PlayerStatsDialog #MatchupButton:hover {
+    background-color: #2a3e1a;
+    border-color: #f4a030;
+    color: #f4a030;
+}
+
+#PlayerStatsDialog #MatchupButton:pressed {
+    background-color: #0f1f0f;
+}
+
+/* ── Dialog Matchups ──────────────────────────────────────────────────── */
+#MatchupHeader {
+    background-color: #081912;
+    border-bottom: 2px solid #2f6f55;
+    border-radius: 6px 6px 0 0;
+}
+
+#MatchupScroll {
+    background: transparent;
+    border: none;
+}
+
+#MatchupContainer {
+    background: transparent;
+}
+
+#MatchupRow {
+    background-color: #0f241d;
+    border-bottom: 1px solid #162e22;
+}
+
+#MatchupRow[alt="1"] {
+    background-color: #0b1f18;
+}
+
+#MatchupRow:hover {
+    background-color: #182e24;
+    border-bottom: 1px solid #2f6f55;
+}
+
+/* Transparence obligatoire pour laisser passer l'art en fond */
+#MatchupRow QLabel {
+    background: transparent;
+}
+
+#MatchupRow QWidget {
+    background: transparent;
+}
+
+#MatchupCmdName {
+    color: #e8e8e8;
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+}
+
+#MatchupW {
+    color: #3fd27d;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+}
+
+#MatchupL {
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+}
+
+#MatchupD {
+    color: #888888;
+    font-size: 14px;
+    font-weight: 700;
+    background: transparent;
+}
+
+#MatchupWinrate {
+    color: #3fd27d;
+    font-weight: 600;
+    font-size: 13px;
+    background: transparent;
 }
