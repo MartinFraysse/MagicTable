@@ -595,6 +595,26 @@
     background-color: transparent;
 }
 
+/* ── Bouton filtre Duel ───────────────────────────────────────────────── */
+#FilterToggleButton {
+    background-color: transparent;
+    color: #7a9a8a;
+    border: 1px solid #3a5a4a;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+#FilterToggleButton:hover {
+    border-color: #2d8a5e;
+    color: #c8e8d8;
+}
+#FilterToggleButton:checked {
+    background-color: #1a3d2e;
+    color: #3fd27d;
+    border-color: #3fd27d;
+    font-weight: 600;
+}
+
 /* ── Bouton Matchup ───────────────────────────────────────────────────── */
 #PlayerStatsDialog #MatchupButton {
     background-color: #1a2e1a;
@@ -616,13 +636,34 @@
     background-color: #0f1f0f;
 }
 
-/* ── Dialog Matchups ──────────────────────────────────────────────────── */
-#MatchupHeader {
-    background-color: #081912;
-    border-bottom: 2px solid #2f6f55;
-    border-radius: 6px 6px 0 0;
+/* ── Stats Globales ───────────────────────────────────────────────────── */
+#GlobalStatsScroll {
+    background: transparent;
+    border: none;
 }
 
+#GlobalStatsContainer {
+    background: transparent;
+}
+
+#RankingRow {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    border: 1px solid rgba(63, 210, 125, 0.08);
+}
+
+#RankingRow:hover {
+    background: rgba(63, 210, 125, 0.08);
+    border: 1px solid rgba(63, 210, 125, 0.18);
+}
+
+#RankingNumber {
+    color: #7ab89a;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* ── Dialog Matchups (grille de cartes) ───────────────────────────────── */
 #MatchupScroll {
     background: transparent;
     border: none;
@@ -632,60 +673,7 @@
     background: transparent;
 }
 
-#MatchupRow {
-    background-color: #0f241d;
-    border-bottom: 1px solid #162e22;
-}
-
-#MatchupRow[alt="1"] {
-    background-color: #0b1f18;
-}
-
-#MatchupRow:hover {
-    background-color: #182e24;
-    border-bottom: 1px solid #2f6f55;
-}
-
-/* Transparence obligatoire pour laisser passer l'art en fond */
-#MatchupRow QLabel {
-    background: transparent;
-}
-
-#MatchupRow QWidget {
-    background: transparent;
-}
-
-#MatchupCmdName {
-    color: #e8e8e8;
-    font-size: 14px;
-    font-weight: 500;
-    background: transparent;
-}
-
-#MatchupW {
-    color: #3fd27d;
-    font-size: 14px;
-    font-weight: 700;
-    background: transparent;
-}
-
-#MatchupL {
-    color: #ef4444;
-    font-size: 14px;
-    font-weight: 700;
-    background: transparent;
-}
-
-#MatchupD {
-    color: #888888;
-    font-size: 14px;
-    font-weight: 700;
-    background: transparent;
-}
-
-#MatchupWinrate {
-    color: #3fd27d;
-    font-weight: 600;
-    font-size: 13px;
+#MatchupCard {
+    border-radius: 12px;
     background: transparent;
 }

@@ -5,8 +5,20 @@ from ui.main_window import MainWindow
 from PySide6.QtWidgets import QApplication, QStyleFactory
 from PySide6.QtGui import QIcon
 
+
+def get_resource_dir() -> Path:
+    """
+    Retourne le répertoire contenant les ressources read-only (assets, styles).
+    - Mode packagé (PyInstaller) : sys._MEIPASS  (fichiers extraits du bundle)
+    - Mode développement         : dossier de app.py
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent
+
+
 # Répertoire racine de l’application (où se trouve app.py)
-APP_DIR = Path(__file__).parent
+APP_DIR = get_resource_dir()
 
 def install_desktop_entry():
     """Installe l’icône et le .desktop dans ~/.local/share/ pour Wayland/Linux."""
@@ -67,7 +79,7 @@ def main():
     """app.setStyleSheet(load_qss("styles/dark_green_widget.qss"))"""
     
     window = MainWindow()
-    window.show()
+    window._toggle_fullscreen()
 
     sys.exit(app.exec())
 

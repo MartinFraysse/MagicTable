@@ -1,0 +1,46 @@
+name: Build & Release Windows
+
+# Se déclenche uniquement sur un tag de version (ex: v1.0.0)
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Récupérer le code ──────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Python 3.12 (LTS, compatible PySide6) ──────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      # ── 3. Installer les dépendances ──────────────────────────────────
+      - name: Install dependencies
+        run: pip install PySide6 pyinstaller
+
+      # ── 4. Build le .exe ──────────────────────────────────────────────
+      - name: Build with PyInstaller
+        run: pyinstaller MagicTable.spec
+
+      # ── 5. Vérifier que le .exe existe ────────────────────────────────
+      - name: Check output
+        run: Test-Path dist\MagicTable.exe
+        shell: pwsh
+
+      # ── 6. Créer la GitHub Release et uploader le .exe ────────────────
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/MagicTable.exe
+          generate_release_notes: true   # Génère les notes depuis les commits
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

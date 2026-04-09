@@ -6,7 +6,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QFrame, QGridLayout, QScrollArea, QWidget, QTabWidget,
-    QLineEdit, QSizePolicy,
+    QLineEdit, QSizePolicy, QSplitter,
 )
 
 from core.commander import Commander, MTG_COLORS, COLOR_HEX, COLOR_SYMBOLS
@@ -316,176 +316,209 @@ class _CommanderHeader(QFrame):
 
 
 # ---------------------------------------------------------------------------
-# Matchup dialog
+# Matchup cards
 # ---------------------------------------------------------------------------
 
-_MU_BG      = QColor(0x0f, 0x24, 0x1d)
-_MU_BG_ALT  = QColor(0x0b, 0x1f, 0x18)
+class _CommanderMatchupCard(QFrame):
+    """Carte de matchup : image du commandant adverse en fond + stats W/L/D."""
 
-# Largeurs fixes des colonnes stats (px)
-_COL_W = 48   # W
-_COL_L = 48   # L
-_COL_D = 48   # D
-_COL_BAR = 110  # barre winrate
-
-
-class _WinrateBar(QWidget):
-    """Pourcentage + barre de progression colorée."""
-
-    def __init__(self, rate: float, parent=None):
-        super().__init__(parent)
-        self._rate = rate
-        self.setFixedSize(_COL_BAR, 44)
-        self.setAttribute(Qt.WA_StyledBackground, False)
-
-    def paintEvent(self, _event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        w, h = self.width(), self.height()
-        pct_text = f"{self._rate * 100:.0f}%"
-
-        if self._rate >= 0.55:
-            color = QColor("#3fd27d")
-        elif self._rate >= 0.40:
-            color = QColor("#e8880a")
-        else:
-            color = QColor("#ef4444")
-
-        # Texte centré en haut
-        font = QFont()
-        font.setPixelSize(14)
-        font.setBold(True)
-        painter.setFont(font)
-        painter.setPen(color)
-        painter.drawText(QRectF(0, 4, w, 18), Qt.AlignCenter, pct_text)
-
-        # Barre en bas
-        bx, by, bw, bh = 6, 28, w - 12, 8
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(QColor("#1a3d2e")))
-        painter.drawRoundedRect(QRectF(bx, by, bw, bh), 4, 4)
-
-        fill_w = bw * self._rate
-        if fill_w > 0:
-            painter.setBrush(QBrush(color))
-            painter.drawRoundedRect(QRectF(bx, by, fill_w, bh), 4, 4)
-
-        painter.end()
-
-
-class _MatchupRow(QFrame):
-    """Ligne de matchup avec art du commandant en fond."""
-
-    ROW_H = 64
+    CARD_W = 165
+    CARD_H = 245
 
     def __init__(self, opp_name: str, img_path: str | None,
-                 w: int, l: int, d: int, alt: bool, parent=None):
+                 wins: int, losses: int, draws: int, parent=None):
         super().__init__(parent)
-        self._alt = alt
+        self._opp_name = opp_name
+        self._wins   = wins
+        self._losses = losses
+        self._draws  = draws
+        total = wins + losses + draws
+        self._rate: float | None = wins / total if total else None
         self._pixmap: QPixmap | None = None
-        self.setFixedHeight(self.ROW_H)
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setObjectName("MatchupRow")
-        self.setProperty("alt", "1" if alt else "0")
+        self._hovered = False
+
+        self.setFixedSize(self.CARD_W, self.CARD_H)
+        self.setAttribute(Qt.WA_StyledBackground, False)
+        self.setObjectName("MatchupCard")
+        self.setCursor(Qt.PointingHandCursor)
 
         if img_path:
             px = QPixmap(str(DATA_DIR / img_path))
             if not px.isNull():
                 self._pixmap = px
 
-        total = w + l + d
-        rate = w / total if total else None
+    def enterEvent(self, event):
+        self._hovered = True
+        self.update()
+        super().enterEvent(event)
 
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 0, 16, 0)
-        layout.setSpacing(0)
+    def leaveEvent(self, event):
+        self._hovered = False
+        self.update()
+        super().leaveEvent(event)
 
-        # Nom du commandant
-        name_lbl = QLabel(opp_name)
-        name_lbl.setObjectName("MatchupCmdName")
-        layout.addWidget(name_lbl, 1)
-
-        # W / L / D
-        for val, obj in [(str(w), "MatchupW"), (str(l), "MatchupL"), (str(d), "MatchupD")]:
-            lbl = QLabel(val)
-            lbl.setObjectName(obj)
-            lbl.setAlignment(Qt.AlignCenter)
-            lbl.setFixedWidth(_COL_W)
-            layout.addWidget(lbl)
-
-        layout.addSpacing(8)
-
-        # Winrate
-        if rate is not None:
-            bar = _WinrateBar(rate)
-            layout.addWidget(bar)
-        else:
-            dash = QLabel("—")
-            dash.setObjectName("MatchupWinrate")
-            dash.setFixedWidth(_COL_BAR)
-            dash.setAlignment(Qt.AlignCenter)
-            layout.addWidget(dash)
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        if not self._pixmap:
-            return
-
+    def paintEvent(self, _event):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        rect = self.rect()
-        bg = _MU_BG_ALT if self._alt else _MU_BG
+        CW = self.CARD_W
+        CH = self.CARD_H
+        rect = QRectF(0, 0, CW, CH)
 
-        # Image pleine largeur, centrée
-        scaled = self._pixmap.scaled(
-            rect.width(), rect.height(),
-            Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation,
+        STATS_H = 70          # hauteur de la zone stats en bas
+        IMG_H   = CH - STATS_H  # hauteur de la zone image
+
+        # ── Clip arrondi global ──────────────────────────────────────────
+        clip = QPainterPath()
+        clip.addRoundedRect(rect, 12, 12)
+        painter.setClipPath(clip)
+
+        # ── Fond sombre de base ──────────────────────────────────────────
+        painter.fillRect(rect.toRect(), QColor(0x07, 0x14, 0x0e))
+
+        # ── Image commandant ─────────────────────────────────────────────
+        if self._pixmap:
+            scaled = self._pixmap.scaled(
+                CW, IMG_H + 20,
+                Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation,
+            )
+            sx = (scaled.width() - CW) // 2
+            painter.setOpacity(0.93 if self._hovered else 0.85)
+            painter.drawPixmap(
+                QRect(0, 0, CW, IMG_H),
+                scaled,
+                QRect(sx, 0, CW, IMG_H),
+            )
+            painter.setOpacity(1.0)
+
+        # ── Gradient bas de l'image (lisibilité du nom) ──────────────────
+        grad_img = QLinearGradient(0, IMG_H * 0.35, 0, IMG_H)
+        grad_img.setColorAt(0, QColor(0, 0, 0, 0))
+        grad_img.setColorAt(1, QColor(0x07, 0x14, 0x0e, 255))
+        painter.fillRect(QRectF(0, 0, CW, IMG_H), QBrush(grad_img))
+
+        # ── Zone stats ───────────────────────────────────────────────────
+        painter.fillRect(QRectF(0, IMG_H, CW, STATS_H), QColor(0x04, 0x0d, 0x08))
+
+        # Ligne de séparation
+        painter.setPen(QPen(QColor(0x2f, 0x6f, 0x55, 100), 1))
+        painter.drawLine(8, IMG_H, CW - 8, IMG_H)
+
+        # ── Nom du commandant ────────────────────────────────────────────
+        font_name = QFont()
+        font_name.setPixelSize(12)
+        font_name.setBold(True)
+        painter.setFont(font_name)
+        painter.setPen(QColor("#e8e8e8"))
+        name_rect = QRectF(6, IMG_H - 40, CW - 12, 38)
+        painter.drawText(
+            name_rect,
+            Qt.AlignBottom | Qt.AlignHCenter | Qt.TextWordWrap,
+            self._opp_name,
         )
-        src_x = (scaled.width() - rect.width()) // 2
-        src_y = max(0, (scaled.height() - rect.height()) // 5)
 
-        painter.setOpacity(0.75)
-        painter.drawPixmap(rect, scaled,
-                           QRect(src_x, src_y, rect.width(), rect.height()))
-        painter.setOpacity(1.0)
+        # ── W / L / D ────────────────────────────────────────────────────
+        col_w   = CW // 3
+        stats_y = IMG_H + 6
 
-        # Fondu gauche et droite, large zone centrale visible
-        r, g, b = bg.red(), bg.green(), bg.blue()
-        grad = QLinearGradient(rect.left(), 0, rect.right(), 0)
-        grad.setColorAt(0.00, QColor(r, g, b, 255))
-        grad.setColorAt(0.18, QColor(r, g, b, 200))
-        grad.setColorAt(0.35, QColor(r, g, b, 0))
-        grad.setColorAt(0.65, QColor(r, g, b, 0))
-        grad.setColorAt(0.82, QColor(r, g, b, 200))
-        grad.setColorAt(1.00, QColor(r, g, b, 255))
-        painter.fillRect(rect, QBrush(grad))
+        for i, (val, key, hex_col) in enumerate([
+            (self._wins,   "W", "#3fd27d"),
+            (self._losses, "L", "#ef4444"),
+            (self._draws,  "D", "#aaaaaa"),
+        ]):
+            x = i * col_w
+            c = QColor(hex_col)
+
+            font_val = QFont()
+            font_val.setPixelSize(17)
+            font_val.setBold(True)
+            painter.setFont(font_val)
+            painter.setPen(c)
+            painter.drawText(QRectF(x, stats_y, col_w, 22), Qt.AlignCenter, str(val))
+
+            font_key = QFont()
+            font_key.setPixelSize(9)
+            painter.setFont(font_key)
+            painter.setPen(c.darker(140))
+            painter.drawText(QRectF(x, stats_y + 21, col_w, 13), Qt.AlignCenter, key)
+
+        # ── Barre winrate ─────────────────────────────────────────────────
+        if self._rate is not None:
+            rate = self._rate
+            if rate >= 0.55:
+                bar_color = QColor("#3fd27d")
+            elif rate >= 0.40:
+                bar_color = QColor("#e8880a")
+            else:
+                bar_color = QColor("#ef4444")
+
+            pct_y = stats_y + 34
+            bar_x = 10
+            bar_y = pct_y + 14
+            bar_w = CW - 20
+            bar_h = 6
+
+            # Pourcentage
+            font_pct = QFont()
+            font_pct.setPixelSize(10)
+            font_pct.setBold(True)
+            painter.setFont(font_pct)
+            painter.setPen(bar_color)
+            painter.drawText(
+                QRectF(bar_x, pct_y, bar_w, 14),
+                Qt.AlignCenter,
+                f"{rate * 100:.0f}%",
+            )
+
+            # Track
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor("#1a3d2e")))
+            painter.drawRoundedRect(QRectF(bar_x, bar_y, bar_w, bar_h), 3, 3)
+
+            # Fill
+            fill = bar_w * rate
+            if fill > 0:
+                painter.setBrush(QBrush(bar_color))
+                painter.drawRoundedRect(QRectF(bar_x, bar_y, fill, bar_h), 3, 3)
+
+        # ── Bordure ──────────────────────────────────────────────────────
+        painter.setClipping(False)
+        border = QColor(0x4f, 0x9f, 0x80) if self._hovered else QColor(0x2f, 0x6f, 0x55, 180)
+        painter.setPen(QPen(border, 1.5 if self._hovered else 1.0))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(0.75, 0.75, -0.75, -0.75), 12, 12)
 
         painter.end()
 
 
 class MatchupDialog(QDialog):
-    """Fenêtre de matchups : W/L/D et winrate contre chaque commandant adverse."""
+    """Fenêtre de matchups : grille de cartes par commandant adverse."""
+
+    _COLS    = 4
+    _SPACING = 12
 
     def __init__(self, commander_name: str, matchups: dict, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Matchups — {commander_name}")
         self.setModal(True)
-        self.setMinimumSize(600, 500)
+        self.setFixedSize(760, 620)
         self.setObjectName("PlayerStatsDialog")
 
         self._commander_name = commander_name
-        self._all_matchups = list(matchups.items())  # [(name, {w,l,d}), ...]
+        self._all_matchups = sorted(
+            matchups.items(),
+            key=lambda x: x[1]["w"] / (x[1]["w"] + x[1]["l"] + x[1]["d"])
+            if (x[1]["w"] + x[1]["l"] + x[1]["d"]) > 0 else 0,
+            reverse=True,
+        )
 
-        # Charger la map commandant → image
         raw = CommanderStorage.load()
         self._img_map: dict[str, str | None] = {
             c["name"]: c.get("image_path") for c in raw
         }
 
-        self._rows_container: QWidget | None = None
-        self._rows_layout: QVBoxLayout | None = None
+        self._grid_layout: QGridLayout | None = None
         self._build_ui()
 
     def _build_ui(self):
@@ -519,81 +552,56 @@ class MatchupDialog(QDialog):
             search.textChanged.connect(self._on_search)
             layout.addWidget(search)
 
-            # ── En-têtes colonnes ─────────────────────────────────────────
-            header = QFrame()
-            header.setObjectName("MatchupHeader")
-            hlay = QHBoxLayout(header)
-            hlay.setContentsMargins(16, 8, 16, 8)
-            hlay.setSpacing(0)
-
-            name_h = QLabel("Commandant")
-            name_h.setObjectName("StatsLabel")
-            hlay.addWidget(name_h, 1)
-
-            for txt, obj in [("W", "MatchupW"), ("L", "MatchupL"), ("D", "MatchupD")]:
-                lbl = QLabel(txt)
-                lbl.setObjectName(obj)
-                lbl.setAlignment(Qt.AlignCenter)
-                lbl.setFixedWidth(_COL_W)
-                hlay.addWidget(lbl)
-
-            hlay.addSpacing(8)
-
-            wr_h = QLabel("Winrate")
-            wr_h.setObjectName("StatsLabel")
-            wr_h.setFixedWidth(_COL_BAR)
-            wr_h.setAlignment(Qt.AlignCenter)
-            hlay.addWidget(wr_h)
-
-            layout.addWidget(header)
-
-            # ── Scroll + lignes ───────────────────────────────────────────
+            # ── Scroll area + grille de cartes ────────────────────────────
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
             scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             scroll.setFrameShape(QFrame.NoFrame)
             scroll.setObjectName("MatchupScroll")
 
-            self._rows_container = QWidget()
-            self._rows_container.setObjectName("MatchupContainer")
-            self._rows_layout = QVBoxLayout(self._rows_container)
-            self._rows_layout.setContentsMargins(0, 0, 0, 0)
-            self._rows_layout.setSpacing(0)
+            container = QWidget()
+            container.setObjectName("MatchupContainer")
+            self._grid_layout = QGridLayout(container)
+            self._grid_layout.setContentsMargins(0, 4, 0, 12)
+            self._grid_layout.setSpacing(self._SPACING)
+            self._grid_layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-            scroll.setWidget(self._rows_container)
+            scroll.setWidget(container)
             layout.addWidget(scroll, 1)
 
-            self._populate_rows(self._all_matchups)
+            self._populate_grid(self._all_matchups)
 
         close_btn = QPushButton("Fermer")
         close_btn.setObjectName("CancelButton")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, alignment=Qt.AlignRight)
 
-    def _populate_rows(self, matchups: list):
-        """Vide et remplit les lignes selon la liste fournie."""
-        while self._rows_layout.count():
-            item = self._rows_layout.takeAt(0)
+    def _populate_grid(self, matchups: list):
+        """Vide et remplit la grille de cartes."""
+        if self._grid_layout is None:
+            return
+        while self._grid_layout.count():
+            item = self._grid_layout.takeAt(0)
             if item and item.widget():
                 item.widget().deleteLater()
 
         for i, (opp_name, data) in enumerate(matchups):
-            img = self._img_map.get(opp_name)
-            row = _MatchupRow(opp_name, img, data["w"], data["l"], data["d"], alt=(i % 2 == 1))
-            self._rows_layout.addWidget(row)
-
-        self._rows_layout.addStretch()
+            img  = self._img_map.get(opp_name)
+            card = _CommanderMatchupCard(
+                opp_name, img, data["w"], data["l"], data["d"]
+            )
+            self._grid_layout.addWidget(card, i // self._COLS, i % self._COLS)
 
     def _on_search(self, text: str):
         q = text.strip().lower()
-        if q:
-            filtered = [(n, d) for n, d in self._all_matchups if q in n.lower()]
-        else:
-            filtered = self._all_matchups
-        shown = len(filtered)
+        filtered = (
+            [(n, d) for n, d in self._all_matchups if q in n.lower()]
+            if q else self._all_matchups
+        )
         total = len(self._all_matchups)
+        shown = len(filtered)
         self._count_lbl.setText(f"({shown}/{total})" if q else f"({total})")
-        self._populate_rows(filtered)
+        self._populate_grid(filtered)
 
 
 # ---------------------------------------------------------------------------
@@ -607,7 +615,7 @@ class CommanderStatsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(f"Statistiques — {commander.name}")
         self.setModal(True)
-        self.setMinimumSize(460, 540)
+        self.setFixedSize(460, 760)
         self.setObjectName("PlayerStatsDialog")
 
         self._commander = commander
@@ -800,3 +808,417 @@ class CommanderStatsDialog(QDialog):
 
         layout.addLayout(grid)
         return frame
+
+
+# ===========================================================================
+# GLOBAL STATS — stats de tous les commandants
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Calcul
+# ---------------------------------------------------------------------------
+
+def _compute_global_stats() -> dict:
+    """
+    Calcule les stats globales sur tous les tournois (archivés ou non).
+    Retourne :
+        {
+            'wins':       [(name, count, img_path), ...],  # triés par nb victoires totales
+            'wins_multi': [(name, count, img_path), ...],  # triés par nb victoires Multi
+            'wins_duel':  [(name, count, img_path), ...],  # triés par nb victoires Duel
+            'multi':      [(name, count, img_path), ...],  # triés par nb tournois Multi joués
+            'duel':       [(name, count, img_path), ...],  # triés par nb tournois Duel joués
+        }
+    """
+    tournaments = TournamentStorage.load()
+    commanders_raw = CommanderStorage.load()
+    img_map: dict[str, str | None] = {c["name"]: c.get("image_path") for c in commanders_raw}
+
+    wins:       dict[str, int] = {}
+    wins_multi: dict[str, int] = {}
+    wins_duel:  dict[str, int] = {}
+    multi: dict[str, int] = {}
+    duel:  dict[str, int] = {}
+
+    for t in tournaments:
+        is_duel = "Duel" in t.get("format", "")
+        target = duel if is_duel else multi
+
+        # Compte chaque commandant une seule fois par tournoi
+        cmds_seen: set[str] = set()
+        for p in t.get("players", []):
+            cmd = p.get("commander", "")
+            if cmd and cmd not in cmds_seen:
+                cmds_seen.add(cmd)
+                target[cmd] = target.get(cmd, 0) + 1
+
+        # Victoires : rang 1 du classement final
+        rank_by_id = _final_ranking(t)
+        pid_to_cmd = {p["id"]: p.get("commander", "") for p in t.get("players", [])}
+        wins_target = wins_duel if is_duel else wins_multi
+        for pid, rank in rank_by_id.items():
+            if rank == 1:
+                cmd = pid_to_cmd.get(pid, "")
+                if cmd:
+                    wins[cmd]        = wins.get(cmd, 0) + 1
+                    wins_target[cmd] = wins_target.get(cmd, 0) + 1
+
+    def to_ranked(d: dict) -> list[tuple[str, int, str | None]]:
+        return [
+            (name, count, img_map.get(name))
+            for name, count in sorted(d.items(), key=lambda x: -x[1])
+        ]
+
+    return {
+        "wins":       to_ranked(wins),
+        "wins_multi": to_ranked(wins_multi),
+        "wins_duel":  to_ranked(wins_duel),
+        "multi":      to_ranked(multi),
+        "duel":       to_ranked(duel),
+    }
+
+
+# ---------------------------------------------------------------------------
+# _Thumb — image circulaire miniature
+# ---------------------------------------------------------------------------
+
+class _Thumb(QFrame):
+    """Image circulaire miniature d'un commandant."""
+
+    def __init__(self, img_path: str | None, size: int = 44, parent=None):
+        super().__init__(parent)
+        self._size = size
+        self._pixmap: QPixmap | None = None
+        self.setFixedSize(size, size)
+        self.setAttribute(Qt.WA_StyledBackground, False)
+        if img_path:
+            px = QPixmap(str(DATA_DIR / img_path))
+            if not px.isNull():
+                self._pixmap = px
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        s = self._size
+        circle = QRectF(0, 0, s, s)
+
+        clip = QPainterPath()
+        clip.addEllipse(circle)
+        painter.setClipPath(clip)
+
+        if self._pixmap:
+            scaled = self._pixmap.scaled(s, s, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            sx = (scaled.width() - s) // 2
+            sy = max(0, (scaled.height() - s) // 5)
+            painter.drawPixmap(QRect(0, 0, s, s), scaled, QRect(sx, sy, s, s))
+        else:
+            painter.fillRect(QRect(0, 0, s, s), QColor("#1a3d2e"))
+
+        painter.setClipping(False)
+        painter.setPen(QPen(QColor("#2f6f55"), 1.5))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawEllipse(circle.adjusted(0.75, 0.75, -0.75, -0.75))
+        painter.end()
+
+
+# ---------------------------------------------------------------------------
+# _PodiumCard — grande carte image pour le podium
+# ---------------------------------------------------------------------------
+
+class _PodiumCard(QFrame):
+    """Carte du podium : image pleine + badge rang + nom + compteur."""
+
+    _RANK_COLOR = {1: "#FFD700", 2: "#B0B8C1", 3: "#CD7F32"}
+    _RANK_LABEL = {1: "1er", 2: "2e", 3: "3e"}
+    _RANK_ICON  = {1: "🥇", 2: "🥈", 3: "🥉"}
+    _SIZES      = {1: (210, 310), 2: (180, 272), 3: (162, 248)}
+
+    def __init__(self, rank: int, name: str, value: int, suffix: str,
+                 img_path: str | None, parent=None):
+        super().__init__(parent)
+        self._rank   = rank
+        self._name   = name
+        self._value  = value
+        self._suffix = suffix
+        self._pixmap: QPixmap | None = None
+        w, h = self._SIZES.get(rank, (155, 225))
+        self.setFixedSize(w, h)
+        self.setAttribute(Qt.WA_StyledBackground, False)
+        if img_path:
+            px = QPixmap(str(DATA_DIR / img_path))
+            if not px.isNull():
+                self._pixmap = px
+
+    def paintEvent(self, _event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+
+        CW, CH = self.width(), self.height()
+        rect = QRectF(0, 0, CW, CH)
+        rc   = QColor(self._RANK_COLOR[self._rank])
+
+        # Clip arrondi
+        clip = QPainterPath()
+        clip.addRoundedRect(rect, 14, 14)
+        painter.setClipPath(clip)
+
+        # Fond sombre
+        painter.fillRect(rect.toRect(), QColor(0x07, 0x14, 0x0e))
+
+        # Image pleine
+        if self._pixmap:
+            scaled = self._pixmap.scaled(CW, CH, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            sx = (scaled.width() - CW) // 2
+            sy = max(0, (scaled.height() - CH) // 5)
+            painter.setOpacity(0.88)
+            painter.drawPixmap(QRect(0, 0, CW, CH), scaled, QRect(sx, sy, CW, CH))
+            painter.setOpacity(1.0)
+
+        # Gradient bas (lisibilité texte)
+        grad = QLinearGradient(0, CH * 0.32, 0, CH)
+        grad.setColorAt(0, QColor(0, 0, 0, 0))
+        grad.setColorAt(1, QColor(0, 0, 0, 240))
+        painter.fillRect(rect, QBrush(grad))
+
+        # Badge rang (coin haut droit)
+        br = 18
+        badge = QRectF(CW - br * 2 - 7, 7, br * 2, br * 2)
+        painter.setBrush(QBrush(rc))
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(badge)
+        fb = QFont(); fb.setPixelSize(12); fb.setBold(True)
+        painter.setFont(fb)
+        painter.setPen(QColor("#000000"))
+        painter.drawText(badge, Qt.AlignCenter, self._RANK_LABEL[self._rank])
+
+        # Nom du commandant
+        fn = QFont(); fn.setPixelSize(12); fn.setBold(True)
+        painter.setFont(fn)
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(
+            QRectF(6, CH - 56, CW - 12, 30),
+            Qt.AlignBottom | Qt.AlignHCenter | Qt.TextWordWrap,
+            self._name,
+        )
+
+        # Valeur (victoires / parties)
+        fv = QFont(); fv.setPixelSize(16); fv.setBold(True)
+        painter.setFont(fv)
+        painter.setPen(rc)
+        painter.drawText(
+            QRectF(6, CH - 27, CW - 12, 23),
+            Qt.AlignCenter,
+            f"{self._RANK_ICON[self._rank]} {self._value} {self._suffix}",
+        )
+
+        # Bordure colorée selon le rang
+        painter.setClipping(False)
+        painter.setPen(QPen(rc.darker(130), 2))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(1, 1, -1, -1), 14, 14)
+
+        painter.end()
+
+
+# ---------------------------------------------------------------------------
+# _RankingRow — ligne de classement avec image circulaire
+# ---------------------------------------------------------------------------
+
+class _RankingRow(QFrame):
+    """Ligne de classement : rang + image circulaire + nom + compteur."""
+
+    _RANK_COLOR = {1: "#FFD700", 2: "#B0B8C1", 3: "#CD7F32"}
+
+    def __init__(self, rank: int, name: str, count: int, suffix: str,
+                 img_path: str | None, parent=None):
+        super().__init__(parent)
+        self.setObjectName("RankingRow")
+        self.setFixedHeight(58)
+
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(10, 4, 14, 4)
+        lay.setSpacing(10)
+
+        # Numéro de rang (coloré pour le top 3)
+        rk_lbl = QLabel(f"#{rank}")
+        color = self._RANK_COLOR.get(rank, "")
+        if color:
+            rk_lbl.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 14px;")
+        else:
+            rk_lbl.setObjectName("RankingNumber")
+        rk_lbl.setFixedWidth(34)
+        rk_lbl.setAlignment(Qt.AlignCenter)
+        lay.addWidget(rk_lbl)
+
+        # Image circulaire
+        lay.addWidget(_Thumb(img_path, size=46))
+
+        # Nom
+        name_lbl = QLabel(name)
+        name_lbl.setObjectName("StatsLabel")
+        lay.addWidget(name_lbl, 1)
+
+        # Compteur (en gras)
+        val_lbl = QLabel(f"<b>{count}</b> {suffix}")
+        val_lbl.setObjectName("StatsValue")
+        val_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lay.addWidget(val_lbl)
+
+
+# ---------------------------------------------------------------------------
+# Helpers de construction d'UI
+# ---------------------------------------------------------------------------
+
+def _make_podium_row(data: list, suffix: str) -> QHBoxLayout:
+    """
+    Construit le podium visuel : 2e (gauche), 1er (centre), 3e (droite).
+    Les cartes sont alignées en bas pour simuler les marches d'un podium.
+    """
+    row = QHBoxLayout()
+    row.setAlignment(Qt.AlignCenter | Qt.AlignBottom)
+    row.setSpacing(16)
+
+    order = [
+        (2, data[1] if len(data) > 1 else None),
+        (1, data[0]),
+        (3, data[2] if len(data) > 2 else None),
+    ]
+
+    for rank, entry in order:
+        if entry is None:
+            row.addStretch()
+            continue
+        name, count, img = entry
+        card = _PodiumCard(rank, name, count, suffix, img)
+        # Wrapper avec stretch en haut → pousse la carte vers le bas (effet marches)
+        wrapper = QWidget()
+        wl = QVBoxLayout(wrapper)
+        wl.setContentsMargins(0, 0, 0, 0)
+        wl.setSpacing(0)
+        wl.addStretch()
+        wl.addWidget(card)
+        row.addWidget(wrapper)
+
+    return row
+
+
+def _make_ranking_scroll(data: list, suffix: str) -> QScrollArea:
+    """Construit la liste scrollable du classement complet avec images (pour les dialogs)."""
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    scroll.setFrameShape(QFrame.NoFrame)
+    scroll.setObjectName("GlobalStatsScroll")
+
+    container = QWidget()
+    container.setObjectName("GlobalStatsContainer")
+    cl = QVBoxLayout(container)
+    cl.setContentsMargins(0, 0, 0, 8)
+    cl.setSpacing(4)
+    for rank, (name, count, img) in enumerate(data, 1):
+        cl.addWidget(_RankingRow(rank, name, count, suffix, img))
+    cl.addStretch()
+
+    scroll.setWidget(container)
+    return scroll
+
+
+def _make_ranking_list(data: list, suffix: str) -> QWidget:
+    """Construit la liste plate du classement complet (pour les vues avec scroll externe)."""
+    container = QWidget()
+    container.setObjectName("GlobalStatsContainer")
+    cl = QVBoxLayout(container)
+    cl.setContentsMargins(0, 0, 0, 0)
+    cl.setSpacing(4)
+    for rank, (name, count, img) in enumerate(data, 1):
+        cl.addWidget(_RankingRow(rank, name, count, suffix, img))
+    return container
+
+
+# ---------------------------------------------------------------------------
+# CommanderGlobalStatsDialog
+# ---------------------------------------------------------------------------
+
+class CommanderGlobalStatsDialog(QDialog):
+    """
+    Statistiques globales des commandants sur tous les tournois.
+
+    Trois onglets :
+    - 🏆 Victoires : podium + classement par nb de victoires
+    - 👑 Multi     : podium + commandants les plus joués en Multi
+    - ⚔️  Duel     : podium + commandants les plus joués en Duel
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("🏆 Stats globales — Commandants")
+        self.setModal(True)
+        self.setFixedSize(820, 700)
+        self.setObjectName("PlayerStatsDialog")
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+
+        self._data = _compute_global_stats()
+        self._build_ui()
+
+    def _build_ui(self):
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 20, 20, 20)
+        lay.setSpacing(16)
+
+        title = QLabel("🏆 Statistiques globales des Commandants")
+        title.setObjectName("SectionTitle")
+        lay.addWidget(title)
+
+        tabs = QTabWidget()
+        tabs.setObjectName("StatsTabWidget")
+        tabs.addTab(
+            self._build_tab(self._data["wins"],  "victoire(s)", "Aucune victoire enregistrée."),
+            "🏆 Victoires",
+        )
+        tabs.addTab(
+            self._build_tab(self._data["multi"], "partie(s)", "Aucun tournoi Multi enregistré."),
+            "👑 Multi",
+        )
+        tabs.addTab(
+            self._build_tab(self._data["duel"],  "partie(s)", "Aucun tournoi Duel enregistré."),
+            "⚔️ Duel",
+        )
+        lay.addWidget(tabs, 1)
+
+        close_btn = QPushButton("Fermer")
+        close_btn.setObjectName("CancelButton")
+        close_btn.clicked.connect(self.accept)
+        lay.addWidget(close_btn, alignment=Qt.AlignRight)
+
+    def _build_tab(self, data: list, suffix: str, empty_msg: str) -> QWidget:
+        """
+        Onglet :
+        - Podium visuel en haut (top 3 avec grandes images)
+        - Classement complet scrollable en bas (si plus de 3 entrées)
+        """
+        page = QWidget()
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 12, 0, 0)
+        lay.setSpacing(12)
+
+        if not data:
+            lbl = QLabel(empty_msg)
+            lbl.setObjectName("StatsLabel")
+            lbl.setAlignment(Qt.AlignCenter)
+            lay.addWidget(lbl)
+            lay.addStretch()
+            return page
+
+        # Podium (top 3)
+        lay.addLayout(_make_podium_row(data, suffix))
+
+        # Classement complet si plus de 3 entrées
+        if len(data) > 3:
+            sep = QLabel("Classement complet")
+            sep.setObjectName("StatsSectionTitle")
+            lay.addWidget(sep)
+            lay.addWidget(_make_ranking_scroll(data, suffix), 1)
+
+        return page

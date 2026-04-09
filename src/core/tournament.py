@@ -120,36 +120,98 @@ class Tournament:
 
     def _generate_tables(self) -> list[Table] | None:
         """
-        Génère les tables à partir des scores et de la robustesse.
+        Génère les tables à partir des scores et de la robustesse,
+        en évitant les rematches dès le 2ème round.
         """
         active_players = [p for p in self.players if not p.dropped]
         player_count = len(active_players)
-
         table_sizes = self.compute_table_sizes(player_count)
-
         if table_sizes is None:
             return None
 
         ordered_players = self.sort_players()
 
-        tables: list[Table] = []
-        index = 0
-        table_number = 1
+        # Premier round (scores tous à 0 → mélange aléatoire) : pas d'anti-rematch
+        if not self.rounds:
+            tables: list[Table] = []
+            idx = 0
+            for i, size in enumerate(table_sizes):
+                tables.append(Table(number=i + 1, players=ordered_players[idx:idx + size]))
+                idx += size
+            return tables
 
-        for size in table_sizes:
-            table_players = ordered_players[index:index + size]
+        opponents_map = self.get_opponents_map()
 
-            tables.append(
-                Table(
-                    number=table_number,
-                    players=table_players
-                )
+        if self.is_1v1_format():
+            return self._generate_1v1_tables_anti_rematch(
+                ordered_players, opponents_map, table_sizes
+            )
+        else:
+            return self._generate_commander_tables_anti_rematch(
+                ordered_players, table_sizes, opponents_map
             )
 
-            index += size
-            table_number += 1
+    def _generate_1v1_tables_anti_rematch(
+        self,
+        ordered: list["Player"],
+        opponents_map: dict[int, set[int]],
+        table_sizes: list[int],
+    ) -> list[Table]:
+        """
+        Appariement 1v1 anti-rematch pour le format standard (non-Swiss).
 
-        return tables
+        Si nombre impair de joueurs : choisit le sit-out qui minimise les rematches
+        puis les écarts de score, en testant chaque candidat du moins bien classé
+        au mieux classé.
+
+        Utilise le même backtracking global que le système Swiss.
+        Aucune exception levée : le meilleur pairing possible est toujours retourné.
+        """
+        from core.swiss_pairing import _find_best_pairing  # noqa: PLC0415
+
+        n_play = sum(table_sizes)
+
+        if len(ordered) > n_play:
+            # Nombre impair : sit-out intelligent
+            sitout = ordered[-1]  # défaut : dernier du classement
+            best_rem, best_gap = float('inf'), float('inf')
+            for candidate in reversed(ordered):
+                remaining = [p for p in ordered if p.id != candidate.id][:n_play]
+                _, rem, gap = _find_best_pairing(remaining, opponents_map)
+                if (rem, gap) < (best_rem, best_gap):
+                    best_rem, best_gap = rem, gap
+                    sitout = candidate
+                    if rem == 0:
+                        break
+            to_pair = [p for p in ordered if p.id != sitout.id][:n_play]
+        else:
+            to_pair = ordered[:n_play]
+
+        pairings_idx, _, _ = _find_best_pairing(to_pair, opponents_map)
+        return [
+            Table(number=i + 1, players=[to_pair[a], to_pair[b]])
+            for i, (a, b) in enumerate(pairings_idx)
+        ]
+
+    def _generate_commander_tables_anti_rematch(
+        self,
+        ordered: list["Player"],
+        table_sizes: list[int],
+        opponents_map: dict[int, set[int]],
+    ) -> list[Table]:
+        """
+        Génère les tables Commander (3-4 joueurs) en minimisant les rematches.
+        1. Assignation initiale séquentielle par score (tables proches en score).
+        2. Optimisation par échanges locaux entre tables adjacentes.
+        """
+        # Assignation initiale par score
+        tables: list[Table] = []
+        idx = 0
+        for i, size in enumerate(table_sizes):
+            tables.append(Table(number=i + 1, players=ordered[idx:idx + size]))
+            idx += size
+
+        return _optimize_tables_anti_rematch(tables, opponents_map)
 
     def compute_table_sizes(self, player_count: int) -> list[int] | None:
         """
@@ -384,11 +446,13 @@ class Tournament:
     # Swiss Pairing System
     # =====================
 
-    def create_round_swiss(self, allow_rematch: bool = False) -> Round:
+    def create_round_swiss(self) -> Round:
         """
-        Crée un round avec appariement Swiss officiel.
+        Crée un round avec appariement Swiss global anti-rematch.
         Uniquement valide pour les formats 1v1.
-        Lève ValueError("rematch_forced") si rematches inévitables et non autorisés.
+
+        Le pairing minimise les rematches automatiquement — aucune exception levée.
+        Le bye est attribué intelligemment pour favoriser les pairings sans rematch.
         """
         round_number = len(self.rounds) + 1
         opponents_map = self.get_opponents_map()
@@ -404,9 +468,6 @@ class Tournament:
             self.bye_history,
             standings_order=standings_order,
         )
-
-        if result.rematch_forced and not allow_rematch:
-            raise ValueError("rematch_forced")
 
         tables: list[Table] = []
         for i, (p1, p2) in enumerate(result.pairings, 1):
@@ -675,6 +736,76 @@ class Tournament:
             tournament.bracket = Bracket.from_dict(bracket_data)
 
         return tournament
+
+
+# =====================
+# Optimisation anti-rematch (Commander)
+# =====================
+
+def _optimize_tables_anti_rematch(
+    tables: list[Table],
+    opponents_map: dict[int, set[int]],
+) -> list[Table]:
+    """
+    Réduit les rematches par échanges locaux entre tables adjacentes (score-proches).
+
+    Algorithme : hill-climbing — à chaque passe, on cherche l'échange entre deux
+    joueurs de tables voisines (±2 positions) qui réduit le plus le nombre total
+    de rematches. On itère jusqu'à convergence ou 30 passes max.
+
+    Un « rematch » = deux joueurs dans la même table qui se sont déjà affrontés.
+    """
+
+    def table_conflicts(players: list) -> int:
+        total = 0
+        for i, p1 in enumerate(players):
+            for p2 in players[i + 1:]:
+                if p2.id in opponents_map.get(p1.id, set()):
+                    total += 1
+        return total
+
+    # Travailler sur des listes mutables
+    groups: list[list] = [list(t.players) for t in tables]
+    n = len(groups)
+
+    for _ in range(30):
+        improved = False
+
+        for ti in range(n):
+            c_ti = table_conflicts(groups[ti])
+            if c_ti == 0:
+                continue  # Table sans conflit, on passe
+
+            # Chercher le meilleur échange avec une table voisine (±2)
+            best_delta = 0
+            best_swap: tuple | None = None
+
+            for tj in range(max(0, ti - 2), min(n, ti + 3)):
+                if ti == tj:
+                    continue
+                c_tj = table_conflicts(groups[tj])
+                current = c_ti + c_tj
+
+                for pi, p1 in enumerate(groups[ti]):
+                    for pj, p2 in enumerate(groups[tj]):
+                        new_ti = groups[ti][:pi] + [p2] + groups[ti][pi + 1:]
+                        new_tj = groups[tj][:pj] + [p1] + groups[tj][pj + 1:]
+                        delta = table_conflicts(new_ti) + table_conflicts(new_tj) - current
+                        if delta < best_delta:
+                            best_delta = delta
+                            best_swap = (ti, tj, new_ti, new_tj)
+
+            if best_swap:
+                ti_s, tj_s, new_ti, new_tj = best_swap
+                groups[ti_s] = new_ti
+                groups[tj_s] = new_tj
+                improved = True
+                break  # Recommencer depuis le début
+
+        if not improved:
+            break  # Plus aucun échange bénéfique → convergence
+
+    return [Table(number=t.number, players=g) for t, g in zip(tables, groups)]
 
 
 # =====================

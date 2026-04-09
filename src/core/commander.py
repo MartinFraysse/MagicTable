@@ -36,6 +36,7 @@ class Commander:
     name: str
     colors: list[str] = field(default_factory=list)
     image_path: str | None = field(default=None)
+    duel: bool = False
 
     @property
     def color_identity(self) -> str:
@@ -52,6 +53,7 @@ class Commander:
             "name": self.name,
             "colors": self.colors,
             "image_path": self.image_path,
+            "duel": self.duel,
         }
 
     @classmethod
@@ -61,4 +63,5 @@ class Commander:
             name=data["name"],
             colors=data.get("colors", []),
             image_path=data.get("image_path"),
+            duel=data.get("duel", False),
         )

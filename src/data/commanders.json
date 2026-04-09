@@ -7,7 +7,17 @@
       "U",
       "R"
     ],
-    "image_path": "commander_images/ae10a15ad3ee44d69c94865097b041ff.jpg"
+    "image_path": "commander_images/ae10a15ad3ee44d69c94865097b041ff.jpg",
+    "duel": true
+  },
+  {
+    "id": 19,
+    "name": "Braids, Conjurer Adept",
+    "colors": [
+      "U"
+    ],
+    "image_path": "commander_images/33c46031c0734cb2a7c7a8141b597144.jpg",
+    "duel": false
   },
   {
     "id": 14,
@@ -16,7 +26,8 @@
       "W",
       "G"
     ],
-    "image_path": "commander_images/b7aab2082fb1471bab2de9d8bf8512c4.jpg"
+    "image_path": "commander_images/b7aab2082fb1471bab2de9d8bf8512c4.jpg",
+    "duel": true
   },
   {
     "id": 16,
@@ -26,7 +37,8 @@
       "B",
       "R"
     ],
-    "image_path": "commander_images/7445a3edb61a4090ae0f5f7fd31173fa.jpg"
+    "image_path": "commander_images/7445a3edb61a4090ae0f5f7fd31173fa.jpg",
+    "duel": false
   },
   {
     "id": 7,
@@ -36,7 +48,8 @@
       "B",
       "R"
     ],
-    "image_path": "commander_images/9cb4893e211a4804804a93d336cf53fe.jpg"
+    "image_path": "commander_images/9cb4893e211a4804804a93d336cf53fe.jpg",
+    "duel": true
   },
   {
     "id": 18,
@@ -45,7 +58,8 @@
       "B",
       "R"
     ],
-    "image_path": "commander_images/78e3fc10a5764767b8013b5b2c68d851.jpg"
+    "image_path": "commander_images/78e3fc10a5764767b8013b5b2c68d851.jpg",
+    "duel": false
   },
   {
     "id": 17,
@@ -54,7 +68,8 @@
       "B",
       "R"
     ],
-    "image_path": "commander_images/436a15ce568e4c75b5e83ed2a1e8cd3f.jpg"
+    "image_path": "commander_images/436a15ce568e4c75b5e83ed2a1e8cd3f.jpg",
+    "duel": true
   },
   {
     "id": 15,
@@ -63,7 +78,8 @@
       "U",
       "G"
     ],
-    "image_path": "commander_images/220807871bd2478eb76f8d92253fdf47.jpg"
+    "image_path": "commander_images/220807871bd2478eb76f8d92253fdf47.jpg",
+    "duel": false
   },
   {
     "id": 5,
@@ -72,7 +88,8 @@
       "W",
       "R"
     ],
-    "image_path": "commander_images/981c1ff64ff54548bea95fe861f2ecd3.jpg"
+    "image_path": "commander_images/981c1ff64ff54548bea95fe861f2ecd3.jpg",
+    "duel": true
   },
   {
     "id": 9,
@@ -80,7 +97,8 @@
     "colors": [
       "G"
     ],
-    "image_path": "commander_images/e52406e13fb4493da93995e3273d62d1.jpg"
+    "image_path": "commander_images/e52406e13fb4493da93995e3273d62d1.jpg",
+    "duel": true
   },
   {
     "id": 3,
@@ -89,7 +107,8 @@
       "U",
       "G"
     ],
-    "image_path": "commander_images/37ae38ee7e3047fa99b8f5772112d731.jpg"
+    "image_path": "commander_images/37ae38ee7e3047fa99b8f5772112d731.jpg",
+    "duel": true
   },
   {
     "id": 1,
@@ -97,7 +116,8 @@
     "colors": [
       "W"
     ],
-    "image_path": "commander_images/7da2e18762b34a16a1ecf09a858ec81a.jpg"
+    "image_path": "commander_images/7da2e18762b34a16a1ecf09a858ec81a.jpg",
+    "duel": true
   },
   {
     "id": 13,
@@ -106,7 +126,8 @@
       "R",
       "G"
     ],
-    "image_path": "commander_images/905a3137f1364e729f39044e93f203d2.jpg"
+    "image_path": "commander_images/905a3137f1364e729f39044e93f203d2.jpg",
+    "duel": true
   },
   {
     "id": 8,
@@ -116,7 +137,8 @@
       "R",
       "G"
     ],
-    "image_path": "commander_images/b89ebecb281f4c129d89f0aba88e3329.jpg"
+    "image_path": "commander_images/b89ebecb281f4c129d89f0aba88e3329.jpg",
+    "duel": true
   },
   {
     "id": 2,
@@ -125,7 +147,8 @@
       "W",
       "B"
     ],
-    "image_path": "commander_images/532a798179e542b19625f6de2e6c04f9.jpg"
+    "image_path": "commander_images/532a798179e542b19625f6de2e6c04f9.jpg",
+    "duel": true
   },
   {
     "id": 11,
@@ -134,7 +157,8 @@
       "U",
       "R"
     ],
-    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg"
+    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg",
+    "duel": true
   },
   {
     "id": 10,
@@ -146,7 +170,8 @@
       "R",
       "G"
     ],
-    "image_path": "commander_images/890ef2f44ee14d10a3f365ad2b1b655b.jpg"
+    "image_path": "commander_images/890ef2f44ee14d10a3f365ad2b1b655b.jpg",
+    "duel": true
   },
   {
     "id": 4,
@@ -154,14 +179,7 @@
     "colors": [
       "R"
     ],
-    "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg"
-  },
-  {
-    "id": 19,
-    "name": "Braids, Conjurer Adept",
-    "colors": [
-      "U"
-    ],
-    "image_path": "commander_images/33c46031c0734cb2a7c7a8141b597144.jpg"
+    "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg",
+    "duel": true
   }
 ]

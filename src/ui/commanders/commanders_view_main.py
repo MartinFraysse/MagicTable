@@ -34,6 +34,7 @@ class CommandersViewMain(QWidget):
         self._next_id = 1
         self._search_text: str = ""
         self._selected_id: int | None = None
+        self._filter_duel: bool = False
 
         self._build_ui()
         self._load_commanders()
@@ -68,6 +69,13 @@ class CommandersViewMain(QWidget):
         self.search_input.setClearButtonEnabled(True)
         self.search_input.textChanged.connect(self._on_search_changed)
 
+        self._duel_filter_btn = QPushButton("⚔️ Duel")
+        self._duel_filter_btn.setObjectName("FilterToggleButton")
+        self._duel_filter_btn.setCheckable(True)
+        self._duel_filter_btn.setCursor(Qt.PointingHandCursor)
+        self._duel_filter_btn.setFixedHeight(32)
+        self._duel_filter_btn.toggled.connect(self._on_duel_filter_toggled)
+
         add_btn = QPushButton("➕ Ajouter un commandant")
         add_btn.setObjectName("PrimaryButton")
         add_btn.setCursor(Qt.PointingHandCursor)
@@ -77,6 +85,7 @@ class CommandersViewMain(QWidget):
         layout.addWidget(self.count_label)
         layout.addStretch()
         layout.addWidget(self.search_input)
+        layout.addWidget(self._duel_filter_btn)
         layout.addWidget(add_btn)
 
         return frame
@@ -119,6 +128,10 @@ class CommandersViewMain(QWidget):
         self._search_text = text.strip().lower()
         self._refresh_grid()
 
+    def _on_duel_filter_toggled(self, checked: bool):
+        self._filter_duel = checked
+        self._refresh_grid()
+
     def _refresh_grid(self):
         while self._flow.count():
             item = self._flow.takeAt(0)
@@ -127,8 +140,10 @@ class CommandersViewMain(QWidget):
 
         self._commanders.sort(key=lambda c: c.name.lower())
         filtered = self._commanders
+        if self._filter_duel:
+            filtered = [c for c in filtered if c.duel]
         if self._search_text:
-            filtered = [c for c in self._commanders if self._search_text in c.name.lower()]
+            filtered = [c for c in filtered if self._search_text in c.name.lower()]
 
         for commander in filtered:
             card = CommanderCard(commander, selected=self._selected_id == commander.id)
@@ -203,6 +218,7 @@ class CommandersViewMain(QWidget):
             name=data["name"],
             colors=data["colors"],
             image_path=data.get("image_path"),
+            duel=data.get("duel", False),
         )
         self._next_id += 1
         self._commanders.append(commander)

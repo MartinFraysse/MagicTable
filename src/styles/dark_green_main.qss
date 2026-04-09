@@ -87,3 +87,59 @@ QPushButton#QuitButton {
 QPushButton#QuitButton:hover {
     background-color: #e74c3c;
 }
+
+/* =====================
+   UPDATE BANNER
+===================== */
+
+#UpdateBanner {
+    background-color: #0d3d2c;
+    border: 1px solid #2a7a54;
+    border-radius: 10px;
+}
+
+#UpdateBannerTitle {
+    color: #3ad68a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#UpdateBannerVersion {
+    color: #a0d4bc;
+    font-size: 12px;
+}
+
+#UpdateBannerStatus {
+    color: #7ab89a;
+    font-size: 11px;
+}
+
+#UpdateProgressBar {
+    background-color: #1a5c3e;
+    border: none;
+    border-radius: 3px;
+}
+
+#UpdateProgressBar::chunk {
+    background-color: #3ad68a;
+    border-radius: 3px;
+}
+
+QPushButton#UpdateButton {
+    background-color: #1a7a52;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 8px;
+}
+
+QPushButton#UpdateButton:hover {
+    background-color: #20a06a;
+}
+
+QPushButton#UpdateButton:disabled {
+    background-color: #0d3d2c;
+    color: #4a7a68;
+}

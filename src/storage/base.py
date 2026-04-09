@@ -1,9 +1,28 @@
+import sys
 import json
 from pathlib import Path
 from json import JSONDecodeError
 
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+def _resolve_data_dir() -> Path:
+    """
+    Retourne le répertoire des données utilisateur.
+    - Mode packagé (PyInstaller .exe) : %APPDATA%\\MagicTable\\data
+    - Mode développement              : src/data  (comportement historique)
+    """
+    if getattr(sys, "frozen", False):
+        # App packagée sur Windows
+        appdata = Path(sys._MEIPASS).parent  # dossier du .exe
+        # On stocke les données à côté de l'exe pour faciliter les backups
+        data_dir = appdata / "data"
+    else:
+        data_dir = Path(__file__).parent.parent / "data"
+
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return data_dir
+
+
+DATA_DIR = _resolve_data_dir()
 
 
 class JsonStorage:

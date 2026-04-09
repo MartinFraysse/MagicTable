@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, Signal
 from PySide6.QtGui import QPalette, QColor
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDialog,
     QVBoxLayout,
     QHBoxLayout,
@@ -53,7 +54,7 @@ class CreateCommanderDialog(QDialog):
 
         self.setWindowTitle("Modifier le commandant" if self._is_edit else "Nouveau commandant")
         self.setModal(True)
-        self.setFixedSize(420, 370)
+        self.setFixedSize(420, 400)
         self.setObjectName("CreatePlayerDialog")
 
         self.setAttribute(Qt.WA_TranslucentBackground, False)
@@ -223,6 +224,17 @@ class CreateCommanderDialog(QDialog):
         self.colorless_label.setObjectName("StatsLabel")
         self.colorless_label.hide()
         layout.addWidget(self.colorless_label)
+
+        # Duel Commander
+        self._duel_check = QCheckBox("⚔️  Duel Commander")
+        self._duel_check.setObjectName("DuelCheckbox")
+        self._duel_check.setStyleSheet(
+            "QCheckBox { color: #7a9a8a; font-size: 12px; spacing: 6px; }"
+            "QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid #3a5a4a;"
+            "  border-radius: 3px; background: #0f241d; }"
+            "QCheckBox::indicator:checked { background: #2d8a5e; border-color: #3fd27d; }"
+        )
+        layout.addWidget(self._duel_check)
 
         # Image
         image_section_label = QLabel("Image de fond")
@@ -443,6 +455,7 @@ class CreateCommanderDialog(QDialog):
             btn.setChecked(code in self._commander.colors)
         self._image_path = self._commander.image_path
         self._update_image_ui()
+        self._duel_check.setChecked(self._commander.duel)
 
     def _clear_error(self):
         self.error_label.hide()
@@ -474,6 +487,7 @@ class CreateCommanderDialog(QDialog):
             "name": self.name_input.text().strip(),
             "colors": colors,
             "image_path": self._image_path,
+            "duel": self._duel_check.isChecked(),
         }
 
     def apply_changes(self):
@@ -483,3 +497,4 @@ class CreateCommanderDialog(QDialog):
         self._commander.name = data["name"]
         self._commander.colors = data["colors"]
         self._commander.image_path = data["image_path"]
+        self._commander.duel = data["duel"]

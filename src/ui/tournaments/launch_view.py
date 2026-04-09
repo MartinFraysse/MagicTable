@@ -296,6 +296,7 @@ class PickCommanderDialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
         self._selected_name: str = ""
+        self._filter_duel: bool = False
 
         raw = CommanderStorage.load()
         self._commanders: list[Commander] = sorted(
@@ -311,11 +312,24 @@ class PickCommanderDialog(QDialog):
         title.setObjectName("LaunchSectionTitle")
         layout.addWidget(title)
 
+        search_row = QHBoxLayout()
+        search_row.setSpacing(8)
+
         self.filter_input = QLineEdit()
         self.filter_input.setObjectName("LaunchPlayerInput")
         self.filter_input.setPlaceholderText("Rechercher…")
         self.filter_input.textChanged.connect(self._refresh_list)
-        layout.addWidget(self.filter_input)
+        search_row.addWidget(self.filter_input, 1)
+
+        self._duel_btn = QPushButton("⚔️ Duel")
+        self._duel_btn.setObjectName("FilterToggleButton")
+        self._duel_btn.setCheckable(True)
+        self._duel_btn.setFixedHeight(30)
+        self._duel_btn.setCursor(Qt.PointingHandCursor)
+        self._duel_btn.toggled.connect(self._on_duel_toggled)
+        search_row.addWidget(self._duel_btn)
+
+        layout.addLayout(search_row)
 
         self.list_widget = QListWidget()
         self.list_widget.setObjectName("LaunchPlayersList")
@@ -378,10 +392,16 @@ class PickCommanderDialog(QDialog):
                     self.ok_btn.setEnabled(True)
                     break
 
+    def _on_duel_toggled(self, checked: bool):
+        self._filter_duel = checked
+        self._refresh_list()
+
     def _refresh_list(self):
         f = self.filter_input.text().lower().strip()
         self.list_widget.clear()
         for commander in self._commanders:
+            if self._filter_duel and not commander.duel:
+                continue
             if f and f not in commander.name.lower():
                 continue
             item = QListWidgetItem(commander.name)
@@ -412,6 +432,7 @@ class PickCommanderDialog(QDialog):
             name=data["name"],
             colors=data["colors"],
             image_path=data.get("image_path"),
+            duel=data.get("duel", False),
         )
         commanders.append(new_commander)
         CommanderStorage.save([c.to_dict() for c in commanders])

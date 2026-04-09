@@ -1,5 +1,478 @@
 [
   {
+    "id": 3,
+    "name": "Test",
+    "format": "⚔️ Duel Commander",
+    "date": "30/06/2002",
+    "max_rounds": 3,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "swiss",
+    "bye_history": [
+      0,
+      1,
+      2
+    ],
+    "players": [
+      {
+        "id": 0,
+        "name": "Sebito",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Zurgo Bellstriker",
+        "buchholz": 14.0,
+        "sos": 7.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Rounard",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Lumra, Bellow of the Wood",
+        "buchholz": 13.0,
+        "sos": 6.5,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Pedro",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phelia, Exuberant Shepherd",
+        "buchholz": 10.0,
+        "sos": 5.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Marfin",
+        "score": 7,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin of House Karlov",
+        "buchholz": 13.0,
+        "sos": 4.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Léa",
+        "score": 7,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Juri, Master of the Revue",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              4,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "4": 2,
+              "3": 2
+            },
+            "game_scores": {
+              "4": 1,
+              "3": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              0
+            ],
+            "finished": true,
+            "results": {
+              "0": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "2": 0,
+              "4": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "0": 1,
+              "3": 2
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              1
+            ],
+            "finished": true,
+            "results": {
+              "1": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              4,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "0": 0
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              3,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "3": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "demi",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "demi",
+          "position": 0,
+          "player1_id": 4,
+          "player2_id": 0,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 1,
+          "round_name": "demi",
+          "position": 1,
+          "player1_id": 3,
+          "player2_id": 2,
+          "winner_id": 3,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 2,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 0,
+          "player2_id": 2,
+          "winner_id": 2,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": true
+        },
+        {
+          "match_id": 3,
+          "round_name": "final",
+          "position": 1,
+          "player1_id": 4,
+          "player2_id": 3,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": false
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
+    "id": 2,
+    "name": "Dc test stats",
+    "format": "⚔️ Duel Commander",
+    "date": "30/05/2026",
+    "max_rounds": 2,
+    "archived": true,
+    "podiums_recorded": true,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Rounard",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Phelia, Exuberant Shepherd",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Pedro",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Aragorn, King of Gondor",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Marfin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Omo, Queen of Vesuva",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Sebito",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Celes, Rune Knight",
+        "buchholz": 6.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "0": 0,
+              "3": 2
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              3,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "3": 0,
+              "2": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              1,
+              0
+            ],
+            "finished": true,
+            "results": {
+              "1": 1,
+              "0": 2
+            },
+            "game_scores": {
+              "1": 2,
+              "0": 0
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "demi",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "demi",
+          "position": 0,
+          "player1_id": 2,
+          "player2_id": 0,
+          "winner_id": 2,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 1,
+          "round_name": "demi",
+          "position": 1,
+          "player1_id": 1,
+          "player2_id": 3,
+          "winner_id": 1,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 2,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 0,
+          "player2_id": 3,
+          "winner_id": 0,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": true
+        },
+        {
+          "match_id": 3,
+          "round_name": "final",
+          "position": 1,
+          "player1_id": 2,
+          "player2_id": 1,
+          "winner_id": 2,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": false
+        }
+      ],
+      "finished": true
+    }
+  },
+  {
     "id": 0,
     "name": "Dc Lundi",
     "format": "⚔️ Duel Commander",

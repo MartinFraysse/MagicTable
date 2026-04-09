@@ -128,6 +128,7 @@ class DashboardViewMain(QWidget):
         # Overlay classement final
         # =====================
         self.final_overlay = FinalStandingsOverlay(self)
+        self.final_overlay.dismissed.connect(self._auto_archive)
 
         # =====================
         # Calcul initial des hauteurs
@@ -304,26 +305,9 @@ class DashboardViewMain(QWidget):
         if self.current_tournament.is_1v1_format():
             self._apply_1v1_standings()
 
-        # Utiliser l'algorithme approprié selon le système d'appariement
+        # Créer le round selon le système d'appariement
         if self.current_tournament.is_swiss_format():
-            allow_rematch = False
-            for _ in range(2):
-                try:
-                    self.current_tournament.create_round_swiss(allow_rematch=allow_rematch)
-                    break
-                except ValueError:
-                    choice = self._show_rematch_dialog()
-                    if choice == "continue":
-                        allow_rematch = True
-                    elif choice == "finish":
-                        self._finish_tournament()
-                        return
-                    elif choice == "bracket":
-                        self._launch_bracket()
-                        return
-                    else:
-                        return
-            print(f"\n⚖️ Round Swiss généré (appariement officiel)\n")
+            self.current_tournament.create_round_swiss()
         else:
             result = self.current_tournament.create_round()
             if result is None:
@@ -341,73 +325,6 @@ class DashboardViewMain(QWidget):
 
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
-
-    def _show_rematch_dialog(self) -> str:
-        """
-        Affiche le dialog quand des rematches sont inévitables.
-        Retourne : 'continue', 'finish', 'bracket', ou 'cancel'.
-        """
-        tournament = self.current_tournament
-        can_bracket = (
-            tournament.is_1v1_format()
-            and len(tournament.players) >= 4
-            and tournament.bracket is None
-        )
-
-        from PySide6.QtWidgets import QSizePolicy
-
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Rematches inévitables")
-        dialog.setObjectName("RematchDialog")
-        dialog.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
-        dialog.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        layout = QVBoxLayout(dialog)
-        layout.setSpacing(8)
-        layout.setContentsMargins(20, 20, 20, 16)
-
-        msg = QLabel(
-            "⚠️  Impossible de créer ce round sans rematches.\n"
-            "Tous les joueurs ont déjà joué ensemble.\n\n"
-            "Que souhaitez-vous faire ?"
-        )
-        msg.setObjectName("RematchDialogMessage")
-        layout.addWidget(msg)
-
-        layout.addSpacing(4)
-
-        choice = ["cancel"]
-
-        btn_continue = QPushButton("▶  Continuer  (avec rematches)")
-        btn_continue.setObjectName("RematchDialogContinue")
-        btn_finish   = QPushButton("🏁  Terminer le tournoi")
-        btn_finish.setObjectName("RematchDialogFinish")
-
-        def on_continue(): choice[0] = "continue"; dialog.accept()
-        def on_finish():   choice[0] = "finish";   dialog.accept()
-
-        btn_continue.clicked.connect(on_continue)
-        btn_finish.clicked.connect(on_finish)
-        layout.addWidget(btn_continue)
-        layout.addWidget(btn_finish)
-
-        if can_bracket:
-            btn_bracket = QPushButton("🏆  Passer en bracket final")
-            btn_bracket.setObjectName("RematchDialogBracket")
-            def on_bracket(): choice[0] = "bracket"; dialog.accept()
-            btn_bracket.clicked.connect(on_bracket)
-            layout.addWidget(btn_bracket)
-
-        layout.addSpacing(2)
-        btn_cancel = QPushButton("Annuler")
-        btn_cancel.setObjectName("RematchDialogCancel")
-        btn_cancel.clicked.connect(dialog.reject)
-        layout.addWidget(btn_cancel)
-
-        dialog.adjustSize()
-        dialog.setFixedSize(dialog.sizeHint())
-        dialog.exec()
-        return choice[0]
 
     def _finish_tournament(self):
         """Affiche le classement final quand le tournoi est terminé."""
@@ -449,9 +366,7 @@ class DashboardViewMain(QWidget):
 
         print(f"\n{'='*60}\n")
 
-        # Désactiver le bouton suivant et afficher le bouton d'archivage
         self.round_controls.set_next_enabled(False)
-        self.round_controls.show_archive_button()
 
         # Jouer le son de victoire
         if self.victory_sound.source().isValid():
@@ -932,44 +847,20 @@ class DashboardViewMain(QWidget):
     # ======================================================
     # Archive tournament
     # ======================================================
-    def _archive_tournament(self):
-        """Archive le tournoi terminé."""
+    def _auto_archive(self):
+        """Archive automatiquement le tournoi quand l'overlay de fin est fermé."""
         if not self.current_tournament:
             return
-
-        # Confirmation
-        reply = QMessageBox.question(
-            self,
-            "Archiver le tournoi",
-            f"Voulez-vous archiver le tournoi '{self.current_tournament.name}' ?\n\n"
-            f"Il sera déplacé dans l'historique.",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes
-        )
-
-        if reply != QMessageBox.Yes:
-            return
-
-        # Enregistrer les podiums pour les joueurs réguliers
         self._record_podiums()
-
-        # Archiver
         tournament_id = self.current_tournament.id
         self.current_tournament.archive()
-
-        # Notifier pour sauvegarder et retirer de la vue
         self.tournament_changed.emit()
         self.tournament_archived.emit(tournament_id)
-
-        # Réinitialiser l'affichage du dashboard
         self._clear_dashboard()
 
-        QMessageBox.information(
-            self,
-            "Tournoi archivé",
-            "Le tournoi a été archivé avec succès.\n"
-            "Vous pouvez le retrouver dans l'historique."
-        )
+    def _archive_tournament(self):
+        """Archive le tournoi terminé (bouton manuel, garde pour compatibilité)."""
+        self._auto_archive()
 
     def _export_pdf(self):
         """Exporte les résultats du tournoi en PDF."""

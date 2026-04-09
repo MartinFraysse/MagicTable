@@ -1,13 +1,11 @@
 """
-Système d'appariement Swiss officiel.
+Système d'appariement Swiss 1v1 — backtracking global anti-rematch.
 
-Règles implémentées :
-- Tri par standings complets : match_points → OMW% → GW% → OGW%
-- Appariement par bracket de score (joueurs de même score s'affrontent)
-- Dans chaque bracket : rang le plus proche d'abord (1vs2, 3vs4, ...)
-- Anti-rematch : backtracking pour trouver le swap le plus proche
-- Floaters : joueurs non appariés descendent au bracket inférieur (comportement normal)
-- Bye : joueur le moins bien classé sans bye précédent
+Principes :
+- Jamais de rematch si une alternative existe
+- Bye intelligent : le candidat dont l'absence permet le meilleur pairing reçoit le bye
+- Backtracking global : aucun bracket strict, tous les joueurs sont considérés ensemble
+- Automatique et silencieux : aucune alerte levée, le meilleur pairing est toujours retourné
 """
 import math
 from dataclasses import dataclass
@@ -22,7 +20,7 @@ class SwissPairingResult:
     """Résultat d'un appariement Swiss."""
     pairings: list[tuple["Player", "Player"]]
     bye_player: "Player | None"
-    rematch_forced: bool = False
+    had_rematch: bool = False
 
 
 def compute_recommended_rounds(player_count: int) -> int:
@@ -49,154 +47,177 @@ def generate_swiss_pairings(
     """
     Génère les appariements Swiss pour un round.
 
-    Algorithme :
-    1. Trier les joueurs par standings_order (match_points + OMW% + GW% + OGW%)
-    2. Si nombre impair : bye au joueur le moins bien classé sans bye précédent
-    3. Grouper par bracket de score (match_points identiques)
-    4. Dans chaque bracket (du plus haut au plus bas) :
-       - Combiner les floaters du bracket précédent + joueurs du bracket actuel
-       - Trier le groupe combiné par rang
-       - Apparier rang 1 vs rang 2, rang 3 vs rang 4, etc. (anti-rematch via backtracking)
-       - Les joueurs non appariés « flottent » vers le bracket inférieur
-    5. Forcer l'appariement des floaters restants (rematches inévitables)
+    Étapes :
+    1. Trier les joueurs par standings (match_points → OMW% → GW% → OGW%)
+    2. Si nombre impair : sélectionner le bye intelligemment (voir _select_bye)
+    3. Apparier les joueurs restants par backtracking global (voir _find_best_pairing)
 
-    Args :
-        players        : Liste des joueurs à apparier.
-        opponents_map  : {player_id → set(opponent_ids déjà rencontrés)}.
-        bye_history    : Set des player_ids ayant déjà reçu un bye.
-        standings_order: Liste d'IDs du meilleur (index 0) au moins bon — produite
-                         par build_standings() : match_points → OMW% → GW% → OGW%.
-
-    Returns :
-        SwissPairingResult avec pairings et bye_player éventuel.
+    Le résultat minimise les rematches en premier, puis les écarts de score.
+    Aucune exception n'est jamais levée.
     """
-    # Construire la table rang → index (plus petit = meilleur)
     rank_map: dict[int, int] = (
         {pid: idx for idx, pid in enumerate(standings_order)}
-        if standings_order
-        else {}
+        if standings_order else {}
     )
 
     def rank(p: "Player") -> int:
         return rank_map.get(p.id, len(players))
 
-    # --- Étape 1 : trier par standings ---
-    active_players = sorted(players, key=rank)
+    active = sorted(players, key=rank)
 
-    # --- Étape 2 : bye (nombre impair) ---
+    # --- Bye ---
     bye_player: "Player | None" = None
+    if len(active) % 2 == 1:
+        bye_player = _select_bye(active, opponents_map, bye_history)
+        active = [p for p in active if p.id != bye_player.id]
 
-    if len(active_players) % 2 == 1:
-        # Chercher depuis le bas du classement le premier sans bye
-        for p in reversed(active_players):
-            if p.id not in bye_history:
-                bye_player = p
-                active_players.remove(p)
-                break
-
-        # Si tous ont déjà eu un bye → dernier du classement
-        if bye_player is None:
-            bye_player = active_players.pop()
-
-    # --- Étape 3 : grouper par bracket de score ---
-    # active_players est déjà trié → chaque bracket conserve l'ordre standings
-    score_brackets: dict[int, list["Player"]] = {}
-    for p in active_players:
-        score_brackets.setdefault(p.score, []).append(p)
-
-    # --- Étape 4 : apparier bracket par bracket ---
-    pairings: list[tuple["Player", "Player"]] = []
-    floaters: list["Player"] = []
-    rematch_forced = False
-
-    for score in sorted(score_brackets.keys(), reverse=True):
-        # Floaters du bracket précédent + joueurs du bracket actuel, re-triés par rang
-        group = sorted(floaters + score_brackets[score], key=rank)
-        floaters = []
-
-        paired, unpaired = _pair_group(group, opponents_map)
-        pairings.extend(paired)
-        floaters = unpaired
-
-    # --- Étape 5 : floaters restants (rematches inévitables) ---
-    if len(floaters) >= 2:
-        for i in range(0, len(floaters) - 1, 2):
-            pairings.append((floaters[i], floaters[i + 1]))
-        rematch_forced = True
+    # --- Pairing ---
+    pairings, had_rematch = _pair_players(active, opponents_map)
 
     return SwissPairingResult(
         pairings=pairings,
         bye_player=bye_player,
-        rematch_forced=rematch_forced,
+        had_rematch=had_rematch,
     )
 
 
-def _pair_group(
+def _select_bye(
     players: list["Player"],
     opponents_map: dict[int, set[int]],
-) -> tuple[list[tuple["Player", "Player"]], list["Player"]]:
+    bye_history: set[int],
+) -> "Player":
     """
-    Apparie les joueurs d'un groupe (déjà triés par rang standings).
+    Sélectionne le joueur qui reçoit le bye.
 
-    Utilise un backtracking pour minimiser le nombre de floaters tout en
-    préférant les pairings les plus proches en rang (l'ordre d'exploration
-    est naturellement rang 1 vs rang 2, puis 3 vs 4, etc.).
+    Candidats : joueurs sans bye précédent, triés du moins bien classé au mieux.
+    Critère : le candidat dont l'absence génère le moins de rematches dans
+    les pairings restants. En cas d'égalité, le moins bien classé est préféré.
 
-    Returns :
-        (pairings, floaters) — appariements réussis et joueurs non appariés.
+    Exemple :
+        Joueurs [C=3, D=3, A=1, B=1, E=0], A et B ont déjà joué.
+        - Essai E : reste [C,D,A,B] → A-B forcé → 1 rematch
+        - Essai B : reste [C,D,A,E] → C-D + A-E → 0 rematch ✓
+        → B reçoit le bye, C-D et A-E jouent.
     """
-    if len(players) < 2:
-        return [], list(players)
+    candidates = [p for p in reversed(players) if p.id not in bye_history]
+    if not candidates:
+        # Tous ont déjà eu un bye → dernier du classement
+        candidates = [players[-1]]
 
+    best_bye = candidates[0]
+    best_rematches = float('inf')
+
+    for candidate in candidates:
+        remaining = [p for p in players if p.id != candidate.id]
+        _, rematches, _ = _find_best_pairing(remaining, opponents_map)
+        if rematches < best_rematches:
+            best_rematches = rematches
+            best_bye = candidate
+            if rematches == 0:
+                break  # Optimal trouvé : aucun rematch possible
+
+    return best_bye
+
+
+def _pair_players(
+    players: list["Player"],
+    opponents_map: dict[int, set[int]],
+) -> tuple[list[tuple["Player", "Player"]], bool]:
+    """
+    Appaire une liste paire de joueurs.
+    Retourne (pairings, had_rematch).
+    """
+    pairings_idx, rematches, _ = _find_best_pairing(players, opponents_map)
+    result = [(players[i], players[j]) for i, j in pairings_idx]
+    return result, rematches > 0
+
+
+def _find_best_pairing(
+    players: list["Player"],
+    opponents_map: dict[int, set[int]],
+) -> tuple[list[tuple[int, int]], int, int]:
+    """
+    Trouve le meilleur appariement global par backtracking.
+
+    Critères de priorité :
+    1. Minimiser le nombre de rematches (adversaires déjà rencontrés)
+    2. Minimiser la somme des écarts de score (paires les plus proches en points)
+
+    Algorithme :
+    - Pour chaque joueur (dans l'ordre du classement), essaie tous ses partenaires
+      disponibles triés par : (non-rematch d'abord, écart de score croissant)
+    - Élagage agressif : abandonne toute branche qui ne peut pas améliorer la solution
+    - Sortie précoce dès qu'une solution parfaite (0 rematch, 0 écart) est trouvée
+    - Garde-fou : arrêt à 300 000 itérations pour les très grandes listes
+
+    Retourne : (indices_des_paires, nb_rematches, somme_écarts_score)
+    """
     n = len(players)
-    best_floater_count = [n + 1]
-    best_result: list[tuple[list, list] | None] = [None]
+    if n == 0:
+        return [], 0, 0
+
+    best = {"rematches": n + 1, "gap": 10 ** 9, "pairings": []}
+    iters = [0]
+
+    def is_rematch(i: int, j: int) -> bool:
+        return players[j].id in opponents_map.get(players[i].id, set())
 
     def backtrack(
         available: list[int],
         pairings: list[tuple[int, int]],
-        floaters: list[int],
+        rematches: int,
+        gap: int,
     ) -> None:
-        # Élagage : impossible de faire mieux que le meilleur connu
-        if len(floaters) >= best_floater_count[0]:
+        iters[0] += 1
+        if iters[0] > 300_000:
+            return  # Garde-fou : évite les blocages sur de très grandes listes
+
+        # Élagage primaire : trop de rematches accumulés
+        if rematches > best["rematches"]:
+            return
+        # Élagage secondaire : même nombre de rematches mais écart déjà trop grand
+        # (gap est monotone croissant, donc il ne peut qu'empirer)
+        if rematches == best["rematches"] and gap >= best["gap"]:
             return
 
-        if len(available) < 2:
-            all_floaters = floaters + available
-            if len(all_floaters) < best_floater_count[0]:
-                best_floater_count[0] = len(all_floaters)
-                best_result[0] = (pairings[:], all_floaters[:])
-            return
-
-        # Court-circuit : solution optimale déjà trouvée
-        if best_floater_count[0] == 0:
+        if not available:
+            # Solution complète trouvée
+            best["rematches"] = rematches
+            best["gap"] = gap
+            best["pairings"] = pairings[:]
             return
 
         i = available[0]
         rest = available[1:]
-        has_valid_partner = False
 
-        # Essayer les partenaires dans l'ordre du rang (le plus proche d'abord)
-        for k, j in enumerate(rest):
-            if players[j].id not in opponents_map.get(players[i].id, set()):
-                has_valid_partner = True
-                remaining = rest[:k] + rest[k + 1:]
-                pairings.append((i, j))
-                backtrack(remaining, pairings, floaters)
-                pairings.pop()
-                if best_floater_count[0] == 0:
-                    return
+        # Trier les partenaires potentiels :
+        # 1. Non-rematch avant rematch (is_rematch : 0 < 1)
+        # 2. À type égal : plus proche en score d'abord
+        def sort_key(kj: tuple) -> tuple:
+            _, j = kj
+            return (1 if is_rematch(i, j) else 0, abs(players[i].score - players[j].score))
 
-        # Aucun partenaire valide dans ce groupe → i devient floater
-        if not has_valid_partner:
-            backtrack(rest, pairings, floaters + [i])
+        for k, j in sorted(enumerate(rest), key=sort_key):
+            rem = 1 if is_rematch(i, j) else 0
+            new_rem = rematches + rem
 
-    backtrack(list(range(n)), [], [])
+            # Dès qu'on dépasse le budget de rematches, tous les suivants aussi
+            # (liste triée : rematches viennent après non-rematches)
+            if new_rem > best["rematches"]:
+                break
 
-    if best_result[0] is None:
-        return [], list(players)
+            new_gap = gap + abs(players[i].score - players[j].score)
+            if new_rem == best["rematches"] and new_gap >= best["gap"]:
+                continue  # Ce partenaire ne peut pas améliorer l'écart
 
-    pairings_idx, floaters_idx = best_result[0]
-    result_pairings = [(players[i], players[j]) for i, j in pairings_idx]
-    result_floaters = [players[i] for i in floaters_idx]
-    return result_pairings, result_floaters
+            remaining = rest[:k] + rest[k + 1:]
+            pairings.append((i, j))
+            backtrack(remaining, pairings, new_rem, new_gap)
+            pairings.pop()
+
+            # Sortie précoce : solution parfaite (0 rematch, 0 écart de score)
+            if best["rematches"] == 0 and best["gap"] == 0:
+                return
+
+    backtrack(list(range(n)), [], 0, 0)
+    return best["pairings"], best["rematches"], best["gap"]
