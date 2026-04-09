@@ -1019,3 +1019,38 @@ QPushButton#BracketCancelButton {
 QPushButton#BracketCancelButton:hover {
     color: rgba(255, 255, 255, 0.65);
 }
+
+/* ── Multi-tournois ─────────────────────────────────────── */
+
+QLabel#DashboardEmptyLabel {
+    color: rgba(255, 255, 255, 0.30);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+QTabWidget#DashboardTabs::pane {
+    border: none;
+    background: transparent;
+}
+
+QTabWidget#DashboardTabs QTabBar::tab {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.55);
+    padding: 7px 20px;
+    margin-right: 4px;
+    border-radius: 6px 6px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 120px;
+}
+
+QTabWidget#DashboardTabs QTabBar::tab:selected {
+    background: rgba(46, 204, 113, 0.18);
+    color: #2ecc71;
+    border-bottom: 2px solid #2ecc71;
+}
+
+QTabWidget#DashboardTabs QTabBar::tab:hover:!selected {
+    background: rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.75);
+}

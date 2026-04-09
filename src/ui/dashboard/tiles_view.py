@@ -1,7 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame, QSizePolicy
 
-from core.swiss_pairing import compute_recommended_rounds
-
 
 class DashboardTilesView(QWidget):
     def __init__(self, parent=None):
@@ -17,14 +15,6 @@ class DashboardTilesView(QWidget):
         self.tile_tables = self._tile("🪑", "Tables", "-")
         self.tile_round = self._tile("🌀", "Round", "-")
         self.tile_timer = self._tile("⏱", "Prochaine round", "50:00")
-
-        # Sous-titre de recommandation pour la tile round
-        round_sub = QLabel("")
-        round_sub.setObjectName("DashboardTileSubtitle")
-        self.tile_round.layout().addWidget(round_sub)
-        self.tile_round.subtitle_label = round_sub
-
-
 
         for tile in (
             self.tile_active,
@@ -90,8 +80,6 @@ class DashboardTilesView(QWidget):
         self.set_active()
         self.tile_name.value_label.setText(name)
         self.tile_round.value_label.setText(f"#{round_number}/{max_rounds}")
-        reco = compute_recommended_rounds(player_count)
-        self.tile_round.subtitle_label.setText(f"Reco: {reco} rds")
         self.tile_players.value_label.setText(str(player_count))
         self.tile_tables.value_label.setText(str(table_count))
 
@@ -107,5 +95,4 @@ class DashboardTilesView(QWidget):
         self.tile_players.value_label.setText("-")
         self.tile_tables.value_label.setText("-")
         self.tile_round.value_label.setText("-")
-        self.tile_round.subtitle_label.setText("")
         self.tile_timer.value_label.setText("--:--")

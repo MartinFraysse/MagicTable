@@ -2,10 +2,12 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton,
     QLabel, QComboBox, QSpinBox, QAbstractSpinBox,
-    QStyledItemDelegate,
+    QStyledItemDelegate, QSizePolicy,
 )
 from PySide6.QtCore import Qt, QSize
 from core.tournament import Tournament
+from core.league import League
+from storage.leagues import LeagueStorage
 
 
 
@@ -20,10 +22,12 @@ class CreateTournamentDialog(QDialog):
 
         self._edit_mode = tournament is not None
         self._tournament = tournament
+        self._leagues: list[League] = [League.from_dict(d) for d in LeagueStorage.load()]
+        self._old_league_id: int | None = None
 
         self.setWindowTitle("Tournoi")
         self.setModal(True)
-        self.setFixedSize(400, 515)
+        self.setFixedSize(400, 580)
         self.setObjectName("CreateTournamentDialog")
 
         root = QVBoxLayout(self)
@@ -135,13 +139,29 @@ class CreateTournamentDialog(QDialog):
         self.format_input.currentIndexChanged.connect(self._on_format_changed)
 
         # =====================
+        # Ligue
+        # =====================
+        league_row = QHBoxLayout()
+        league_row.setSpacing(12)
+        league_row.addWidget(QLabel("Ligue"))
+
+        self._league_combo = QComboBox()
+        self._league_combo.setObjectName("LeagueAffiliationCombo")
+        self._league_combo.setMinimumHeight(42)
+        self._league_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        league_row.addWidget(self._league_combo)
+
+        root.addLayout(league_row)
+        self._update_league_combo()
+
+        # =====================
         # Preview
         # =====================
         self.preview = QLabel()
         self.preview.setObjectName("TournamentPreview")
         self.preview.setAlignment(Qt.AlignCenter)
         self.preview.setWordWrap(True)
-        self.preview.setMinimumHeight(70)
+        self.preview.setFixedHeight(70)
         root.addWidget(self.preview)
 
         root.addStretch()
@@ -190,13 +210,22 @@ class CreateTournamentDialog(QDialog):
         self.date_input.setText(t.date)
         self.rounds_input.setValue(t.max_rounds)
 
-        # Charger le système d'appariement
         if t.pairing_system == "swiss":
             self.pairing_combo.setCurrentIndex(1)
         else:
             self.pairing_combo.setCurrentIndex(0)
 
         self._on_format_changed()
+
+        # Pré-sélectionner la ligue actuelle du tournoi
+        self._old_league_id = next(
+            (lg.id for lg in self._leagues if t.id in lg.tournament_ids), None
+        )
+        if self._old_league_id is not None:
+            for i in range(self._league_combo.count()):
+                if self._league_combo.itemData(i) == self._old_league_id:
+                    self._league_combo.setCurrentIndex(i)
+                    break
 
     def _on_format_changed(self):
         """Les formats 1v1 utilisent toujours Swiss, Commander toujours Standard."""
@@ -208,6 +237,7 @@ class CreateTournamentDialog(QDialog):
             self.pairing_combo.setCurrentIndex(0)  # Standard
         self.pairing_label.setVisible(False)
         self.pairing_combo.setVisible(False)
+        self._update_league_combo()
 
     def _update_state(self):
         name = self.name_input.text().strip()
@@ -253,6 +283,23 @@ class CreateTournamentDialog(QDialog):
         current = self.format_input.currentText()
         is_1v1 = current not in ["👑 Commander", "🎴 Format du tournoi"]
         return "swiss" if is_1v1 else "standard"
+
+    def _update_league_combo(self) -> None:
+        self._league_combo.clear()
+        self._league_combo.addItem("Aucune ligue", -1)
+        for lg in self._leagues:
+            self._league_combo.addItem(f"{lg.name}  •  {lg.season}", lg.id)
+
+    def get_selected_league_id(self) -> int | None:
+        """Retourne l'ID de la ligue sélectionnée, ou None si 'Aucune ligue'."""
+        data = self._league_combo.currentData()
+        if data is None or data == -1:
+            return None
+        return data
+
+    def get_old_league_id(self) -> int | None:
+        """Retourne l'ID de la ligue dans laquelle le tournoi était avant édition."""
+        return self._old_league_id
 
 
 class ComboBoxItemDelegate(QStyledItemDelegate):

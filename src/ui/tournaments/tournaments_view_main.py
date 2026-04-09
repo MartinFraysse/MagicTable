@@ -153,11 +153,14 @@ class TournamentViewMain(QWidget):
         if not dialog.exec():
             return
 
+        old_league_id = dialog.get_old_league_id()
+        new_league_id = dialog.get_selected_league_id()
+
         dialog.apply_changes()
 
-        # Rafraîchir les deux vues
         self.upcoming_view.refresh_tournament(tournament)
         self.launch_view._load_tournament(tournament)
+        self.upcoming_view._update_league_affiliation(tournament.id, old_league_id, new_league_id)
 
     def _start_tournament(self, tournament: Tournament):
         # Ne créer un round que si le tournoi n'en a pas encore

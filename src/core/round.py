@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 from core.table import Table
 from enum import Enum
 

@@ -26,6 +26,7 @@ class DashboardRoundControlsView(QWidget):
     export_pdf_requested     = Signal()
     projection_requested     = Signal()
     quit_requested           = Signal()
+    undo_requested           = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -114,6 +115,15 @@ class DashboardRoundControlsView(QWidget):
         self.projection_btn.setMinimumHeight(34)
         self.projection_btn.clicked.connect(self.projection_requested)
 
+        # ↩ Annuler (undo)
+        self.undo_btn = QPushButton("↩  Annuler")
+        self.undo_btn.setObjectName("SecondaryButton")
+        self.undo_btn.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.undo_btn.setMinimumHeight(34)
+        self.undo_btn.setEnabled(False)
+        self.undo_btn.setToolTip("Annuler la dernière action (Ctrl+Z)")
+        self.undo_btn.clicked.connect(self.undo_requested)
+
         # 🔄 Réinitialiser
         self.reset_btn = QPushButton("🔄  Réinitialiser le tournoi")
         self.reset_btn.setObjectName("DangerButton")
@@ -129,6 +139,7 @@ class DashboardRoundControlsView(QWidget):
         self.quit_btn.clicked.connect(self.quit_requested)
 
         row2.addWidget(self.projection_btn)
+        row2.addWidget(self.undo_btn)
         row2.addStretch(1)
         row2.addWidget(self.reset_btn)
         row2.addWidget(self.quit_btn)
@@ -145,6 +156,9 @@ class DashboardRoundControlsView(QWidget):
     # =====================
     # Public API
     # =====================
+    def set_undo_enabled(self, enabled: bool) -> None:
+        self.undo_btn.setEnabled(enabled)
+
     def set_start_enabled(self, enabled: bool):
         self.start_round_btn.setEnabled(enabled)
 

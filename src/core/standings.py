@@ -5,8 +5,8 @@ Implémente les règles officielles Magic: The Gathering pour le classement suis
 - Match Points : Win=3, Draw=1, Loss=0
 - Tiebreakers (dans l'ordre) :
     1. OMW% (Opponent Match Win Percentage) avec floor 0.33
-    2. GW%  (Game Win Percentage) — placeholder 0.0 (games non trackés)
-    3. OGW% (Opponent Game Win Percentage) — placeholder 0.0
+    2. GW%  (Game Win Percentage) — calculé depuis game_scores BO3 si disponibles
+    3. OGW% (Opponent Game Win Percentage) — calculé depuis game_scores BO3 si disponibles
 """
 
 from __future__ import annotations
@@ -30,8 +30,8 @@ class StandingEntry:
     matches_played: int = 0
     mw_pct: float = 0.0        # Match Win % = match_points / (3 * matches_played)
     omw_pct: float = 0.0       # Opponent Match Win % (floor 0.33 par adversaire)
-    gw_pct: float = 0.0        # Game Win % (placeholder — games non trackés)
-    ogw_pct: float = 0.0       # Opponent Game Win % (placeholder)
+    gw_pct: float = 0.0        # Game Win % (depuis game_scores BO3 si disponibles)
+    ogw_pct: float = 0.0       # Opponent Game Win % (depuis game_scores BO3 si disponibles)
 
 
 def build_standings(tournament: Tournament) -> list[StandingEntry]:

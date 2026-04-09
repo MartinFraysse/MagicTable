@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict
 from core.player import Player
-from core.round import Round
+from core.round import Round, RoundState
 from core.table import Table
 from core.swiss_pairing import generate_swiss_pairings, compute_recommended_rounds
 from core.standings import build_standings
@@ -80,8 +80,6 @@ class Tournament:
 
     def _invalidate_preparation_rounds(self) -> None:
         """Supprime les rounds en préparation (tables pas encore jouées)."""
-        from core.round import RoundState
-
         self.rounds = [
             r for r in self.rounds
             if r.state != RoundState.PREPARATION
@@ -588,10 +586,28 @@ class Tournament:
         all_tables_finished = all(t.finished for t in last_round.tables)
         return len(self.rounds) >= self.max_rounds and all_tables_finished
 
+    def restore_from_dict(self, data: dict) -> None:
+        """
+        Restaure l'état du tournoi depuis un snapshot (undo).
+        Modifie l'objet en place pour conserver la même référence mémoire.
+        """
+        restored = Tournament.from_dict(data)
+        self.name = restored.name
+        self.format = restored.format
+        self.date = restored.date
+        self.max_rounds = restored.max_rounds
+        self.archived = restored.archived
+        self.podiums_recorded = restored.podiums_recorded
+        self.pairing_system = restored.pairing_system
+        self.players = restored.players
+        self.rounds = restored.rounds
+        self.bye_history = restored.bye_history
+        self.bracket = restored.bracket
+        self._next_player_id = restored._next_player_id
+
     def archive(self) -> None:
         """Archive le tournoi."""
         self.archived = True
-        print(f"\n📦 Tournoi '{self.name}' archivé.\n")
 
     def reset(self) -> None:
         """Réinitialise le tournoi: supprime rounds, tables, résultats et scores."""
@@ -613,14 +629,6 @@ class Tournament:
         # Supprimer le bracket
         self.bracket = None
 
-        print(f"\n{'='*50}")
-        print(f"🔄 TOURNOI RÉINITIALISÉ - {self.name}")
-        print(f"{'='*50}")
-        print(f"  • {len(self.players)} joueurs conservés")
-        print(f"  • Scores remis à 0")
-        print(f"  • Rounds supprimés")
-        print(f"{'='*50}\n")
-
     @property
     def player_count(self) -> int:
         return len(self.players)
@@ -630,28 +638,8 @@ class Tournament:
     # =====================
 
     def table_count(self) -> int | None:
-        n = self.player_count
-
-        # COMMANDER
-        if self.format == "👑 Commander":
-            if n < 6:
-                return None
-
-            max_fours = n // 4
-            for fours in range(max_fours, -1, -1):
-                remainder = n - 4 * fours
-                if remainder == 0:
-                    return fours
-                if remainder % 3 == 0:
-                    return fours + remainder // 3
-
-            return None
-
-        # AUTRES FORMATS (tables de 2)
-        if n < 4:
-            return None
-
-        return n // 2
+        sizes = self.compute_table_sizes(self.player_count)
+        return len(sizes) if sizes is not None else None
 
     # =====================
     # Serialization

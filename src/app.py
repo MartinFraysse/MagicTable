@@ -74,10 +74,9 @@ def main():
         "styles/dark_green_setting.qss",
         "styles/dark_green_main.qss",
         "styles/dark_green_widget.qss",
+        "styles/dark_green_league.qss",
     ))
 
-    """app.setStyleSheet(load_qss("styles/dark_green_widget.qss"))"""
-    
     window = MainWindow()
     window._toggle_fullscreen()
 

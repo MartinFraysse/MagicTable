@@ -1,0 +1,45 @@
+[
+  {
+    "id": 0,
+    "name": "Duel League",
+    "format": "⚔️ Duel Commander",
+    "season": "2026",
+    "tournament_ids": [
+      3,
+      2,
+      0,
+      5
+    ],
+    "scoring": {
+      "1": 12,
+      "2": 9,
+      "3": 7,
+      "4": 5,
+      "5": 3,
+      "6": 3,
+      "7": 2,
+      "8": 2
+    },
+    "participation_pts": 1
+  },
+  {
+    "id": 1,
+    "name": "Multi League",
+    "format": "👑 Commander",
+    "season": "2026",
+    "tournament_ids": [
+      1
+    ],
+    "scoring": {
+      "1": 12,
+      "2": 9,
+      "3": 7,
+      "4": 5,
+      "5": 3,
+      "6": 3,
+      "7": 2,
+      "8": 2
+    },
+    "participation_pts": 1
+  }
+]

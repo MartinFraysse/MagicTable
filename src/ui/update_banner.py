@@ -1,9 +1,9 @@
 """Bandeau de mise à jour affiché dans la sidebar quand une MAJ est disponible."""
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QProgressBar, QFrame,
+    QVBoxLayout, QLabel, QPushButton, QProgressBar, QFrame,
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 
 from updater import Updater
 

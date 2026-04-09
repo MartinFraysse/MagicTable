@@ -18,6 +18,8 @@ from core.tournament import (
 from ui.widgets.tournament_card import TournamentCard
 from ui.tournaments.dialogs.create_tournament import CreateTournamentDialog
 from storage.tournaments import TournamentStorage
+from storage.leagues import LeagueStorage
+from core.league import League
 from datetime import datetime
 
 
@@ -143,6 +145,23 @@ class UpcomingView(QWidget):
         self._rebuild_cards_layout()
         self._save_all()
 
+        new_league_id = dialog.get_selected_league_id()
+        if new_league_id is not None:
+            self._update_league_affiliation(tournament.id, None, new_league_id)
+
+    def _update_league_affiliation(
+        self, tournament_id: int, old_id: int | None, new_id: int | None
+    ) -> None:
+        if old_id == new_id:
+            return
+        leagues = [League.from_dict(d) for d in LeagueStorage.load()]
+        for lg in leagues:
+            if lg.id == old_id:
+                lg.tournament_ids = [t for t in lg.tournament_ids if t != tournament_id]
+            if lg.id == new_id and tournament_id not in lg.tournament_ids:
+                lg.tournament_ids.append(tournament_id)
+        LeagueStorage.save([lg.to_dict() for lg in leagues])
+
     def _register_tournament(self, tournament: Tournament):
         tid = tournament.id
         self._tournament_ids[tid] = tournament.name
@@ -170,12 +189,17 @@ class UpcomingView(QWidget):
         if not dialog.exec():
             return
 
+        old_league_id = dialog.get_old_league_id()
+        new_league_id = dialog.get_selected_league_id()
+
         dialog.apply_changes()
 
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
         card._refresh()
         self._save_all()
+
+        self._update_league_affiliation(tournament.id, old_league_id, new_league_id)
 
     def _delete_tournament(self, card: TournamentCard, tournament: Tournament):
         reply = QMessageBox.question(

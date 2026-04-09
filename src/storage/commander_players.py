@@ -2,4 +2,4 @@ from storage.base import JsonStorage
 
 
 class CommanderPlayerStorage(JsonStorage):
-    filename = "commanders.json"
+    filename = "commander_players.json"

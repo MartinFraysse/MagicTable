@@ -280,6 +280,121 @@
     }
   },
   {
+    "id": 4,
+    "name": "Test Rollback",
+    "format": "⚔️ Duel Commander",
+    "date": "30/06/2002",
+    "max_rounds": 3,
+    "archived": false,
+    "podiums_recorded": false,
+    "pairing_system": "swiss",
+    "bye_history": [
+      3
+    ],
+    "players": [
+      {
+        "id": 0,
+        "name": "Léa",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Celes, Rune Knight",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Marfin",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Sorin of House Karlov",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Pedro",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Aragorn, King of Gondor",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Sebito",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Raph & Mikey, Troublemakers",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Rounard",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              1
+            ],
+            "finished": false,
+            "results": {},
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              4
+            ],
+            "finished": false,
+            "results": {},
+            "game_scores": {}
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1
+            },
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
+    "bracket": null
+  },
+  {
     "id": 2,
     "name": "Dc test stats",
     "format": "⚔️ Duel Commander",
@@ -935,6 +1050,96 @@
               "3": 2,
               "4": 3
             },
+            "game_scores": {}
+          }
+        ]
+      }
+    ],
+    "bracket": null
+  },
+  {
+    "id": 5,
+    "name": "Poketest",
+    "format": "⚡ Pokemon",
+    "date": "24/54/4844",
+    "max_rounds": 2,
+    "archived": false,
+    "podiums_recorded": false,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Jean",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Geek",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "De",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Merde",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "preparation",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              2,
+              1
+            ],
+            "finished": false,
+            "results": {},
+            "game_scores": {}
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": false,
+            "results": {},
             "game_scores": {}
           }
         ]

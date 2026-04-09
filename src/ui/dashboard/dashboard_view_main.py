@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QDialog, QLabel, QPushButton
 from PySide6.QtCore import QTimer, Signal, QUrl, Qt
+from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtMultimedia import QSoundEffect
 import os
 
@@ -17,6 +18,7 @@ from ui.dashboard.pairings_window import PairingsWindow
 from ui.dashboard.final_standings_overlay import FinalStandingsOverlay
 
 from core.tournament import Tournament
+from core.tournament_history import TournamentHistory
 from core.table import Table
 from core.round import Round
 from core.bracket import BracketType, BracketRoundName, get_bracket_final_ranking
@@ -34,12 +36,17 @@ class DashboardViewMain(QWidget):
     tournament_changed = Signal()
     # Signal émis quand le tournoi est archivé (avec l'ID du tournoi)
     tournament_archived = Signal(int)
+    # Signal émis quand l'utilisateur quitte volontairement le tournoi
+    tournament_quit = Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.current_tournament: Tournament | None = None
         self.current_round: Round | None = None
+
+        # Historique pour l'annulation (undo)
+        self._history = TournamentHistory()
 
         # État du mode bracket
         self._bracket_mode: bool = False
@@ -110,6 +117,11 @@ class DashboardViewMain(QWidget):
         self.round_controls.projection_requested.connect(self._show_projection)
         self.round_controls.quit_requested.connect(self._quit_tournament)
         self.round_controls.launch_bracket_requested.connect(self._launch_bracket)
+        self.round_controls.undo_requested.connect(self._undo)
+
+        # Raccourci clavier Ctrl+Z
+        undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, self)
+        undo_shortcut.activated.connect(self._undo)
 
         # =====================
         # Timer
@@ -206,7 +218,12 @@ class DashboardViewMain(QWidget):
     # ======================================================
     # Round lifecycle
     # ======================================================
-    def set_current_round(self, tournament: Tournament, timer_minutes: int = None):
+    def set_current_round(self, tournament: Tournament, timer_minutes: int = None, *, _from_undo: bool = False):
+        # Vider l'historique si on change de tournoi
+        if not _from_undo and tournament is not self.current_tournament:
+            self._history.clear()
+            self.round_controls.set_undo_enabled(False)
+
         # Si le tournoi est en phase de bracket, configurer le mode bracket
         if tournament.bracket and not tournament.bracket.finished:
             self._setup_bracket_mode(tournament, timer_minutes)
@@ -259,6 +276,44 @@ class DashboardViewMain(QWidget):
         # recalcul au cas où
         self._recompute_layout_heights()
 
+    # ======================================================
+    # Undo
+    # ======================================================
+    def _snapshot(self) -> None:
+        """Sauvegarde l'état actuel du tournoi avant une mutation."""
+        if self.current_tournament:
+            self._history.snapshot(self.current_tournament)
+            self.round_controls.set_undo_enabled(True)
+
+    def _undo(self) -> None:
+        """Restaure le dernier état sauvegardé du tournoi."""
+        if not self._history.can_undo() or not self.current_tournament:
+            return
+
+        self._history.undo(self.current_tournament)
+
+        # Rafraîchir complètement l'UI
+        self.set_current_round(self.current_tournament, _from_undo=True)
+
+        # Rétablir l'état des boutons selon l'état réel des tables
+        if self.current_round and self._all_tables_finished():
+            self.round_controls.set_next_enabled(True)
+            if self.current_tournament.can_create_round():
+                self.round_controls.set_finish_mode(False)
+                self._check_repetitions()
+            else:
+                self.round_controls.set_finish_mode(True)
+                if (self.current_tournament.is_1v1_format()
+                        and len(self.current_tournament.players) >= 4
+                        and self.current_tournament.bracket is None):
+                    self.round_controls.show_bracket_launch_button()
+
+        self.round_controls.set_undo_enabled(self._history.can_undo())
+        self.tournament_changed.emit()
+
+    # ======================================================
+    # Round lifecycle
+    # ======================================================
     def _start_round(self):
         if not self.current_round:
             return
@@ -300,6 +355,8 @@ class DashboardViewMain(QWidget):
             self.round_controls.hide_bracket_launch_button()
             self._finish_tournament()
             return
+
+        self._snapshot()
 
         # Synchroniser les scores 1v1 avant le pairing
         if self.current_tournament.is_1v1_format():
@@ -354,18 +411,6 @@ class DashboardViewMain(QWidget):
         players = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
         self.ranking_view.set_final_standings(tournament, final_ids)
 
-        # Print dans le terminal
-        print(f"\n{'='*60}")
-        print(f"🏆 TOURNOI TERMINÉ - {self.current_tournament.name}")
-        print(f"{'='*60}")
-        print(f"\n📊 CLASSEMENT FINAL:\n")
-
-        for rank, player in enumerate(players, 1):
-            medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, "  ")
-            print(f"  {medal} {rank}. {player.name:<20} {player.score} pts")
-
-        print(f"\n{'='*60}\n")
-
         self.round_controls.set_next_enabled(False)
 
         # Jouer le son de victoire
@@ -405,6 +450,7 @@ class DashboardViewMain(QWidget):
         if not dialog.exec():
             return
 
+        self._snapshot()
         new_tables = dialog.get_updated_tables()
 
         # Identifier le nouveau joueur BYE
@@ -446,6 +492,7 @@ class DashboardViewMain(QWidget):
         if not dialog.exec():
             return
 
+        self._snapshot()
         table.results = dialog.results()
         table.game_scores = dialog.game_scores()
         table.finished = True
@@ -511,6 +558,7 @@ class DashboardViewMain(QWidget):
         if reply != QMessageBox.Yes:
             return
 
+        self._snapshot()
         # Marquer comme droppé
         player.dropped = True
         dropped_ids = {p.id for p in self.current_tournament.players if p.dropped}
@@ -586,19 +634,10 @@ class DashboardViewMain(QWidget):
         # Système de points: 1er=3pts, 2ème=2pts, 3ème-4ème=1pt
         POINTS_BY_POSITION = {1: 3, 2: 2, 3: 1, 4: 1}
 
-        print(f"\n{'='*50}")
-        print(f"TABLE {table.number} - RÉSULTATS")
-        print(f"{'='*50}")
-
         for player in table.players:
             position = table.results.get(player.id, 3)
             points = POINTS_BY_POSITION.get(position, 1)
             player.add_score(points)
-
-            position_label = {1: "🥇 1er", 2: "🥈 2ème", 3: "🥉 3ème", 4: "4ème"}.get(position, f"{position}ème")
-            print(f"  {player.name:<20} {position_label:<10} +{points}pts → Total: {player.score}pts")
-
-        print(f"{'='*50}\n")
 
     def _apply_1v1_standings(self):
         """Recalcule tous les scores 1v1 depuis les résultats bruts (Win=3, Loss=0)."""
@@ -634,6 +673,7 @@ class DashboardViewMain(QWidget):
         if bracket_type is None:
             return
 
+        self._snapshot()
         self.current_tournament.start_bracket(bracket_type)
         self.round_controls.hide_bracket_launch_button()
         self._setup_bracket_mode(self.current_tournament)
@@ -778,6 +818,7 @@ class DashboardViewMain(QWidget):
         if reply != QMessageBox.Yes:
             return
 
+        self._snapshot()
         # Reset du tournoi
         self.current_tournament.reset()
 
@@ -818,8 +859,6 @@ class DashboardViewMain(QWidget):
 
         if has_repetitions:
             self.round_controls.show_repetition_warning(rate)
-            print(f"\n⚠️  ALERTE: {rate:.0f}% des joueurs se sont déjà affrontés!")
-            print("   → Utilisez 'Round varié' pour mélanger différemment.\n")
         else:
             self.round_controls.hide_repetition_warning()
 
@@ -832,14 +871,13 @@ class DashboardViewMain(QWidget):
             self._finish_tournament()
             return
 
+        self._snapshot()
         # Créer le round avec l'algorithme basé sur les adversaires
         self.current_tournament.create_round_by_opponents()
         self.set_current_round(self.current_tournament)
 
         # Cacher l'alerte
         self.round_controls.hide_repetition_warning()
-
-        print(f"\n🔀 Round varié généré (adversaires non rencontrés privilégiés)\n")
 
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
@@ -1013,16 +1051,18 @@ class DashboardViewMain(QWidget):
         if reply != QMessageBox.Yes:
             return
 
-        # Sauvegarder l'état actuel
+        tid = self.current_tournament.id
         self.tournament_changed.emit()
-
-        # Réinitialiser l'affichage
         self._clear_dashboard()
+        self.tournament_quit.emit(tid)
 
     def _clear_dashboard(self):
         """Réinitialise l'affichage du dashboard à l'état initial."""
         # Arrêter le timer
         self.timer.stop()
+
+        # Vider l'historique undo
+        self._history.clear()
 
         # Réinitialiser les références
         self.current_tournament = None
@@ -1040,6 +1080,7 @@ class DashboardViewMain(QWidget):
         # Réinitialiser les contrôles
         self.round_controls.set_start_enabled(False)
         self.round_controls.set_next_enabled(False)
+        self.round_controls.set_undo_enabled(False)
         self.round_controls.hide_repetition_warning()
         self.round_controls.hide_archive_button()
 

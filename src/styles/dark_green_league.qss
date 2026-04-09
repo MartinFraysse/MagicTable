@@ -1,0 +1,474 @@
+/* =======================================================================
+   MAGIC TABLE — LEAGUE VIEW
+   Palette : identique au reste de l'app
+     fond principal   #0a1612
+     cartes           gradient #1c4a3a → #132f26
+     bordures         #2f6f55 / #1f4d3a
+     accent vert      #3ad68a / #2ecc71
+     texte            #eafff6 / #b6dcd0 / #8fcfb5
+   ======================================================================= */
+
+/* ── Conteneur principal ─────────────────────────────────────────── */
+
+#LeagueViewMain {
+    background-color: #0a1612;
+}
+
+/* ── Panneau gauche ──────────────────────────────────────────────── */
+
+#LeagueLeftPanel {
+    background: transparent;
+}
+
+#LeaguePanelTitle {
+    color: #eafff6;
+    font-size: 18px;
+    font-weight: 800;
+    padding-bottom: 4px;
+}
+
+/* Scrollarea transparente */
+#LeagueLeftPanel QScrollArea {
+    background: transparent;
+    border: none;
+}
+
+#LeagueLeftPanel QScrollArea QWidget {
+    background: transparent;
+}
+
+#LeagueLeftPanel QScrollBar:vertical {
+    background: transparent;
+    width: 6px;
+    margin: 4px 2px;
+}
+
+#LeagueLeftPanel QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.35);
+    border-radius: 3px;
+    min-height: 24px;
+}
+
+#LeagueLeftPanel QScrollBar::handle:vertical:hover {
+    background-color: rgba(58, 214, 138, 0.65);
+}
+
+#LeagueLeftPanel QScrollBar::add-line:vertical,
+#LeagueLeftPanel QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+/* ── Carte de ligue ──────────────────────────────────────────────── */
+
+#LeagueCard {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1c4a3a, stop:1 #132f26);
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+}
+
+#LeagueCard:hover {
+    border: 1px solid #3ad68a;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #245f4a, stop:1 #1a3d32);
+}
+
+#LeagueCardAccent {
+    background-color: #2f6f55;
+    border-radius: 3px;
+}
+
+#LeagueCard[selected="true"] #LeagueCardAccent {
+    background-color: #3ad68a;
+}
+
+#LeagueCard[selected="true"] {
+    border: 1px solid #3ad68a;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1e5c45, stop:1 #163520);
+}
+
+#LeagueCardName {
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#LeagueCardFormat {
+    color: #3ad68a;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#LeagueCardMeta {
+    color: #8fcfb5;
+    font-size: 11px;
+}
+
+/* ── Panneau droit ───────────────────────────────────────────────── */
+
+#LeagueRightPanel {
+    background: transparent;
+}
+
+/* État vide */
+#LeagueEmptyIcon {
+    font-size: 48px;
+    color: #2f6f55;
+    padding-bottom: 8px;
+}
+
+#LeagueEmptyLabel {
+    color: #5a8a74;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* En-tête détail */
+#LeagueDetailTitle {
+    color: #eafff6;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+#LeagueDetailSubtitle {
+    color: #8fcfb5;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Séparateur de section */
+#LeagueSectionTitle {
+    color: #eafff6;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 0;
+    border-bottom: 2px solid #2f6f55;
+}
+
+/* ── Table de classement ─────────────────────────────────────────── */
+
+#LeagueStandingsTable {
+    background-color: #132f26;
+    border: 1px solid #2f6f55;
+    border-radius: 10px;
+    gridline-color: #1f4d3a;
+    color: #eafff6;
+    font-size: 13px;
+    outline: none;
+}
+
+#LeagueStandingsTable::item {
+    padding: 9px 12px;
+    border: none;
+}
+
+#LeagueStandingsTable::item:alternate {
+    background-color: #153a2e;
+}
+
+#LeagueStandingsTable::item:hover {
+    background-color: #1c4a3a;
+}
+
+#LeagueStandingsTable QHeaderView::section {
+    background-color: #1c4a3a;
+    color: #eafff6;
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 2px solid #3ad68a;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+#LeagueStandingsTable QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 2px;
+}
+
+#LeagueStandingsTable QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.45);
+    border-radius: 4px;
+    min-height: 32px;
+}
+
+#LeagueStandingsTable QScrollBar::handle:vertical:hover {
+    background-color: rgba(58, 214, 138, 0.75);
+}
+
+#LeagueStandingsTable QScrollBar::add-line:vertical,
+#LeagueStandingsTable QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+/* ── Tournois inclus ─────────────────────────────────────────────── */
+
+#LeagueTournamentsScroll {
+    background: transparent;
+    border: none;
+}
+
+#LeagueTournamentsScroll QWidget {
+    background: transparent;
+}
+
+#LeagueTournamentRow {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1a3d32, stop:1 #122b22);
+    border: 1px solid #1f4d3a;
+    border-radius: 8px;
+}
+
+#LeagueTournamentRow:hover {
+    border-color: #2f6f55;
+}
+
+#LeagueTournamentName {
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#LeagueTournamentMeta {
+    color: #8fcfb5;
+    font-size: 11px;
+}
+
+QPushButton#RemoveSmallButton {
+    background: transparent;
+    color: #5a8a74;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 6px;
+}
+
+QPushButton#RemoveSmallButton:hover {
+    background: rgba(231, 76, 60, 0.18);
+    border-color: rgba(231, 76, 60, 0.4);
+    color: #e74c3c;
+}
+
+/* ── Dialog barème ───────────────────────────────────────────────── */
+
+#CreateLeagueDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 16px;
+}
+
+#CreateLeagueDialog QLabel {
+    color: #b6dcd0;
+    font-size: 13px;
+}
+
+#CreateLeagueDialog QLineEdit,
+#CreateLeagueDialog QComboBox {
+    min-height: 38px;
+    padding: 8px 12px;
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 14px;
+}
+
+#CreateLeagueDialog QLineEdit:focus,
+#CreateLeagueDialog QComboBox:focus {
+    border-color: #3ad68a;
+    background-color: #153a2e;
+}
+
+#LeagueScoringFrame {
+    background-color: #132f26;
+    border: 1px solid #1f4d3a;
+    border-radius: 10px;
+}
+
+#LeagueScoringFrame QLabel {
+    color: #b6dcd0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#LeagueScoringFrame QSpinBox {
+    background-color: #1c4a3a;
+    border: 1px solid #2f6f55;
+    border-radius: 6px;
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 8px;
+    min-height: 28px;
+}
+
+#LeagueScoringFrame QSpinBox:focus {
+    border-color: #3ad68a;
+}
+
+#LeagueScoringFrame QSpinBox::up-button,
+#LeagueScoringFrame QSpinBox::down-button {
+    width: 20px;
+    border: none;
+    background: transparent;
+}
+
+#ScoringPositionLabel {
+    color: #8fcfb5;
+    font-size: 12px;
+    min-width: 80px;
+}
+
+#ScoringSeparator {
+    background-color: #1f4d3a;
+    max-height: 1px;
+    border: none;
+}
+
+/* ── Dialog ajouter tournoi ──────────────────────────────────────── */
+
+#AddTournamentDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 14px;
+}
+
+#AddTournamentInfo {
+    color: #b6dcd0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+#AddTournamentScroll {
+    background: transparent;
+    border: none;
+}
+
+#AddTournamentContainer {
+    background: transparent;
+}
+
+#AddTournamentScroll QScrollBar:vertical {
+    background: transparent;
+    width: 6px;
+    margin: 4px 2px;
+}
+
+#AddTournamentScroll QScrollBar::handle:vertical {
+    background-color: rgba(120, 220, 180, 0.35);
+    border-radius: 3px;
+    min-height: 24px;
+}
+
+#AddTournamentScroll QScrollBar::handle:vertical:hover {
+    background-color: rgba(58, 214, 138, 0.65);
+}
+
+#AddTournamentScroll QScrollBar::add-line:vertical,
+#AddTournamentScroll QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+#AddTournamentCard {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1a3d32, stop:1 #122b22);
+    border: 1px solid #1f4d3a;
+    border-radius: 9px;
+}
+
+#AddTournamentCard:hover {
+    border-color: #2f6f55;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1e4a3a, stop:1 #163020);
+}
+
+#AddTournamentCard[selected="true"] {
+    border: 2px solid #3ad68a;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1e5c45, stop:1 #163520);
+}
+
+#AddTournamentCard[selected="true"] #AddTournamentCardAccent {
+    background-color: #3ad68a;
+}
+
+#AddTournamentCardAccent {
+    background-color: #2f6f55;
+    border-radius: 3px;
+}
+
+#AddTournamentCardName {
+    color: #eafff6;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#AddTournamentCardMeta {
+    color: #8fcfb5;
+    font-size: 11px;
+}
+
+#AddTournamentEmpty {
+    color: #5a8a74;
+    font-size: 13px;
+    padding: 20px;
+}
+
+/* ── Dialog détail joueur ────────────────────────────────────────── */
+
+#PlayerDetailDialog {
+    background-color: #0f241d;
+    border: 1px solid #1f4d3a;
+    border-radius: 16px;
+}
+
+#PlayerDetailRank {
+    font-size: 36px;
+    padding-right: 4px;
+}
+
+#PlayerDetailName {
+    color: #eafff6;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+#PlayerDetailSub {
+    color: #8fcfb5;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#PlayerDetailTable {
+    background-color: #132f26;
+    border: 1px solid #2f6f55;
+    border-radius: 10px;
+    gridline-color: #1f4d3a;
+    color: #eafff6;
+    font-size: 13px;
+    outline: none;
+}
+
+#PlayerDetailTable::item {
+    padding: 9px 12px;
+    border: none;
+}
+
+#PlayerDetailTable::item:alternate {
+    background-color: #153a2e;
+}
+
+#PlayerDetailTable QHeaderView::section {
+    background-color: #1c4a3a;
+    color: #eafff6;
+    padding: 8px 12px;
+    border: none;
+    border-bottom: 2px solid #3ad68a;
+    font-weight: 700;
+    font-size: 12px;
+}
+

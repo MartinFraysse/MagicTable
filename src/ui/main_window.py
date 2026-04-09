@@ -15,7 +15,8 @@ from ui.tournaments.tournaments_view_main import TournamentViewMain
 from ui.players.players_view_main import PlayersViewMain
 from ui.stats.stats_view_main import StatsViewMain
 from ui.settings_view import SettingsView
-from ui.dashboard.dashboard_view_main import DashboardViewMain
+from ui.dashboard.multi_dashboard_container import MultiDashboardContainer
+from ui.league.league_view_main import LeagueViewMain
 from ui.commanders.commanders_view_main import CommandersViewMain
 
 class MainWindow(QMainWindow):
@@ -134,6 +135,7 @@ class MainWindow(QMainWindow):
             ("👥", "Joueurs"),
             ("👑", "Commandants"),
             ("📈", "Stats"),
+            ("🏅", "Ligue"),
             ("⚙️", "Paramètres"),
         ]:
             btn = QPushButton(f"{icon}  {name}")
@@ -200,11 +202,12 @@ class MainWindow(QMainWindow):
         self.stack.setObjectName("MainStack")
         self.stack.setAttribute(Qt.WA_StyledBackground, True)
 
-        self.dashboard_view = DashboardViewMain()
+        self.dashboard_view = MultiDashboardContainer()
         self.tournaments_view = TournamentViewMain()
         self.players_view = PlayersViewMain()
         self.commanders_view = CommandersViewMain()
         self.stats_view = StatsViewMain()
+        self.league_view = LeagueViewMain()
         self.settings_view = SettingsView()
 
         self.stack.addWidget(self.dashboard_view)      # Index 0
@@ -212,7 +215,8 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.players_view)        # Index 2
         self.stack.addWidget(self.commanders_view)     # Index 3
         self.stack.addWidget(self.stats_view)          # Index 4
-        self.stack.addWidget(self.settings_view)       # Index 5
+        self.stack.addWidget(self.league_view)         # Index 5
+        self.stack.addWidget(self.settings_view)       # Index 6
 
         layout.addWidget(self.stack)
 
@@ -228,9 +232,12 @@ class MainWindow(QMainWindow):
             self.commanders_view.refresh()
         elif index == 4:  # Stats
             self.stats_view.refresh()
+        elif index == 5:  # Ligue
+            self.league_view.refresh()
 
     def _on_tournaments_cleared(self):
         """Recharge les tournois en mémoire après suppression depuis les paramètres."""
+        self.dashboard_view.close_all()
         self.tournaments_view.launch_view._clear_tournament()
         self.tournaments_view.upcoming_view.reload_from_storage()
 
@@ -238,6 +245,5 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(0)
         self.nav_buttons[0].setChecked(True)
 
-        # Récupérer la durée du timer depuis les paramètres
         timer_duration = self.settings_view.get_timer_duration()
-        self.dashboard_view.set_current_round(tournament, timer_duration)
+        self.dashboard_view.start_tournament(tournament, timer_duration)
