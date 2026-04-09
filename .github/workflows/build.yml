@@ -6,6 +6,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write   # Nécessaire pour créer des Releases GitHub
+
 jobs:
   build-windows:
     runs-on: windows-latest
