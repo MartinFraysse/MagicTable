@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, Signal
 
 from storage.tournaments import TournamentStorage
 from storage.regular_players import RegularPlayerStorage
+from storage.commanders import CommanderStorage
 from version import __version__
 from updater import UpdateChecker, Updater, _is_packaged
 
@@ -241,9 +242,14 @@ class SettingsView(QWidget):
         reset_players_btn.setObjectName("DangerButton")
         reset_players_btn.clicked.connect(self._reset_players)
 
+        reset_commanders_btn = QPushButton("Supprimer tous les commandants")
+        reset_commanders_btn.setObjectName("DangerButton")
+        reset_commanders_btn.clicked.connect(self._reset_commanders)
+
         buttons_layout.addWidget(reset_archived_btn)
         buttons_layout.addWidget(reset_tournaments_btn)
         buttons_layout.addWidget(reset_players_btn)
+        buttons_layout.addWidget(reset_commanders_btn)
         buttons_layout.addStretch()
 
         layout.addLayout(buttons_layout)
@@ -507,6 +513,31 @@ class SettingsView(QWidget):
             "Joueurs supprimés",
             "Tous les joueurs permanents ont été supprimés."
         )
+
+    def _reset_commanders(self):
+        """Supprime tous les commandants après confirmation."""
+        commanders = CommanderStorage.load()
+        count = len(commanders)
+
+        if count == 0:
+            QMessageBox.information(self, "Aucun commandant",
+                "Il n'y a aucun commandant à supprimer.")
+            return
+
+        reply = QMessageBox.warning(
+            self,
+            "Supprimer tous les commandants",
+            f"Cette action est irréversible !\n\n"
+            f"{count} commandant{'s' if count > 1 else ''} et leurs images seront supprimés.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        CommanderStorage.save([])
+        QMessageBox.information(self, "Commandants supprimés",
+            f"{count} commandant{'s' if count > 1 else ''} supprimé{'s' if count > 1 else ''}.")
 
     def showEvent(self, event):
         """Rafraîchit les stats quand la vue est affichée."""
