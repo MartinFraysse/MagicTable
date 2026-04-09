@@ -17,8 +17,6 @@ from ui.stats.stats_view_main import StatsViewMain
 from ui.settings_view import SettingsView
 from ui.dashboard.dashboard_view_main import DashboardViewMain
 from ui.commanders.commanders_view_main import CommandersViewMain
-from ui.update_banner import UpdateBanner
-from updater import UpdateChecker
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -76,10 +74,6 @@ class MainWindow(QMainWindow):
             self._on_tournaments_cleared
         )
 
-        # Vérification de mise à jour en arrière-plan
-        self._update_checker = UpdateChecker()
-        self._update_checker.update_available.connect(self._on_update_available)
-        self._update_checker.start()
 
     # ========================
     # Sidebar
@@ -156,10 +150,6 @@ class MainWindow(QMainWindow):
         self.nav_group.buttons()[0].setChecked(True)
 
         layout.addStretch()
-
-        # Bandeau de mise à jour (caché par défaut)
-        self.update_banner = UpdateBanner()
-        layout.addWidget(self.update_banner)
 
         self.fullscreen_btn = QPushButton("🖥  Plein écran")
         self.fullscreen_btn.setObjectName("QuitButton")
@@ -238,10 +228,6 @@ class MainWindow(QMainWindow):
             self.commanders_view.refresh()
         elif index == 4:  # Stats
             self.stats_view.refresh()
-
-    def _on_update_available(self, version: str, url: str):
-        """Affiche le bandeau de mise à jour dans la sidebar."""
-        self.update_banner.notify(version, url)
 
     def _on_tournaments_cleared(self):
         """Recharge les tournois en mémoire après suppression depuis les paramètres."""

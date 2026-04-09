@@ -1,12 +1,14 @@
 from PySide6.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout,
     QFrame, QPushButton, QSpinBox, QMessageBox,
-    QScrollArea
+    QScrollArea, QProgressBar
 )
 from PySide6.QtCore import Qt, Signal
 
 from storage.tournaments import TournamentStorage
 from storage.regular_players import RegularPlayerStorage
+from version import __version__
+from updater import UpdateChecker, Updater, _is_packaged
 
 
 class SettingsView(QWidget):
@@ -54,6 +56,10 @@ class SettingsView(QWidget):
         # Section Données
         data_section = self._build_data_section()
         content_layout.addWidget(data_section)
+
+        # Section Mise à jour
+        update_section = self._build_update_section()
+        content_layout.addWidget(update_section)
 
         # Section À propos
         about_section = self._build_about_section()
@@ -247,6 +253,130 @@ class SettingsView(QWidget):
 
         return frame
 
+    def _build_update_section(self) -> QFrame:
+        """Section de mise à jour manuelle."""
+        frame = QFrame()
+        frame.setObjectName("SettingsSection")
+
+        layout = QVBoxLayout(frame)
+        layout.setSpacing(12)
+
+        title = QLabel("Mise à jour")
+        title.setObjectName("SettingsSectionTitle")
+        layout.addWidget(title)
+
+        # Version actuelle
+        row = QHBoxLayout()
+        ver_label = QLabel("Version actuelle :")
+        ver_label.setObjectName("SettingsLabel")
+        row.addWidget(ver_label)
+        self._current_version_lbl = QLabel(f"v{__version__}")
+        self._current_version_lbl.setObjectName("SettingsVersion")
+        row.addWidget(self._current_version_lbl)
+        row.addStretch()
+        layout.addLayout(row)
+
+        # Statut + bouton vérifier
+        check_row = QHBoxLayout()
+        self._update_status_lbl = QLabel("")
+        self._update_status_lbl.setObjectName("SettingsHint")
+        check_row.addWidget(self._update_status_lbl, 1)
+
+        self._check_btn = QPushButton("🔍 Vérifier les mises à jour")
+        self._check_btn.setObjectName("PrimaryButton")
+        self._check_btn.setCursor(Qt.PointingHandCursor)
+        self._check_btn.clicked.connect(self._check_update)
+        check_row.addWidget(self._check_btn)
+        layout.addLayout(check_row)
+
+        # Barre de progression (cachée par défaut)
+        self._update_progress = QProgressBar()
+        self._update_progress.setObjectName("UpdateProgressBar")
+        self._update_progress.setTextVisible(False)
+        self._update_progress.setFixedHeight(8)
+        self._update_progress.hide()
+        layout.addWidget(self._update_progress)
+
+        # Bouton télécharger (caché jusqu'à ce qu'une MAJ soit trouvée)
+        self._download_btn = QPushButton("⬇  Télécharger et installer")
+        self._download_btn.setObjectName("PrimaryButton")
+        self._download_btn.setCursor(Qt.PointingHandCursor)
+        self._download_btn.clicked.connect(self._download_update)
+        self._download_btn.hide()
+        layout.addWidget(self._download_btn)
+
+        self._checker: UpdateChecker | None = None
+        self._updater: Updater | None = None
+        self._pending_url: str = ""
+
+        return frame
+
+    def _check_update(self):
+        self._check_btn.setEnabled(False)
+        self._check_btn.setText("Vérification…")
+        self._update_status_lbl.setText("")
+        self._download_btn.hide()
+        self._update_progress.hide()
+
+        self._checker = UpdateChecker()
+        self._checker.update_available.connect(self._on_update_found)
+        self._checker.check_failed.connect(self._on_check_failed)
+        self._checker.finished.connect(self._on_check_done)
+        self._checker.start()
+
+    def _on_check_done(self):
+        """Le thread a terminé sans trouver de MAJ."""
+        self._check_btn.setEnabled(True)
+        self._check_btn.setText("🔍 Vérifier les mises à jour")
+        if not self._pending_url:
+            self._update_status_lbl.setText("✅ Vous êtes à jour !")
+
+    def _on_update_found(self, version: str, url: str):
+        self._pending_url = url
+        self._update_status_lbl.setText(f"🆕 Version v{version} disponible !")
+        self._download_btn.show()
+
+    def _on_check_failed(self):
+        self._update_status_lbl.setText("❌ Impossible de vérifier (pas de connexion ?)")
+
+    def _download_update(self):
+        if not _is_packaged():
+            QMessageBox.information(self, "Info",
+                "La mise à jour automatique fonctionne uniquement\n"
+                "avec la version .exe packagée.")
+            return
+
+        self._download_btn.setEnabled(False)
+        self._download_btn.setText("Téléchargement…")
+        self._update_progress.setValue(0)
+        self._update_progress.show()
+
+        self._updater = Updater(self._pending_url, self)
+        self._updater.progress.connect(self._on_dl_progress)
+        self._updater.finished.connect(self._on_dl_finished)
+        self._updater.error.connect(self._on_dl_error)
+        self._updater.start()
+
+    def _on_dl_progress(self, received: int, total: int):
+        if total > 0:
+            self._update_progress.setValue(int(received / total * 100))
+            self._update_status_lbl.setText(
+                f"⬇  {received/1_048_576:.1f} / {total/1_048_576:.1f} Mo"
+            )
+
+    def _on_dl_finished(self):
+        self._update_progress.setValue(100)
+        self._update_status_lbl.setText("✅ Téléchargement terminé !")
+        self._download_btn.setText("🔄 Redémarrer et installer")
+        self._download_btn.setEnabled(True)
+        self._download_btn.clicked.disconnect()
+        self._download_btn.clicked.connect(self._updater.apply)
+
+    def _on_dl_error(self, msg: str):
+        self._update_status_lbl.setText(f"❌ Erreur : {msg}")
+        self._download_btn.setEnabled(True)
+        self._download_btn.setText("⬇  Réessayer")
+
     def _build_about_section(self) -> QFrame:
         """Construit la section À propos."""
         frame = QFrame()
@@ -263,7 +393,7 @@ class SettingsView(QWidget):
         app_name.setObjectName("SettingsAppName")
         layout.addWidget(app_name)
 
-        version = QLabel("Version 1.0.0")
+        version = QLabel(f"Version {__version__}")
         version.setObjectName("SettingsVersion")
         layout.addWidget(version)
 
