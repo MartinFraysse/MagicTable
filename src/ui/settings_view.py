@@ -218,11 +218,19 @@ class SettingsView(QWidget):
         self.tournaments_count = QLabel("0 tournois")
         self.tournaments_count.setObjectName("SettingsStats")
 
+        self.archived_count = QLabel("0 archivés")
+        self.archived_count.setObjectName("SettingsStats")
+
         self.players_count = QLabel("0 joueurs")
         self.players_count.setObjectName("SettingsStats")
 
+        self.commanders_count = QLabel("0 commandants")
+        self.commanders_count.setObjectName("SettingsStats")
+
         stats_layout.addWidget(self.tournaments_count)
+        stats_layout.addWidget(self.archived_count)
         stats_layout.addWidget(self.players_count)
+        stats_layout.addWidget(self.commanders_count)
         stats_layout.addStretch()
 
         layout.addLayout(stats_layout)
@@ -417,17 +425,18 @@ class SettingsView(QWidget):
     def _refresh_stats(self):
         """Rafraîchit les statistiques affichées."""
         tournaments = TournamentStorage.load()
-        players = RegularPlayerStorage.load()
+        players    = RegularPlayerStorage.load()
+        commanders = CommanderStorage.load()
 
-        t_count = len(tournaments)
-        p_count = len(players)
+        t_count  = len(tournaments)
+        ar_count = sum(1 for t in tournaments if t.get("archived", False))
+        p_count  = len(players)
+        c_count  = len(commanders)
 
-        self.tournaments_count.setText(
-            f"{t_count} tournoi{'s' if t_count != 1 else ''}"
-        )
-        self.players_count.setText(
-            f"{p_count} joueur{'s' if p_count != 1 else ''} permanent{'s' if p_count != 1 else ''}"
-        )
+        self.tournaments_count.setText(f"{t_count} tournoi{'s' if t_count != 1 else ''}")
+        self.archived_count.setText(f"{ar_count} archivé{'s' if ar_count != 1 else ''}")
+        self.players_count.setText(f"{p_count} joueur{'s' if p_count != 1 else ''} permanent{'s' if p_count != 1 else ''}")
+        self.commanders_count.setText(f"{c_count} commandant{'s' if c_count != 1 else ''}")
 
     def _reset_archived_tournaments(self):
         """Supprime uniquement les tournois archivés après confirmation."""
