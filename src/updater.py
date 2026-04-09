@@ -7,6 +7,7 @@ Système de mise à jour automatique via GitHub Releases.
 
 import sys
 import os
+import ssl
 import json
 import urllib.request
 import urllib.error
@@ -15,6 +16,18 @@ from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 
 from version import __version__, GITHUB_REPO
+
+
+def _ssl_context() -> ssl.SSLContext:
+    """
+    Retourne un contexte SSL fiable dans un bundle PyInstaller.
+    Utilise certifi si disponible, sinon le store système.
+    """
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +68,7 @@ class UpdateChecker(QThread):
                 api_url,
                 headers={"User-Agent": "MagicTable-Updater/1.0"},
             )
-            with urllib.request.urlopen(req, timeout=6) as resp:
+            with urllib.request.urlopen(req, timeout=6, context=_ssl_context()) as resp:
                 data = json.loads(resp.read().decode())
 
             tag = data.get("tag_name", "").lstrip("v")
@@ -107,7 +120,18 @@ class Updater(QThread):
                 received = min(block_count * block_size, total_size)
                 self.progress.emit(received, total_size)
 
-            urllib.request.urlretrieve(self._url, str(new_exe), _on_progress)
+            req_dl = urllib.request.Request(
+                self._url,
+                headers={"User-Agent": "MagicTable-Updater/1.0"},
+            )
+            with urllib.request.urlopen(req_dl, context=_ssl_context()) as resp:
+                total = int(resp.headers.get("Content-Length", 0))
+                received = 0
+                with open(new_exe, "wb") as f:
+                    while chunk := resp.read(65536):
+                        f.write(chunk)
+                        received += len(chunk)
+                        self.progress.emit(received, total)
 
             # ── Script de remplacement (Windows .bat) ─────────────────────
             # Attend 2s (temps que le process Qt se ferme), puis remplace

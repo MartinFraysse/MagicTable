@@ -25,6 +25,8 @@ a = Analysis(
         "PySide6.QtWidgets",
         "PySide6.QtMultimedia",
         "PySide6.QtNetwork",
+        "ssl",
+        "certifi",
     ],
     hookspath=[],
     hooksconfig={},
