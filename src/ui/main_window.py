@@ -75,6 +75,11 @@ class MainWindow(QMainWindow):
             self._on_tournaments_cleared
         )
 
+        # Recharger toutes les données après une synchro serveur
+        self.settings_view.data_synced.connect(
+            self._on_data_synced
+        )
+
 
     # ========================
     # Sidebar
@@ -239,6 +244,14 @@ class MainWindow(QMainWindow):
         """Recharge les tournois en mémoire après suppression depuis les paramètres."""
         self.dashboard_view.close_all()
         self.tournaments_view.launch_view._clear_tournament()
+        self.tournaments_view.upcoming_view.reload_from_storage()
+
+    def _on_data_synced(self):
+        """Recharge toutes les vues après une synchro serveur — sans redémarrer l'app."""
+        self.players_view.refresh()
+        self.commanders_view.refresh()
+        self.stats_view.refresh()
+        self.league_view.refresh()
         self.tournaments_view.upcoming_view.reload_from_storage()
 
     def start_tournament(self, tournament: Tournament):

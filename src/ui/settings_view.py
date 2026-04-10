@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QFrame, QPushButton, QSpinBox, QMessageBox,
     QScrollArea, QProgressBar, QLineEdit
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QThread
 
 from storage.tournaments import TournamentStorage
 from storage.regular_players import RegularPlayerStorage
@@ -13,14 +13,31 @@ from version import __version__
 from updater import UpdateChecker, Updater, _is_packaged
 
 
+class _SyncWorker(QThread):
+    """Thread de synchronisation serveur — non-bloquant."""
+    sync_done = Signal(list, list)  # synced, failed
+
+    def __init__(self, data_dir):
+        super().__init__()
+        self._data_dir = data_dir
+
+    def run(self):
+        from sync.server_client import pull_all
+        result = pull_all(self._data_dir)
+        self.sync_done.emit(result["synced"], result["failed"])
+
+
 class SettingsView(QWidget):
     """Vue des paramètres de l'application."""
 
     # Signal émis quand des tournois sont supprimés depuis les paramètres
     tournaments_cleared = Signal()
+    # Signal émis quand une synchro serveur réussit (pour recharger toutes les vues)
+    data_synced = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._sync_worker = None
 
         self.setObjectName("SettingsView")
         self.setAttribute(Qt.WA_StyledBackground, True)
@@ -253,14 +270,14 @@ class SettingsView(QWidget):
         save_btn.setObjectName("PrimaryButton")
         save_btn.clicked.connect(self._save_server_config)
 
-        sync_btn = QPushButton("🔄  Synchroniser maintenant")
-        sync_btn.setObjectName("SecondaryButton")
-        sync_btn.clicked.connect(self._sync_now)
+        self._sync_btn = QPushButton("🔄  Synchroniser maintenant")
+        self._sync_btn.setObjectName("SecondaryButton")
+        self._sync_btn.clicked.connect(self._sync_now)
 
         self._server_status = QLabel("")
         self._server_status.setObjectName("SettingsDescription")
         btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(sync_btn)
+        btn_layout.addWidget(self._sync_btn)
         btn_layout.addWidget(self._server_status)
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
@@ -310,18 +327,39 @@ class SettingsView(QWidget):
             self._server_status.setText(f"❌  Erreur : {e}")
 
     def _sync_now(self):
-        """Tire les données depuis le serveur immédiatement et recharge l'app."""
-        self._server_status.setText("Connexion en cours…")
-        try:
-            from sync.server_client import pull_all
-            from storage.base import DATA_DIR
-            ok = pull_all(DATA_DIR)
-            if ok:
-                self._server_status.setText("✅  Synchronisé ! Redémarre l'app pour voir les données.")
-            else:
-                self._server_status.setText("❌  Serveur inaccessible — vérifie l'URL et le réseau.")
-        except Exception as e:
-            self._server_status.setText(f"❌  {e}")
+        """Tire les données depuis le serveur dans un thread et recharge toutes les vues."""
+        from storage.base import DATA_DIR
+
+        self._sync_btn.setEnabled(False)
+        self._server_status.setText("🔄  Synchronisation en cours…")
+
+        self._sync_worker = _SyncWorker(DATA_DIR)
+        self._sync_worker.sync_done.connect(self._on_sync_done)
+        self._sync_worker.start()
+
+    def _on_sync_done(self, synced: list, failed: list):
+        """Callback dans le thread principal une fois le pull terminé."""
+        self._sync_btn.setEnabled(True)
+        self._sync_worker = None
+
+        _LABELS = {
+            "players":     "Joueurs",
+            "tournaments": "Tournois",
+            "leagues":     "Ligues",
+            "commanders":  "Commandants",
+        }
+
+        parts = []
+        for r in synced:
+            parts.append(f"✅ {_LABELS.get(r, r)}")
+        for r in failed:
+            parts.append(f"❌ {_LABELS.get(r, r)}")
+
+        if synced:
+            self._server_status.setText("  ".join(parts))
+            self.data_synced.emit()
+        else:
+            self._server_status.setText("❌  Serveur inaccessible — vérifie l'URL et le réseau.")
 
     def _build_data_section(self) -> QFrame:
         """Construit la section de gestion des données."""

@@ -169,11 +169,11 @@ def notify_quit_async(tournament_id) -> None:
     threading.Thread(target=notify_quit, args=(tournament_id,), daemon=True).start()
 
 
-def pull_all(local_data_dir: Path) -> bool:
+def pull_all(local_data_dir: Path) -> dict:
     """
     Télécharge tous les JSON depuis le serveur et les écrit localement.
     Télécharge aussi les images des commandants manquantes.
-    Retourne True si au moins un fichier a été récupéré.
+    Retourne {"synced": [...], "failed": [...]} avec les noms des ressources.
     """
     RESOURCES = {
         "players":     "regular_players.json",
@@ -182,10 +182,12 @@ def pull_all(local_data_dir: Path) -> bool:
         "commanders":  "commanders.json",
     }
     if not is_configured():
-        return False
+        return {"synced": [], "failed": list(RESOURCES.keys())}
 
-    ok = False
+    synced: list = []
+    failed: list = []
     commanders_data = None
+
     for resource, filename in RESOURCES.items():
         data = fetch(resource)
         if data is not None:
@@ -194,15 +196,17 @@ def pull_all(local_data_dir: Path) -> bool:
                 json.dumps(data, indent=2, ensure_ascii=False),
                 encoding="utf-8"
             )
-            ok = True
+            synced.append(resource)
             if resource == "commanders":
                 commanders_data = data
+        else:
+            failed.append(resource)
 
     # Synchroniser les images des commandants manquantes
     if commanders_data:
         _pull_commander_images(local_data_dir, commanders_data)
 
-    return ok
+    return {"synced": synced, "failed": failed}
 
 
 def _pull_commander_images(local_data_dir: Path, commanders: list) -> None:

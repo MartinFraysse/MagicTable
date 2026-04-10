@@ -52,10 +52,14 @@ def _pull_from_server() -> None:
     try:
         from sync.server_client import pull_all
         from storage.base import DATA_DIR
-        ok = pull_all(DATA_DIR)
-        if ok:
-            print("✅ Données synchronisées depuis le serveur")
-        else:
+        result = pull_all(DATA_DIR)
+        synced = result["synced"]
+        failed = result["failed"]
+        if synced:
+            print(f"✅ Sync serveur : {', '.join(synced)}")
+        if failed:
+            print(f"⚠️  Sync serveur — ressources manquantes : {', '.join(failed)}")
+        if not synced:
             print("⚠️  Serveur inaccessible, démarrage avec les données locales")
     except Exception as e:
         print(f"⚠️  Sync serveur ignorée : {e}")
