@@ -242,14 +242,20 @@ class SettingsView(QWidget):
         key_layout.addWidget(self._server_key_input)
         layout.addLayout(key_layout)
 
-        # Bouton + statut
+        # Boutons + statut
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("💾  Sauvegarder")
         save_btn.setObjectName("PrimaryButton")
         save_btn.clicked.connect(self._save_server_config)
+
+        sync_btn = QPushButton("🔄  Synchroniser maintenant")
+        sync_btn.setObjectName("SecondaryButton")
+        sync_btn.clicked.connect(self._sync_now)
+
         self._server_status = QLabel("")
         self._server_status.setObjectName("SettingsDescription")
         btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(sync_btn)
         btn_layout.addWidget(self._server_status)
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
@@ -297,6 +303,20 @@ class SettingsView(QWidget):
             self._server_status.setText("✅  Sauvegardé")
         except Exception as e:
             self._server_status.setText(f"❌  Erreur : {e}")
+
+    def _sync_now(self):
+        """Tire les données depuis le serveur immédiatement et recharge l'app."""
+        self._server_status.setText("Connexion en cours…")
+        try:
+            from sync.server_client import pull_all
+            from storage.base import DATA_DIR
+            ok = pull_all(DATA_DIR)
+            if ok:
+                self._server_status.setText("✅  Synchronisé ! Redémarre l'app pour voir les données.")
+            else:
+                self._server_status.setText("❌  Serveur inaccessible — vérifie l'URL et le réseau.")
+        except Exception as e:
+            self._server_status.setText(f"❌  {e}")
 
     def _build_data_section(self) -> QFrame:
         """Construit la section de gestion des données."""
