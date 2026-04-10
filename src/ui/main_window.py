@@ -252,7 +252,7 @@ class MainWindow(QMainWindow):
         self.commanders_view.refresh()
         self.stats_view.refresh()
         self.league_view.refresh()
-        self.tournaments_view.upcoming_view.reload_from_storage()
+        self.tournaments_view.reload_from_storage()
 
     def start_tournament(self, tournament: Tournament):
         self.stack.setCurrentIndex(0)

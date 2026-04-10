@@ -180,6 +180,11 @@ class TournamentViewMain(QWidget):
         except Exception as e:
             print(f"[sync] notify_start_async ignoré : {e}")
 
+    def reload_from_storage(self):
+        """Recharge les tournois ET l'historique depuis le storage (après sync serveur)."""
+        self.upcoming_view.reload_from_storage()
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+
     def save_tournaments(self):
         """Sauvegarde tous les tournois (appelé depuis le dashboard)."""
         self.upcoming_view._save_all()
