@@ -1,196 +1,31 @@
 [
   {
-    "id": 12,
-    "name": "Aragorn, King of Gondor",
-    "colors": [
-      "W",
-      "U",
-      "R"
-    ],
-    "image_path": "commander_images/ae10a15ad3ee44d69c94865097b041ff.jpg",
-    "duel": true
-  },
-  {
-    "id": 19,
-    "name": "Braids, Conjurer Adept",
-    "colors": [
-      "U"
-    ],
-    "image_path": "commander_images/33c46031c0734cb2a7c7a8141b597144.jpg",
-    "duel": false
-  },
-  {
-    "id": 14,
-    "name": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
-    "colors": [
-      "W",
-      "G"
-    ],
-    "image_path": "commander_images/b7aab2082fb1471bab2de9d8bf8512c4.jpg",
-    "duel": true
-  },
-  {
-    "id": 16,
-    "name": "Caesar, Legion's Emperor",
-    "colors": [
-      "W",
-      "B",
-      "R"
-    ],
-    "image_path": "commander_images/7445a3edb61a4090ae0f5f7fd31173fa.jpg",
-    "duel": false
-  },
-  {
-    "id": 7,
-    "name": "Celes, Rune Knight",
-    "colors": [
-      "W",
-      "B",
-      "R"
-    ],
-    "image_path": "commander_images/9cb4893e211a4804804a93d336cf53fe.jpg",
-    "duel": true
-  },
-  {
-    "id": 18,
-    "name": "Judith, Carnage Connoisseur",
-    "colors": [
-      "B",
-      "R"
-    ],
-    "image_path": "commander_images/78e3fc10a5764767b8013b5b2c68d851.jpg",
-    "duel": false
-  },
-  {
-    "id": 17,
-    "name": "Juri, Master of the Revue",
-    "colors": [
-      "B",
-      "R"
-    ],
-    "image_path": "commander_images/436a15ce568e4c75b5e83ed2a1e8cd3f.jpg",
-    "duel": true
-  },
-  {
-    "id": 15,
-    "name": "Kenessos, Priest of Thassa",
-    "colors": [
-      "U",
-      "G"
-    ],
-    "image_path": "commander_images/220807871bd2478eb76f8d92253fdf47.jpg",
-    "duel": false
-  },
-  {
-    "id": 5,
-    "name": "Lightning, Army of One",
-    "colors": [
-      "W",
-      "R"
-    ],
-    "image_path": "commander_images/981c1ff64ff54548bea95fe861f2ecd3.jpg",
-    "duel": true
-  },
-  {
-    "id": 9,
-    "name": "Lumra, Bellow of the Wood",
-    "colors": [
-      "G"
-    ],
-    "image_path": "commander_images/e52406e13fb4493da93995e3273d62d1.jpg",
-    "duel": true
-  },
-  {
-    "id": 3,
+    "id": 1,
     "name": "Omo, Queen of Vesuva",
     "colors": [
       "U",
       "G"
     ],
-    "image_path": "commander_images/37ae38ee7e3047fa99b8f5772112d731.jpg",
-    "duel": true
-  },
-  {
-    "id": 1,
-    "name": "Phelia, Exuberant Shepherd",
-    "colors": [
-      "W"
-    ],
-    "image_path": "commander_images/7da2e18762b34a16a1ecf09a858ec81a.jpg",
-    "duel": true
-  },
-  {
-    "id": 13,
-    "name": "Raph & Mikey, Troublemakers",
-    "colors": [
-      "R",
-      "G"
-    ],
-    "image_path": "commander_images/905a3137f1364e729f39044e93f203d2.jpg",
-    "duel": true
-  },
-  {
-    "id": 8,
-    "name": "Slimefoot and Squee",
-    "colors": [
-      "B",
-      "R",
-      "G"
-    ],
-    "image_path": "commander_images/b89ebecb281f4c129d89f0aba88e3329.jpg",
+    "image_path": "commander_images/6a1ff28b5e2e4e84a98226923898968d.jpg",
     "duel": true
   },
   {
     "id": 2,
-    "name": "Sorin of House Karlov",
-    "colors": [
-      "W",
-      "B"
-    ],
-    "image_path": "commander_images/532a798179e542b19625f6de2e6c04f9.jpg",
-    "duel": true
-  },
-  {
-    "id": 11,
-    "name": "Spider-Man 2099",
-    "colors": [
-      "U",
-      "R"
-    ],
-    "image_path": "commander_images/45352d56b4a449af9ab28ec11a84ffc6.jpg",
-    "duel": true
-  },
-  {
-    "id": 10,
-    "name": "Terra, Magical Adept // Esper Terra",
-    "colors": [
-      "W",
-      "U",
-      "B",
-      "R",
-      "G"
-    ],
-    "image_path": "commander_images/890ef2f44ee14d10a3f365ad2b1b655b.jpg",
-    "duel": true
-  },
-  {
-    "id": 4,
     "name": "Zurgo Bellstriker",
     "colors": [
       "R"
     ],
-    "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg",
+    "image_path": "commander_images/66396f6b1359492d8af180325dc3db1f.jpg",
     "duel": true
   },
   {
-    "id": 21,
-    "name": "Tasigur, the Golden Fang",
+    "id": 3,
+    "name": "Lightning, Army of One",
     "colors": [
-      "U",
-      "B",
-      "G"
+      "W",
+      "R"
     ],
-    "image_path": "commander_images/96cd17e030dc4c7f8fd961fc314b6966.jpg",
+    "image_path": "commander_images/cf4cd2fc6f144a0b90edd6247d838b55.jpg",
     "duel": true
   }
 ]
