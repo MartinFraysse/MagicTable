@@ -247,3 +247,15 @@ class MainWindow(QMainWindow):
 
         timer_duration = self.settings_view.get_timer_duration()
         self.dashboard_view.start_tournament(tournament, timer_duration)
+
+    def closeEvent(self, event):
+        """Notifie le bot Discord de supprimer les canaux pour tout tournoi encore ouvert."""
+        active_ids = list(self.dashboard_view._dashboards.keys())
+        if active_ids:
+            try:
+                from sync.server_client import notify_quit
+                for tid in active_ids:
+                    notify_quit(tid)
+            except Exception:
+                pass
+        super().closeEvent(event)

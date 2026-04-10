@@ -170,7 +170,15 @@ class TournamentViewMain(QWidget):
                 tournament.create_round_swiss()
             else:
                 tournament.create_round()
+
         self.round_started.emit(tournament)
+
+        # Notifier le bot Discord à chaque lancement (création canaux si besoin)
+        try:
+            from sync.server_client import notify_start_async
+            notify_start_async(tournament.id)
+        except Exception as e:
+            print(f"[sync] notify_start_async ignoré : {e}")
 
     def save_tournaments(self):
         """Sauvegarde tous les tournois (appelé depuis le dashboard)."""

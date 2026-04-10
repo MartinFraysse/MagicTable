@@ -1,0 +1,151 @@
+"""
+Client HTTP pour l'API MagicTable sur le serveur distant.
+
+Configuration via src/data/server.json :
+  { "url": "http://192.168.1.113:8000", "api_key": "magictable_secret_2026" }
+
+Si le fichier est absent ou que le serveur est inaccessible, toutes les
+opérations échouent silencieusement (retournent None) et l'app continue
+avec ses fichiers locaux.
+"""
+
+import json
+import threading
+import urllib.request
+import urllib.error
+from pathlib import Path
+from typing import Optional
+
+_CONFIG_PATH = Path(__file__).parent.parent / "data" / "server.json"
+
+_config: Optional[dict] = None
+_config_loaded = False
+
+
+def _load_config() -> Optional[dict]:
+    global _config, _config_loaded
+    if _config_loaded:
+        return _config
+    _config_loaded = True
+    if not _CONFIG_PATH.exists():
+        return None
+    try:
+        _config = json.loads(_CONFIG_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        _config = None
+    return _config
+
+
+def is_configured() -> bool:
+    cfg = _load_config()
+    return cfg is not None and bool(cfg.get("url"))
+
+
+def fetch(resource: str) -> Optional[list]:
+    """GET /{resource} → list ou None si échec."""
+    cfg = _load_config()
+    if not cfg:
+        return None
+    url = f"{cfg['url'].rstrip('/')}/{resource}"
+    try:
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return json.loads(resp.read().decode())
+    except Exception:
+        return None
+
+
+def push(resource: str, data: list) -> bool:
+    """PUT /{resource} avec data en JSON. Retourne True si succès."""
+    cfg = _load_config()
+    if not cfg:
+        return False
+    url = f"{cfg['url'].rstrip('/')}/{resource}"
+    api_key = cfg.get("api_key", "")
+    try:
+        body = json.dumps(data, ensure_ascii=False).encode()
+        req = urllib.request.Request(url, data=body, method="PUT")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("x-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=5):
+            return True
+    except Exception:
+        return False
+
+
+def push_async(resource: str, data: list) -> None:
+    """Envoie data vers le serveur dans un thread (non-bloquant)."""
+    threading.Thread(target=push, args=(resource, data), daemon=True).start()
+
+
+def notify_start(tournament_id: str) -> bool:
+    """Notifie l'API qu'un tournoi vient de démarrer (1er round créé)."""
+    cfg = _load_config()
+    if not cfg:
+        return False
+    url = f"{cfg['url'].rstrip('/')}/tournament/start"
+    api_key = cfg.get("api_key", "")
+    try:
+        body = json.dumps({"tournament_id": tournament_id}, ensure_ascii=False).encode()
+        req = urllib.request.Request(url, data=body, method="POST")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("x-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=5):
+            return True
+    except Exception:
+        return False
+
+
+def notify_start_async(tournament_id: str) -> None:
+    """Envoie la notification de démarrage dans un thread (non-bloquant)."""
+    threading.Thread(target=notify_start, args=(tournament_id,), daemon=True).start()
+
+
+def notify_quit(tournament_id) -> bool:
+    """Notifie l'API que l'utilisateur a quitté le tournoi (suppression canaux)."""
+    cfg = _load_config()
+    if not cfg:
+        return False
+    url = f"{cfg['url'].rstrip('/')}/tournament/quit"
+    api_key = cfg.get("api_key", "")
+    try:
+        body = json.dumps({"tournament_id": tournament_id}, ensure_ascii=False).encode()
+        req = urllib.request.Request(url, data=body, method="POST")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("x-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=5):
+            return True
+    except Exception:
+        return False
+
+
+def notify_quit_async(tournament_id) -> None:
+    """Envoie la notification de quitter dans un thread (non-bloquant)."""
+    threading.Thread(target=notify_quit, args=(tournament_id,), daemon=True).start()
+
+
+def pull_all(local_data_dir: Path) -> bool:
+    """
+    Télécharge tous les JSON depuis le serveur et les écrit localement.
+    Retourne True si au moins un fichier a été récupéré.
+    """
+    RESOURCES = {
+        "players":     "regular_players.json",
+        "tournaments": "tournaments.json",
+        "leagues":     "leagues.json",
+        "commanders":  "commanders.json",
+    }
+    if not is_configured():
+        return False
+
+    ok = False
+    for resource, filename in RESOURCES.items():
+        data = fetch(resource)
+        if data is not None:
+            path = local_data_dir / filename
+            path.write_text(
+                json.dumps(data, indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+            ok = True
+    return ok

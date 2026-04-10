@@ -3,6 +3,11 @@ import json
 from pathlib import Path
 from json import JSONDecodeError
 
+try:
+    from sync.server_client import push_async
+except ImportError:
+    push_async = None  # type: ignore
+
 
 def _resolve_data_dir() -> Path:
     """
@@ -51,9 +56,22 @@ class JsonStorage:
             # JSON invalide / corrompu
             return []
 
+    # Correspondance filename → resource API
+    _RESOURCE_MAP: dict[str, str] = {
+        "regular_players.json": "players",
+        "tournaments.json":     "tournaments",
+        "leagues.json":         "leagues",
+        "commanders.json":      "commanders",
+    }
+
     @classmethod
     def save(cls, data: list[dict]) -> None:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
 
         with open(cls._file(), "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+
+        # Push vers le serveur en arrière-plan (non-bloquant)
+        resource = cls._RESOURCE_MAP.get(cls.filename)
+        if resource and push_async is not None:
+            push_async(resource, data)

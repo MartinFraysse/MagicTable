@@ -47,7 +47,22 @@ Categories=Game;
     subprocess.run(["gtk-update-icon-cache", "-f", "-t", str(icon_dst.parent.parent.parent)], capture_output=True)
     subprocess.run(["update-desktop-database", str(desktop_dst.parent)], capture_output=True)
 
+def _pull_from_server() -> None:
+    """Synchronise les données depuis le serveur au démarrage (silencieux si hors-ligne)."""
+    try:
+        from sync.server_client import pull_all
+        from storage.base import DATA_DIR
+        ok = pull_all(DATA_DIR)
+        if ok:
+            print("✅ Données synchronisées depuis le serveur")
+        else:
+            print("⚠️  Serveur inaccessible, démarrage avec les données locales")
+    except Exception as e:
+        print(f"⚠️  Sync serveur ignorée : {e}")
+
+
 def main():
+    _pull_from_server()
     app = QApplication(sys.argv)
 
     app.setStyle(QStyleFactory.create("Fusion"))

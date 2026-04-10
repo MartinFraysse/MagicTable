@@ -289,7 +289,8 @@
     "podiums_recorded": false,
     "pairing_system": "swiss",
     "bye_history": [
-      3
+      3,
+      4
     ],
     "players": [
       {
@@ -299,18 +300,6 @@
         "robustness": 0,
         "reward_claimed": false,
         "commander": "Celes, Rune Knight",
-        "buchholz": 0.0,
-        "sos": 0.0,
-        "had_bye": false,
-        "dropped": false
-      },
-      {
-        "id": 1,
-        "name": "Marfin",
-        "score": 0,
-        "robustness": 0,
-        "reward_claimed": false,
-        "commander": "Sorin of House Karlov",
         "buchholz": 0.0,
         "sos": 0.0,
         "had_bye": false,
@@ -349,6 +338,18 @@
         "commander": "Brigid, Clachan's Heart // Brigid, Doun's Mind",
         "buchholz": 0.0,
         "sos": 0.0,
+        "had_bye": true,
+        "dropped": false
+      },
+      {
+        "id": 5,
+        "name": "Marfin",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "Tasigur, the Golden Fang",
+        "buchholz": 0.0,
+        "sos": 0.0,
         "had_bye": false,
         "dropped": false
       }
@@ -362,7 +363,7 @@
             "number": 1,
             "player_ids": [
               0,
-              1
+              5
             ],
             "finished": false,
             "results": {},
@@ -372,7 +373,7 @@
             "number": 2,
             "player_ids": [
               2,
-              4
+              3
             ],
             "finished": false,
             "results": {},
@@ -381,11 +382,11 @@
           {
             "number": 3,
             "player_ids": [
-              3
+              4
             ],
             "finished": true,
             "results": {
-              "3": 1
+              "4": 1
             },
             "game_scores": {}
           }
@@ -1107,6 +1108,18 @@
       {
         "id": 3,
         "name": "Merde",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 0.0,
+        "sos": 0.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Marfin",
         "score": 0,
         "robustness": 0,
         "reward_claimed": false,

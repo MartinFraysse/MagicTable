@@ -8,7 +8,8 @@
     "top_2": 2,
     "top_3": 0,
     "points": 27,
-    "tournaments_played": 4
+    "tournaments_played": 4,
+    "discord_id": 350372944347791363
   },
   {
     "id": 2,
@@ -53,5 +54,16 @@
     "top_3": 0,
     "points": 22,
     "tournaments_played": 3
+  },
+  {
+    "id": 6,
+    "pseudo": "Pso",
+    "full_name": "Martin Fraysse",
+    "phone": "",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
   }
 ]

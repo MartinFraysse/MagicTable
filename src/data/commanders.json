@@ -181,5 +181,16 @@
     ],
     "image_path": "commander_images/448c8414097e4d80a314a682e5034805.jpg",
     "duel": true
+  },
+  {
+    "id": 21,
+    "name": "Tasigur, the Golden Fang",
+    "colors": [
+      "U",
+      "B",
+      "G"
+    ],
+    "image_path": "commander_images/96cd17e030dc4c7f8fd961fc314b6966.jpg",
+    "duel": true
   }
 ]

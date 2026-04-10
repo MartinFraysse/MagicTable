@@ -1056,6 +1056,13 @@ class DashboardViewMain(QWidget):
         self._clear_dashboard()
         self.tournament_quit.emit(tid)
 
+        # Notifier le bot Discord pour supprimer les canaux
+        try:
+            from sync.server_client import notify_quit_async
+            notify_quit_async(tid)
+        except Exception:
+            pass
+
     def _clear_dashboard(self):
         """Réinitialise l'affichage du dashboard à l'état initial."""
         # Arrêter le timer
