@@ -20,7 +20,9 @@ from typing import Optional
 
 def _get_config_path() -> Path:
     if getattr(sys, "frozen", False):
-        # App packagée : server.json est dans data/ à côté du .exe
+        if sys.platform == "win32":
+            import os
+            return Path(os.environ.get("APPDATA", "~")) / "MagicTable" / "data" / "server.json"
         return Path(sys.executable).parent / "data" / "server.json"
     # Développement : src/data/server.json
     return Path(__file__).parent.parent / "data" / "server.json"

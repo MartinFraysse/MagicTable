@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from pathlib import Path
@@ -16,8 +17,12 @@ def _resolve_data_dir() -> Path:
     - Mode développement              : src/data  (comportement historique)
     """
     if getattr(sys, "frozen", False):
-        # App packagée : données à côté du .exe
-        data_dir = Path(sys.executable).parent / "data"
+        if sys.platform == "win32":
+            # Windows packagé : %APPDATA%\MagicTable\data
+            data_dir = Path(os.environ.get("APPDATA", "~")) / "MagicTable" / "data"
+        else:
+            # Linux packagé : à côté du binaire
+            data_dir = Path(sys.executable).parent / "data"
     else:
         data_dir = Path(__file__).parent.parent / "data"
 
