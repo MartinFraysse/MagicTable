@@ -16,10 +16,8 @@ def _resolve_data_dir() -> Path:
     - Mode développement              : src/data  (comportement historique)
     """
     if getattr(sys, "frozen", False):
-        # App packagée sur Windows
-        appdata = Path(sys._MEIPASS).parent  # dossier du .exe
-        # On stocke les données à côté de l'exe pour faciliter les backups
-        data_dir = appdata / "data"
+        # App packagée : données à côté du .exe
+        data_dir = Path(sys.executable).parent / "data"
     else:
         data_dir = Path(__file__).parent.parent / "data"
 

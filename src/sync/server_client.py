@@ -9,6 +9,7 @@ opérations échouent silencieusement (retournent None) et l'app continue
 avec ses fichiers locaux.
 """
 
+import sys
 import json
 import threading
 import urllib.request
@@ -16,7 +17,16 @@ import urllib.error
 from pathlib import Path
 from typing import Optional
 
-_CONFIG_PATH = Path(__file__).parent.parent / "data" / "server.json"
+
+def _get_config_path() -> Path:
+    if getattr(sys, "frozen", False):
+        # App packagée : server.json est dans data/ à côté du .exe
+        return Path(sys.executable).parent / "data" / "server.json"
+    # Développement : src/data/server.json
+    return Path(__file__).parent.parent / "data" / "server.json"
+
+
+_CONFIG_PATH = _get_config_path()
 
 _config: Optional[dict] = None
 _config_loaded = False
