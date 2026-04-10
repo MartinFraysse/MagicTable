@@ -223,10 +223,12 @@ class SettingsView(QWidget):
 
         # Champ URL
         url_layout = QHBoxLayout()
+        url_layout.setSpacing(10)
         url_label = QLabel("URL :")
-        url_label.setFixedWidth(70)
+        url_label.setObjectName("SettingsLabel")
+        url_label.setFixedWidth(80)
         self._server_url_input = QLineEdit()
-        self._server_url_input.setPlaceholderText("http://192.168.1.x:8000")
+        self._server_url_input.setPlaceholderText("http://adresse-ip-serveur:8000")
         self._server_url_input.setObjectName("SettingsInput")
         url_layout.addWidget(url_label)
         url_layout.addWidget(self._server_url_input)
@@ -234,10 +236,12 @@ class SettingsView(QWidget):
 
         # Champ clé API
         key_layout = QHBoxLayout()
+        key_layout.setSpacing(10)
         key_label = QLabel("Clé API :")
-        key_label.setFixedWidth(70)
+        key_label.setObjectName("SettingsLabel")
+        key_label.setFixedWidth(80)
         self._server_key_input = QLineEdit()
-        self._server_key_input.setPlaceholderText("magictable_secret_2026")
+        self._server_key_input.setPlaceholderText("votre-clé-secrète")
         self._server_key_input.setObjectName("SettingsInput")
         key_layout.addWidget(key_label)
         key_layout.addWidget(self._server_key_input)

@@ -89,6 +89,7 @@ class Bracket:
     bracket_type: BracketType
     matches: list[BracketMatch] = field(default_factory=list)
     finished: bool = False
+    started_round: "str | None" = None  # nom du round de bracket dont le chrono a été lancé
 
     def current_round_name(self) -> BracketRoundName | None:
         """Retourne le nom du round actif (premier round non termine)."""
@@ -217,9 +218,10 @@ class Bracket:
 
     def to_dict(self) -> Dict:
         return {
-            "bracket_type": self.bracket_type.value,
-            "matches": [m.to_dict() for m in self.matches],
-            "finished": self.finished,
+            "bracket_type":  self.bracket_type.value,
+            "matches":       [m.to_dict() for m in self.matches],
+            "finished":      self.finished,
+            "started_round": self.started_round,
         }
 
     @classmethod
@@ -228,6 +230,7 @@ class Bracket:
             bracket_type=BracketType(data["bracket_type"]),
             matches=[BracketMatch.from_dict(m) for m in data.get("matches", [])],
             finished=data.get("finished", False),
+            started_round=data.get("started_round"),
         )
 
 

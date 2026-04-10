@@ -231,3 +231,59 @@ def _pull_commander_images(local_data_dir: Path, commanders: list) -> None:
                 local_file.write_bytes(resp.read())
         except Exception:
             pass  # Image indisponible, la carte s'affichera sans image
+
+
+# ── Notifications round vers le bot Discord ───────────────────────────────────
+
+def _post_notify(endpoint: str, body: dict) -> bool:
+    """POST vers /notify/<endpoint> avec authentification."""
+    cfg = _load_config()
+    if not cfg:
+        return False
+    url     = f"{cfg['url'].rstrip('/')}/notify/{endpoint}"
+    api_key = cfg.get("api_key", "")
+    try:
+        data = json.dumps(body, ensure_ascii=False).encode()
+        req  = urllib.request.Request(url, data=data, method="POST")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("x-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=8):
+            return True
+    except Exception:
+        return False
+
+
+def notify_round_start_async(
+    tournament_id,
+    round_num: "int | None",
+    tournament_name: str,
+    bracket_round: "str | None" = None,
+) -> None:
+    """Notifie le bot Discord que le chrono d'un round vient d'être lancé (non-bloquant)."""
+    body = {
+        "tournament_id":   tournament_id,
+        "round_num":       round_num,
+        "tournament_name": tournament_name,
+        "bracket_round":   bracket_round,
+    }
+    threading.Thread(target=_post_notify, args=("round_start", body), daemon=True).start()
+
+
+def notify_next_round_async(
+    tournament_id,
+    tournament_dict: dict,
+    prev_round_num: "int | None" = None,
+    prev_bracket_round: "str | None" = None,
+    new_bracket_round: "str | None" = None,
+    eliminated_names: "list | None" = None,
+) -> None:
+    """Notifie le bot du passage au round suivant : classement + pairings (non-bloquant)."""
+    body = {
+        "tournament_id":       tournament_id,
+        "tournament_data":     tournament_dict,
+        "prev_round_num":      prev_round_num,
+        "prev_bracket_round":  prev_bracket_round,
+        "new_bracket_round":   new_bracket_round,
+        "eliminated_names":    eliminated_names or [],
+    }
+    threading.Thread(target=_post_notify, args=("next_round", body), daemon=True).start()

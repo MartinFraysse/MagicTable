@@ -3,6 +3,7 @@ from PySide6.QtCore import QTimer, Signal, QUrl, Qt
 from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtMultimedia import QSoundEffect
 import os
+import threading
 
 from export.pdf_export import export_tournament_pdf
 
@@ -38,6 +39,8 @@ class DashboardViewMain(QWidget):
     tournament_archived = Signal(int)
     # Signal émis quand l'utilisateur quitte volontairement le tournoi
     tournament_quit = Signal(int)
+    # Signal interne : données serveur reçues depuis le thread de polling
+    _server_data_ready = Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -130,6 +133,15 @@ class DashboardViewMain(QWidget):
         self.remaining_seconds = self.timer_duration * 60
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
+
+        # =====================
+        # Polling résultats Discord (sync temps réel)
+        # =====================
+        self._discord_sync_timer = QTimer(self)
+        self._discord_sync_timer.setInterval(5000)  # toutes les 5 secondes
+        self._discord_sync_timer.timeout.connect(self._poll_discord_results)
+        self._discord_sync_fetching = False
+        self._server_data_ready.connect(self._apply_server_results)
 
         # =====================
         # Fenêtre de projection
@@ -273,6 +285,9 @@ class DashboardViewMain(QWidget):
         # Mettre à jour la fenêtre de projection si ouverte
         self._update_projection()
 
+        # Démarrer le polling Discord si serveur configuré
+        self._start_discord_sync()
+
         # recalcul au cas où
         self._recompute_layout_heights()
 
@@ -315,11 +330,43 @@ class DashboardViewMain(QWidget):
     # Round lifecycle
     # ======================================================
     def _start_round(self):
+        # Mode bracket : current_round est None, on démarre quand même le chrono
+        if self._bracket_mode:
+            if self.current_tournament and self._bracket_displayed_round:
+                self.timer.start(1000)
+                self.round_controls.set_start_enabled(False)
+                # Marquer le round bracket comme démarré
+                self.current_tournament.bracket.started_round = self._bracket_displayed_round.value
+                self.tournament_changed.emit()
+                try:
+                    from sync.server_client import notify_round_start_async
+                    brk = self._bracket_displayed_round.value
+                    notify_round_start_async(self.current_tournament.id, None, self.current_tournament.name, brk)
+                except Exception:
+                    pass
+            return
+
         if not self.current_round:
             return
 
         self.timer.start(1000)
         self.round_controls.set_start_enabled(False)
+
+        # Marquer le round comme démarré (IN_PROGRESS)
+        self.current_round.start()
+        self.tournament_changed.emit()
+
+        # Notifier Discord que le chrono est lancé
+        if self.current_tournament:
+            try:
+                from sync.server_client import notify_round_start_async
+                notify_round_start_async(
+                    self.current_tournament.id,
+                    self.current_round.number,
+                    self.current_tournament.name,
+                )
+            except Exception:
+                pass
 
     def _all_tables_finished(self) -> bool:
         return (
@@ -375,6 +422,8 @@ class DashboardViewMain(QWidget):
                 )
                 return
 
+        prev_round_num = self.current_round.number  # avant set_current_round qui change current_round
+
         self.set_current_round(self.current_tournament)
 
         # Cacher l'alerte de répétition
@@ -382,6 +431,17 @@ class DashboardViewMain(QWidget):
 
         # Notifier pour sauvegarder
         self.tournament_changed.emit()
+
+        # Notifier Discord : classement round précédent + nouveaux pairings
+        try:
+            from sync.server_client import notify_next_round_async
+            notify_next_round_async(
+                self.current_tournament.id,
+                self.current_tournament.to_dict(),
+                prev_round_num=prev_round_num,
+            )
+        except Exception:
+            pass
 
     def _finish_tournament(self):
         """Affiche le classement final quand le tournoi est terminé."""
@@ -487,6 +547,13 @@ class DashboardViewMain(QWidget):
     # Table results
     # ======================================================
     def _edit_table_results(self, table: Table):
+        if self.current_round and self.current_round.state.value == "preparation":
+            QMessageBox.warning(
+                self,
+                "Round non démarré",
+                "Lance le chrono avant d'entrer les résultats."
+            )
+            return
         dialog = EditTableResultsDialog(self, table)
 
         if not dialog.exec():
@@ -674,10 +741,24 @@ class DashboardViewMain(QWidget):
             return
 
         self._snapshot()
+        prev_round_num = self.current_round.number if self.current_round else None
         self.current_tournament.start_bracket(bracket_type)
         self.round_controls.hide_bracket_launch_button()
         self._setup_bracket_mode(self.current_tournament)
         self.tournament_changed.emit()
+
+        # Notifier Discord : classement Swiss final + pairings du 1er round bracket
+        try:
+            from sync.server_client import notify_next_round_async
+            brk_round = self.current_tournament.bracket.current_round_name()
+            notify_next_round_async(
+                self.current_tournament.id,
+                self.current_tournament.to_dict(),
+                prev_round_num=prev_round_num,
+                new_bracket_round=brk_round.value if brk_round else None,
+            )
+        except Exception:
+            pass
 
     def _setup_bracket_mode(self, tournament: Tournament, timer_minutes: int = None):
         """Configure l'UI en mode bracket d'élimination."""
@@ -737,7 +818,19 @@ class DashboardViewMain(QWidget):
 
     def _edit_bracket_result(self, match):
         """Saisit ou modifie le résultat d'un match de bracket."""
+        if not self.current_tournament:
+            return
         bracket = self.current_tournament.bracket
+        if not bracket:
+            return
+        if (self._bracket_displayed_round is not None
+                and bracket.started_round != self._bracket_displayed_round.value):
+            QMessageBox.warning(
+                self,
+                "Round non démarré",
+                "Lance le chrono avant d'entrer les résultats."
+            )
+            return
         players_by_id = {p.id: p for p in self.current_tournament.players}
 
         dialog = EditBracketResultDialog(self, match, players_by_id)
@@ -782,8 +875,23 @@ class DashboardViewMain(QWidget):
             self._finish_tournament()
             return
 
+        prev_bracket_round = self._bracket_displayed_round  # avant l'avance
+
+        # Calculer les éliminés du round précédent
+        players_by_id   = {p.id: p for p in self.current_tournament.players}
+        prev_matches    = bracket.get_matches_for_round(prev_bracket_round)
+        eliminated_names = []
+        for m in prev_matches:
+            if m.finished and m.winner_id is not None and not m.is_third_place:
+                loser_id = m.player2_id if m.winner_id == m.player1_id else m.player1_id
+                if loser_id and m.loser_next_match_id is None:
+                    p = players_by_id.get(loser_id)
+                    if p:
+                        eliminated_names.append(p.name)
+
         self._bracket_displayed_round = round_order[current_idx + 1]
-        players_by_id = {p.id: p for p in self.current_tournament.players}
+        # Réinitialiser le flag "démarré" pour le nouveau round
+        self.current_tournament.bracket.started_round = None
         matches = bracket.get_matches_for_round(self._bracket_displayed_round)
 
         self.tables_view.set_bracket_round(matches, players_by_id)
@@ -797,6 +905,19 @@ class DashboardViewMain(QWidget):
         self.round_controls.set_finish_mode(is_last)
 
         self.tournament_changed.emit()
+
+        # Notifier Discord : classement + nouveaux pairings + éliminations
+        try:
+            from sync.server_client import notify_next_round_async
+            notify_next_round_async(
+                self.current_tournament.id,
+                self.current_tournament.to_dict(),
+                prev_bracket_round=prev_bracket_round.value,
+                new_bracket_round=self._bracket_displayed_round.value,
+                eliminated_names=eliminated_names,
+            )
+        except Exception:
+            pass
 
     # ======================================================
     # Reset tournament
@@ -895,6 +1016,13 @@ class DashboardViewMain(QWidget):
         self.tournament_changed.emit()
         self.tournament_archived.emit(tournament_id)
         self._clear_dashboard()
+
+        # Supprimer les canaux Discord du tournoi
+        try:
+            from sync.server_client import notify_quit_async
+            notify_quit_async(tournament_id)
+        except Exception:
+            pass
 
     def _archive_tournament(self):
         """Archive le tournoi terminé (bouton manuel, garde pour compatibilité)."""
@@ -1065,8 +1193,9 @@ class DashboardViewMain(QWidget):
 
     def _clear_dashboard(self):
         """Réinitialise l'affichage du dashboard à l'état initial."""
-        # Arrêter le timer
+        # Arrêter le timer et le polling Discord
         self.timer.stop()
+        self._discord_sync_timer.stop()
 
         # Vider l'historique undo
         self._history.clear()
@@ -1097,3 +1226,140 @@ class DashboardViewMain(QWidget):
         # Fermer la fenêtre de projection si ouverte
         if self.pairings_window:
             self.pairings_window.close()
+
+    # ======================================================
+    # Polling résultats Discord (sync temps réel)
+    # ======================================================
+
+    def _start_discord_sync(self):
+        """Démarre le polling serveur si un serveur est configuré."""
+        try:
+            from sync.server_client import _load_config
+            if not _load_config():
+                return
+        except Exception:
+            return
+        if not self._discord_sync_timer.isActive():
+            self._discord_sync_timer.start()
+
+    def _poll_discord_results(self):
+        """Lance un fetch serveur en background (non-bloquant)."""
+        if self._discord_sync_fetching or not self.current_tournament:
+            return
+        self._discord_sync_fetching = True
+
+        def _fetch():
+            try:
+                from sync.server_client import fetch
+                data = fetch("tournaments")
+                if data is not None:
+                    self._server_data_ready.emit(data)
+            except Exception:
+                pass
+            finally:
+                self._discord_sync_fetching = False
+
+        threading.Thread(target=_fetch, daemon=True).start()
+
+    def _apply_server_results(self, server_tournaments: list):
+        """Applique les résultats reçus du serveur si différents de l'état local.
+        Appelé sur le thread principal via le signal _server_data_ready."""
+        if not self.current_tournament:
+            return
+
+        # Trouver le tournoi courant dans les données serveur
+        t_dict = next(
+            (t for t in server_tournaments if t.get("id") == self.current_tournament.id),
+            None
+        )
+        if not t_dict:
+            return
+
+        # ── Mode bracket ───────────────────────────────────────────────────────
+        if self._bracket_mode:
+            self._apply_server_bracket(t_dict)
+            return
+
+        # ── Mode round normal ──────────────────────────────────────────────────
+        if not self.current_round:
+            return
+
+        # Trouver le round correspondant (même numéro)
+        server_rounds = t_dict.get("rounds", [])
+        if not server_rounds:
+            return
+        server_round = next(
+            (r for r in server_rounds if r.get("number") == self.current_round.number),
+            None
+        )
+        if not server_round:
+            return
+
+        server_tables = {t.get("number"): t for t in server_round.get("tables", [])}
+        changed = False
+
+        for table in self.current_round.tables:
+            s_table = server_tables.get(table.number)
+            if not s_table:
+                continue
+
+            server_results = {int(k): v for k, v in s_table.get("results", {}).items()}
+            server_game_scores = {int(k): v for k, v in s_table.get("game_scores", {}).items()}
+            server_finished = s_table.get("finished", False)
+
+            if (server_results != table.results
+                    or server_game_scores != table.game_scores
+                    or server_finished != table.finished):
+                table.results = server_results
+                table.game_scores = server_game_scores
+                table.finished = server_finished
+                changed = True
+
+        if changed:
+            # Recalculer les standings si format 1v1
+            if self.current_tournament.is_1v1_format():
+                self._apply_1v1_standings()
+            # Sauvegarder localement
+            self.tournament_changed.emit()
+            # Rafraîchir les vues tables et classement
+            self.tables_view.set_round(self.current_round)
+            self.ranking_view.set_tournament(self.current_tournament)
+            # Activer "Round suivant" si toutes les tables sont terminées
+            if self._all_tables_finished():
+                self.round_controls.set_next_enabled(True)
+
+    def _apply_server_bracket(self, t_dict: dict):
+        """Applique les résultats de bracket reçus du serveur (mode bracket actif)."""
+        bracket = self.current_tournament.bracket
+        if not bracket or not self._bracket_displayed_round:
+            return
+
+        server_bracket = t_dict.get("bracket")
+        if not server_bracket:
+            return
+
+        server_matches = {m["match_id"]: m for m in server_bracket.get("matches", [])}
+        changed = False
+
+        for match in bracket.get_matches_for_round(self._bracket_displayed_round):
+            s_match = server_matches.get(match.match_id)
+            if not s_match:
+                continue
+            # Appliquer seulement si le serveur a un résultat et qu'on n'en a pas encore
+            if s_match.get("finished") and s_match.get("winner_id") is not None and not match.finished:
+                bracket.record_result(match.match_id, s_match["winner_id"])
+                changed = True
+
+        if changed:
+            players_by_id = {p.id: p for p in self.current_tournament.players}
+            matches = bracket.get_matches_for_round(self._bracket_displayed_round)
+            self.tables_view.set_bracket_round(matches, players_by_id)
+            self.ranking_view.set_tournament(self.current_tournament)
+            self._update_bracket_tiles()
+            self.tournament_changed.emit()
+
+            if self._all_bracket_round_matches_finished():
+                self.round_controls.set_next_enabled(True)
+                round_order = bracket.get_round_order()
+                is_last = self._bracket_displayed_round == round_order[-1]
+                self.round_controls.set_finish_mode(is_last)

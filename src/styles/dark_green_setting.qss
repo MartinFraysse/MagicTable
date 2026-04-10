@@ -127,6 +127,31 @@
 }
 
 /* =======================================================================
+   INPUT (QLineEdit)
+   ======================================================================= */
+
+#SettingsInput {
+    background-color: #0e2219;
+    border: 1px solid #2f6f55;
+    border-radius: 8px;
+    color: #eafff6;
+    font-size: 14px;
+    padding: 8px 12px;
+    min-height: 36px;
+    selection-background-color: #3ad68a;
+    selection-color: #0a1a12;
+}
+
+#SettingsInput:focus {
+    border: 2px solid #3ad68a;
+    background-color: #0b1e15;
+}
+
+#SettingsInput:hover:!focus {
+    border-color: #4a9e7a;
+}
+
+/* =======================================================================
    STATS
    ======================================================================= */
 

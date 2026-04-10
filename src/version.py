@@ -1,5 +1,5 @@
 # Version actuelle de l'application
-__version__ = "1.3.6"
+__version__ = "1.4.0"
 
 # Dépôt GitHub au format "username/repo"
 # ⚠️  À remplacer par ton vrai username GitHub avant le premier build
