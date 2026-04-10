@@ -4,6 +4,7 @@
 # Lancer depuis la racine du projet : pyinstaller MagicTable.spec
 #
 
+import certifi
 from pathlib import Path
 
 SRC = Path("src")
@@ -16,6 +17,8 @@ a = Analysis(
         # Ressources read-only embarquées dans le bundle
         (str(SRC / "assets"),  "assets"),
         (str(SRC / "styles"),  "styles"),
+        # Certificats SSL (nécessaires pour les requêtes HTTPS sur Windows)
+        (certifi.where(), "certifi"),
         # ⚠️  src/data/ N'est PAS inclus : les données utilisateur
         #     sont stockées à côté du .exe (voir storage/base.py)
     ],

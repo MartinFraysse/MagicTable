@@ -1,11 +1,20 @@
 import json
 import shutil
+import ssl
 import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
+
+
+def _ssl_context() -> ssl.SSLContext:
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
 from PySide6.QtCore import Qt, QTimer, QEvent, QPoint, Signal
 from PySide6.QtGui import QPalette, QColor
@@ -129,7 +138,7 @@ class CreateCommanderDialog(QDialog):
                     f"https://api.scryfall.com/cards/search?q={encoded}&order=name&unique=cards",
                     headers={"User-Agent": "MagicTable/1.0", "Accept": "application/json"},
                 )
-                with urllib.request.urlopen(req, timeout=4) as resp:
+                with urllib.request.urlopen(req, timeout=4, context=_ssl_context()) as resp:
                     data = json.loads(resp.read().decode())
                 names = [card["name"] for card in data.get("data", [])]
             except urllib.error.HTTPError:
@@ -366,7 +375,7 @@ class CreateCommanderDialog(QDialog):
                 f"https://api.scryfall.com/cards/named?fuzzy={encoded}",
                 headers={"User-Agent": "MagicTable/1.0", "Accept": "application/json"},
             )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10, context=_ssl_context()) as resp:
                 card = json.loads(resp.read().decode("utf-8"))
 
             # Récupérer l'URL art_crop (cartes double face : première face)
@@ -390,7 +399,7 @@ class CreateCommanderDialog(QDialog):
             img_req = urllib.request.Request(
                 art_url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
             )
-            with urllib.request.urlopen(img_req, timeout=15) as img_resp:
+            with urllib.request.urlopen(img_req, timeout=15, context=_ssl_context()) as img_resp:
                 (dest_dir / filename).write_bytes(img_resp.read())
 
             self._image_path = f"commander_images/{filename}"
