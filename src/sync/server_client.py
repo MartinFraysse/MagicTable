@@ -139,6 +139,7 @@ def notify_quit_async(tournament_id) -> None:
 def pull_all(local_data_dir: Path) -> bool:
     """
     Télécharge tous les JSON depuis le serveur et les écrit localement.
+    Télécharge aussi les images des commandants manquantes.
     Retourne True si au moins un fichier a été récupéré.
     """
     RESOURCES = {
@@ -151,6 +152,7 @@ def pull_all(local_data_dir: Path) -> bool:
         return False
 
     ok = False
+    commanders_data = None
     for resource, filename in RESOURCES.items():
         data = fetch(resource)
         if data is not None:
@@ -160,4 +162,39 @@ def pull_all(local_data_dir: Path) -> bool:
                 encoding="utf-8"
             )
             ok = True
+            if resource == "commanders":
+                commanders_data = data
+
+    # Synchroniser les images des commandants manquantes
+    if commanders_data:
+        _pull_commander_images(local_data_dir, commanders_data)
+
     return ok
+
+
+def _pull_commander_images(local_data_dir: Path, commanders: list) -> None:
+    """Télécharge les images des commandants absentes localement."""
+    cfg = _load_config()
+    if not cfg:
+        return
+    base_url = cfg["url"].rstrip("/")
+    img_dir = local_data_dir / "commander_images"
+    img_dir.mkdir(parents=True, exist_ok=True)
+
+    for commander in commanders:
+        image_path = commander.get("image_path", "")
+        if not image_path:
+            continue
+        local_file = local_data_dir / image_path
+        if local_file.exists():
+            continue  # Déjà présente
+
+        # Télécharger depuis le serveur
+        filename = Path(image_path).name
+        url = f"{base_url}/commander_images/{filename}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "MagicTable/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                local_file.write_bytes(resp.read())
+        except Exception:
+            pass  # Image indisponible, la carte s'affichera sans image
