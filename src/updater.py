@@ -82,15 +82,19 @@ def _pick_asset(assets: list) -> str | None:
             if a.get("name", "").lower().endswith(".exe"):
                 return a["browser_download_url"]
     else:
-        # Linux : préfère un asset sans extension ou explicitement Linux
+        # Linux : préfère un asset nommé explicitement pour Linux
         for a in assets:
             name = a.get("name", "").lower()
-            if "linux" in name or (not "." in name.split("/")[-1]):
+            if "linux" in name:
                 return a["browser_download_url"]
-        # Fallback : prend n'importe quel binaire (même .exe, on le renommera)
+        # Fallback : binaire sans extension nommé "magictable"
         for a in assets:
             name = a.get("name", "").lower()
-            if name.endswith(".exe") or name.endswith(".bin"):
+            if name == "magictable" or name.endswith(".bin"):
+                return a["browser_download_url"]
+        # Dernier recours : .exe (sera renommé lors de l'installation)
+        for a in assets:
+            if a.get("name", "").lower().endswith(".exe"):
                 return a["browser_download_url"]
     return None
 
