@@ -18,6 +18,12 @@ ENV/
 # Claude Code local settings
 .claude/settings.local.json
 
+# Discord bot
+discord_bot/.env
+
+# Server config (credentials)
+src/data/server.json
+
 # OS
 .DS_Store
 Thumbs.db
