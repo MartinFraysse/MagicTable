@@ -5,9 +5,10 @@ from pathlib import Path
 from json import JSONDecodeError
 
 try:
-    from sync.server_client import push_async
+    from sync.server_client import push_async, push_commander_images_async
 except ImportError:
-    push_async = None  # type: ignore
+    push_async = None                    # type: ignore
+    push_commander_images_async = None   # type: ignore
 
 
 def _resolve_data_dir() -> Path:
@@ -78,3 +79,6 @@ class JsonStorage:
         resource = cls._RESOURCE_MAP.get(cls.filename)
         if resource and push_async is not None:
             push_async(resource, data)
+            # Pour les commandants : synchroniser aussi les images
+            if resource == "commanders" and push_commander_images_async is not None:
+                push_commander_images_async(DATA_DIR, data)

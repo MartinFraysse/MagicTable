@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, Signal
 from storage.tournaments import TournamentStorage
 from storage.regular_players import RegularPlayerStorage
 from storage.commanders import CommanderStorage
+from storage.leagues import LeagueStorage
 from version import __version__
 from updater import UpdateChecker, Updater, _is_packaged
 
@@ -345,15 +346,19 @@ class SettingsView(QWidget):
         self.commanders_count = QLabel("0 commandants")
         self.commanders_count.setObjectName("SettingsStats")
 
+        self.leagues_count = QLabel("0 ligues")
+        self.leagues_count.setObjectName("SettingsStats")
+
         stats_layout.addWidget(self.tournaments_count)
         stats_layout.addWidget(self.archived_count)
         stats_layout.addWidget(self.players_count)
         stats_layout.addWidget(self.commanders_count)
+        stats_layout.addWidget(self.leagues_count)
         stats_layout.addStretch()
 
         layout.addLayout(stats_layout)
 
-        # Boutons
+        # Boutons — ligne 1 : tournois + joueurs
         buttons_layout = QHBoxLayout()
 
         reset_archived_btn = QPushButton("Supprimer les tournois archivés")
@@ -368,17 +373,29 @@ class SettingsView(QWidget):
         reset_players_btn.setObjectName("DangerButton")
         reset_players_btn.clicked.connect(self._reset_players)
 
+        buttons_layout.addWidget(reset_archived_btn)
+        buttons_layout.addWidget(reset_tournaments_btn)
+        buttons_layout.addWidget(reset_players_btn)
+        buttons_layout.addStretch()
+
+        layout.addLayout(buttons_layout)
+
+        # Boutons — ligne 2 : commandants + ligues
+        buttons_layout2 = QHBoxLayout()
+
         reset_commanders_btn = QPushButton("Supprimer tous les commandants")
         reset_commanders_btn.setObjectName("DangerButton")
         reset_commanders_btn.clicked.connect(self._reset_commanders)
 
-        buttons_layout.addWidget(reset_archived_btn)
-        buttons_layout.addWidget(reset_tournaments_btn)
-        buttons_layout.addWidget(reset_players_btn)
-        buttons_layout.addWidget(reset_commanders_btn)
-        buttons_layout.addStretch()
+        reset_leagues_btn = QPushButton("Supprimer toutes les ligues")
+        reset_leagues_btn.setObjectName("DangerButton")
+        reset_leagues_btn.clicked.connect(self._reset_leagues)
 
-        layout.addLayout(buttons_layout)
+        buttons_layout2.addWidget(reset_commanders_btn)
+        buttons_layout2.addWidget(reset_leagues_btn)
+        buttons_layout2.addStretch()
+
+        layout.addLayout(buttons_layout2)
 
         # Mettre à jour les stats
         self._refresh_stats()
@@ -545,16 +562,19 @@ class SettingsView(QWidget):
         tournaments = TournamentStorage.load()
         players    = RegularPlayerStorage.load()
         commanders = CommanderStorage.load()
+        leagues    = LeagueStorage.load()
 
         t_count  = len(tournaments)
         ar_count = sum(1 for t in tournaments if t.get("archived", False))
         p_count  = len(players)
         c_count  = len(commanders)
+        l_count  = len(leagues)
 
         self.tournaments_count.setText(f"{t_count} tournoi{'s' if t_count != 1 else ''}")
         self.archived_count.setText(f"{ar_count} archivé{'s' if ar_count != 1 else ''}")
         self.players_count.setText(f"{p_count} joueur{'s' if p_count != 1 else ''} permanent{'s' if p_count != 1 else ''}")
         self.commanders_count.setText(f"{c_count} commandant{'s' if c_count != 1 else ''}")
+        self.leagues_count.setText(f"{l_count} ligue{'s' if l_count != 1 else ''}")
 
     def _reset_archived_tournaments(self):
         """Supprime uniquement les tournois archivés après confirmation."""
@@ -663,8 +683,35 @@ class SettingsView(QWidget):
             return
 
         CommanderStorage.save([])
+        self._refresh_stats()
         QMessageBox.information(self, "Commandants supprimés",
             f"{count} commandant{'s' if count > 1 else ''} supprimé{'s' if count > 1 else ''}.")
+
+    def _reset_leagues(self):
+        """Supprime toutes les ligues après confirmation."""
+        leagues = LeagueStorage.load()
+        count = len(leagues)
+
+        if count == 0:
+            QMessageBox.information(self, "Aucune ligue",
+                "Il n'y a aucune ligue à supprimer.")
+            return
+
+        reply = QMessageBox.warning(
+            self,
+            "Supprimer toutes les ligues",
+            f"Cette action est irréversible !\n\n"
+            f"{count} ligue{'s' if count > 1 else ''} et toutes leurs données seront supprimées.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        LeagueStorage.save([])
+        self._refresh_stats()
+        QMessageBox.information(self, "Ligues supprimées",
+            f"{count} ligue{'s' if count > 1 else ''} supprimée{'s' if count > 1 else ''}.")
 
     def showEvent(self, event):
         """Rafraîchit les stats quand la vue est affichée."""

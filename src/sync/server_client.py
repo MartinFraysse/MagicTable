@@ -90,6 +90,39 @@ def push_async(resource: str, data: list) -> None:
     threading.Thread(target=push, args=(resource, data), daemon=True).start()
 
 
+def push_image(local_file: Path) -> bool:
+    """Upload un fichier image vers le serveur. Retourne True si succès."""
+    cfg = _load_config()
+    if not cfg:
+        return False
+    if not local_file.exists():
+        return False
+    filename = local_file.name
+    url = f"{cfg['url'].rstrip('/')}/upload/commander_images/{filename}"
+    api_key = cfg.get("api_key", "")
+    try:
+        data = local_file.read_bytes()
+        req = urllib.request.Request(url, data=data, method="POST")
+        req.add_header("Content-Type", "application/octet-stream")
+        req.add_header("x-api-key", api_key)
+        with urllib.request.urlopen(req, timeout=30):
+            return True
+    except Exception:
+        return False
+
+
+def push_commander_images_async(local_data_dir: Path, commanders: list) -> None:
+    """Pousse toutes les images référencées dans commanders vers le serveur (non-bloquant)."""
+    def _push_all():
+        for commander in commanders:
+            image_path = commander.get("image_path", "")
+            if not image_path:
+                continue
+            push_image(local_data_dir / image_path)
+
+    threading.Thread(target=_push_all, daemon=True).start()
+
+
 def notify_start(tournament_id: str) -> bool:
     """Notifie l'API qu'un tournoi vient de démarrer (1er round créé)."""
     cfg = _load_config()
