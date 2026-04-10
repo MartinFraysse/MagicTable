@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QLabel, QVBoxLayout, QHBoxLayout,
     QFrame, QPushButton, QSpinBox, QMessageBox,
-    QScrollArea, QProgressBar
+    QScrollArea, QProgressBar, QLineEdit
 )
 from PySide6.QtCore import Qt, Signal
 
@@ -53,6 +53,10 @@ class SettingsView(QWidget):
         # Section Notation
         scoring_section = self._build_scoring_section()
         content_layout.addWidget(scoring_section)
+
+        # Section Serveur distant
+        server_section = self._build_server_section()
+        content_layout.addWidget(server_section)
 
         # Section Données
         data_section = self._build_data_section()
@@ -199,6 +203,100 @@ class SettingsView(QWidget):
                 layout.addWidget(line_label)
 
         return block
+
+    def _build_server_section(self) -> QFrame:
+        """Section de configuration du serveur distant."""
+        frame = QFrame()
+        frame.setObjectName("SettingsSection")
+
+        layout = QVBoxLayout(frame)
+        layout.setSpacing(12)
+
+        title = QLabel("Serveur distant")
+        title.setObjectName("SettingsSectionTitle")
+        layout.addWidget(title)
+
+        desc = QLabel("Synchronisation des données avec le serveur MagicTable.")
+        desc.setObjectName("SettingsDescription")
+        layout.addWidget(desc)
+
+        # Champ URL
+        url_layout = QHBoxLayout()
+        url_label = QLabel("URL :")
+        url_label.setFixedWidth(70)
+        self._server_url_input = QLineEdit()
+        self._server_url_input.setPlaceholderText("http://192.168.1.x:8000")
+        self._server_url_input.setObjectName("SettingsInput")
+        url_layout.addWidget(url_label)
+        url_layout.addWidget(self._server_url_input)
+        layout.addLayout(url_layout)
+
+        # Champ clé API
+        key_layout = QHBoxLayout()
+        key_label = QLabel("Clé API :")
+        key_label.setFixedWidth(70)
+        self._server_key_input = QLineEdit()
+        self._server_key_input.setPlaceholderText("magictable_secret_2026")
+        self._server_key_input.setObjectName("SettingsInput")
+        key_layout.addWidget(key_label)
+        key_layout.addWidget(self._server_key_input)
+        layout.addLayout(key_layout)
+
+        # Bouton + statut
+        btn_layout = QHBoxLayout()
+        save_btn = QPushButton("💾  Sauvegarder")
+        save_btn.setObjectName("PrimaryButton")
+        save_btn.clicked.connect(self._save_server_config)
+        self._server_status = QLabel("")
+        self._server_status.setObjectName("SettingsDescription")
+        btn_layout.addWidget(save_btn)
+        btn_layout.addWidget(self._server_status)
+        btn_layout.addStretch()
+        layout.addLayout(btn_layout)
+
+        # Charger les valeurs actuelles
+        self._load_server_config()
+
+        return frame
+
+    def _load_server_config(self):
+        """Charge server.json et pré-remplit les champs."""
+        try:
+            from sync.server_client import _get_config_path
+            path = _get_config_path()
+            if path.exists() and path.stat().st_size > 0:
+                import json
+                cfg = json.loads(path.read_text(encoding="utf-8"))
+                self._server_url_input.setText(cfg.get("url", ""))
+                self._server_key_input.setText(cfg.get("api_key", ""))
+        except Exception:
+            pass
+
+    def _save_server_config(self):
+        """Sauvegarde les champs dans server.json et force le rechargement."""
+        import json
+        from sync.server_client import _get_config_path
+        url = self._server_url_input.text().strip().rstrip("/")
+        key = self._server_key_input.text().strip()
+
+        if not url:
+            self._server_status.setText("⚠️  URL requise")
+            return
+
+        try:
+            path = _get_config_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            cfg = {"url": url, "api_key": key}
+            path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+
+            # Forcer le rechargement du cache
+            import sync.server_client as sc
+            sc._config = cfg
+            sc._config_loaded = True
+
+            self._server_status.setText("✅  Sauvegardé")
+        except Exception as e:
+            self._server_status.setText(f"❌  Erreur : {e}")
 
     def _build_data_section(self) -> QFrame:
         """Construit la section de gestion des données."""
