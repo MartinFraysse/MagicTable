@@ -79,10 +79,20 @@ def put_players(data: list = Body(...), _: str = Depends(verify_key)):
             for p in existing
             if p.get("discord_id")
         }
+        # Construire aussi la map discord_pseudo côté serveur
+        server_discord_pseudo = {
+            str(p["id"]): p.get("discord_pseudo", "")
+            for p in existing
+            if p.get("discord_id")
+        }
         for player in data:
             pid = str(player.get("id", ""))
-            if pid in server_discord and not player.get("discord_id"):
+            # Ne fusionner que si discord_id est ABSENT du payload (vieux client).
+            # Si présent mais vide (""), c'est une déliaison intentionnelle → on la respecte.
+            if pid in server_discord and "discord_id" not in player:
                 player["discord_id"] = server_discord[pid]
+                if not player.get("discord_pseudo") and pid in server_discord_pseudo:
+                    player["discord_pseudo"] = server_discord_pseudo[pid]
     _write("players", data)
     # Retourner les données fusionnées pour que le client mette à jour son fichier local
     return data
