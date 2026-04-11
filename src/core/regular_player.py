@@ -13,6 +13,7 @@ class RegularPlayer:
     full_name: str = ""
     phone: str = ""
     discord_id: str = ""
+    discord_pseudo: str = ""
     top_1: int = 0
     top_2: int = 0
     top_3: int = 0
@@ -44,6 +45,7 @@ class RegularPlayer:
             "full_name": self.full_name,
             "phone": self.phone,
             "discord_id": self.discord_id,
+            "discord_pseudo": self.discord_pseudo,
             "top_1": self.top_1,
             "top_2": self.top_2,
             "top_3": self.top_3,
@@ -59,6 +61,7 @@ class RegularPlayer:
             full_name=data.get("full_name", ""),
             phone=data.get("phone", ""),
             discord_id=str(data.get("discord_id") or ""),
+            discord_pseudo=str(data.get("discord_pseudo") or ""),
             top_1=data.get("top_1", 0),
             top_2=data.get("top_2", 0),
             top_3=data.get("top_3", 0),

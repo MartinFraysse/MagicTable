@@ -314,7 +314,10 @@ class PlayersViewMain(QWidget):
         # Utiliser les points calculés depuis les tournois
         calculated_points = self._get_player_points(player)
 
-        discord_label = "🔗" if player.discord_id else "—"
+        if player.discord_id:
+            discord_label = player.discord_pseudo if player.discord_pseudo else "🔗 Lié"
+        else:
+            discord_label = "—"
         items = [
             (player.pseudo, player.id),
             (player.full_name, None),
@@ -438,11 +441,21 @@ class PlayersViewMain(QWidget):
         if not item:
             return
 
+        row = self.table.currentRow()
+        player = self._get_selected_player()
+
         menu = QMenu(self)
 
         stats_action = menu.addAction("📊 Statistiques")
         menu.addSeparator()
         edit_action = menu.addAction("✏️ Modifier")
+
+        unlink_action = None
+        if player and player.discord_id:
+            menu.addSeparator()
+            label = f"🔓 Délier Discord ({player.discord_pseudo})" if player.discord_pseudo else "🔓 Délier Discord"
+            unlink_action = menu.addAction(label)
+
         menu.addSeparator()
         delete_action = menu.addAction("🗑️ Supprimer")
 
@@ -452,8 +465,39 @@ class PlayersViewMain(QWidget):
             self._show_player_stats()
         elif action == edit_action:
             self._edit_selected_player()
+        elif unlink_action and action == unlink_action:
+            self._unlink_discord(player)
         elif action == delete_action:
             self._delete_selected_player()
+
+    def _get_selected_player(self) -> "RegularPlayer | None":
+        """Retourne le joueur correspondant à la ligne sélectionnée."""
+        row = self.table.currentRow()
+        if row < 0:
+            return None
+        item = self.table.item(row, 0)
+        if not item:
+            return None
+        player_id = item.data(Qt.UserRole)
+        return next((p for p in self._players if p.id == player_id), None)
+
+    def _unlink_discord(self, player: "RegularPlayer"):
+        """Délie le compte Discord du joueur."""
+        name = player.discord_pseudo or player.discord_id
+        reply = QMessageBox.question(
+            self,
+            "Délier Discord",
+            f"Délier le compte Discord « {name} » du joueur « {player.pseudo} » ?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        player.discord_id = ""
+        player.discord_pseudo = ""
+        self._save_players()
+        self._refresh_table()
 
     def _show_player_stats(self):
         """Affiche les statistiques du joueur sélectionné."""
