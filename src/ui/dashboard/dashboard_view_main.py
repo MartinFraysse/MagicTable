@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QDialog, QLabel, QPushButton
-from PySide6.QtCore import QTimer, Signal, QUrl, Qt
+from PySide6.QtCore import QTimer, Signal, Qt
 from PySide6.QtGui import QShortcut, QKeySequence
-from PySide6.QtMultimedia import QSoundEffect
+import subprocess
 import os
 import threading
 
@@ -56,26 +56,11 @@ class DashboardViewMain(QWidget):
         self._bracket_displayed_round: BracketRoundName | None = None
 
         # =====================
-        # Son de fin de tournoi
+        # Sons
         # =====================
-        self.victory_sound = QSoundEffect(self)
-        sound_path = os.path.join(
-            os.path.dirname(__file__),
-            "..", "..", "assets", "sounds", "victory.wav"
-        )
-        if os.path.exists(sound_path):
-            self.victory_sound.setSource(QUrl.fromLocalFile(os.path.abspath(sound_path)))
-            self.victory_sound.setVolume(0.8)
-
-        # Son de fin de timer
-        self.timer_sound = QSoundEffect(self)
-        timer_sound_path = os.path.join(
-            os.path.dirname(__file__),
-            "..", "..", "assets", "sounds", "timer_end.wav"
-        )
-        if os.path.exists(timer_sound_path):
-            self.timer_sound.setSource(QUrl.fromLocalFile(os.path.abspath(timer_sound_path)))
-            self.timer_sound.setVolume(1.0)
+        _base = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "sounds")
+        self._sound_victory = os.path.abspath(os.path.join(_base, "victory.wav"))
+        self._sound_timer   = os.path.abspath(os.path.join(_base, "timer_end.wav"))
 
         # =====================
         # Layout
@@ -204,14 +189,31 @@ class DashboardViewMain(QWidget):
         self.tables_view.setMaximumHeight(tables_h)
 
     # ======================================================
+    # Son
+    # ======================================================
+    def _play_sound(self, path: str) -> None:
+        """Joue un fichier WAV via subprocess (évite le segfault QSoundEffect/FFmpeg)."""
+        if not os.path.exists(path):
+            return
+        def _run():
+            for cmd in (["aplay", path], ["paplay", path], ["afplay", path]):
+                try:
+                    subprocess.run(cmd, timeout=15, capture_output=True)
+                    return
+                except FileNotFoundError:
+                    continue
+                except Exception:
+                    return
+        threading.Thread(target=_run, daemon=True).start()
+
+    # ======================================================
     # Timer
     # ======================================================
     def _tick(self):
         if self.remaining_seconds <= 0:
             self.timer.stop()
             # Jouer le son de fin de timer
-            if self.timer_sound.source().isValid():
-                self.timer_sound.play()
+            self._play_sound(self._sound_timer)
             return
 
         self.remaining_seconds -= 1
@@ -341,7 +343,7 @@ class DashboardViewMain(QWidget):
                 try:
                     from sync.server_client import notify_round_start_async
                     brk = self._bracket_displayed_round.value
-                    notify_round_start_async(self.current_tournament.id, None, self.current_tournament.name, brk)
+                    notify_round_start_async(self.current_tournament.id, None, self.current_tournament.name, brk, self.current_tournament.format)
                 except Exception:
                     pass
             return
@@ -364,6 +366,7 @@ class DashboardViewMain(QWidget):
                     self.current_tournament.id,
                     self.current_round.number,
                     self.current_tournament.name,
+                    tournament_format=self.current_tournament.format,
                 )
             except Exception:
                 pass
@@ -474,11 +477,21 @@ class DashboardViewMain(QWidget):
         self.round_controls.set_next_enabled(False)
 
         # Jouer le son de victoire
-        if self.victory_sound.source().isValid():
-            self.victory_sound.play()
+        self._play_sound(self._sound_victory)
 
         # Overlay de fin de tournoi (superposé au dashboard, pas de nouvelle fenêtre)
         self.final_overlay.show_standings(self.current_tournament.name, players)
+
+        # Notifier Discord : classement final
+        try:
+            from sync.server_client import notify_finish_async
+            notify_finish_async(
+                tournament.id,
+                tournament.name,
+                [p.name for p in players],
+            )
+        except Exception:
+            pass
 
     # ======================================================
     # Edit pairings (round 1 only)

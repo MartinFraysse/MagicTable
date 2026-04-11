@@ -53,7 +53,7 @@ def is_configured() -> bool:
     return cfg is not None and bool(cfg.get("url"))
 
 
-def fetch(resource: str) -> Optional[list]:
+def fetch(resource: str, timeout: int = 5) -> Optional[list]:
     """GET /{resource} → list ou None si échec."""
     cfg = _load_config()
     if not cfg:
@@ -61,14 +61,28 @@ def fetch(resource: str) -> Optional[list]:
     url = f"{cfg['url'].rstrip('/')}/{resource}"
     try:
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode())
     except Exception:
         return None
 
 
+# Répertoire des données locales — même dossier que server.json
+_LOCAL_DATA_DIR = _CONFIG_PATH.parent
+
+# Mapping resource → fichier local
+_RESOURCE_FILES = {
+    "players":     "regular_players.json",
+    "tournaments": "tournaments.json",
+    "leagues":     "leagues.json",
+    "commanders":  "commanders.json",
+}
+
+
 def push(resource: str, data: list) -> bool:
-    """PUT /{resource} avec data en JSON. Retourne True si succès."""
+    """PUT /{resource} avec data en JSON. Retourne True si succès.
+    Si le serveur retourne les données fusionnées (liste), écrit le fichier local.
+    """
     cfg = _load_config()
     if not cfg:
         return False
@@ -79,8 +93,21 @@ def push(resource: str, data: list) -> bool:
         req = urllib.request.Request(url, data=body, method="PUT")
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
-        with urllib.request.urlopen(req, timeout=5):
-            return True
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            try:
+                merged = json.loads(resp.read().decode())
+                # Si le serveur renvoie la liste fusionnée, on met à jour le fichier local
+                if isinstance(merged, list):
+                    filename = _RESOURCE_FILES.get(resource)
+                    if filename:
+                        local_path = _LOCAL_DATA_DIR / filename
+                        local_path.write_text(
+                            json.dumps(merged, indent=2, ensure_ascii=False),
+                            encoding="utf-8",
+                        )
+            except Exception:
+                pass  # Réponse non parsable ou non-liste → on ignore
+        return True
     except Exception:
         return False
 
@@ -88,6 +115,8 @@ def push(resource: str, data: list) -> bool:
 def push_async(resource: str, data: list) -> None:
     """Envoie data vers le serveur dans un thread (non-bloquant)."""
     threading.Thread(target=push, args=(resource, data), daemon=True).start()
+
+
 
 
 def push_image(local_file: Path) -> bool:
@@ -192,6 +221,36 @@ def pull_all(local_data_dir: Path) -> dict:
         data = fetch(resource)
         if data is not None:
             path = local_data_dir / filename
+
+            # Garde-fou : ne jamais écraser des données locales existantes
+            # par une liste vide du serveur (erreur transitoire, fichier corrompu…).
+            if not data and path.exists():
+                try:
+                    local_content = json.loads(path.read_text(encoding="utf-8"))
+                    if local_content:
+                        failed.append(resource)
+                        continue
+                except Exception:
+                    pass
+
+            # Pour les joueurs : préserver les discord_id définis localement
+            # si le serveur ne les a pas encore (push non terminé avant fermeture).
+            if resource == "players" and path.exists():
+                try:
+                    local_players = json.loads(path.read_text(encoding="utf-8"))
+                    local_discord = {
+                        p["id"]: str(p["discord_id"])
+                        for p in local_players
+                        if p.get("discord_id")
+                    }
+                    if local_discord:
+                        for player in data:
+                            pid = player.get("id")
+                            if pid in local_discord and not player.get("discord_id"):
+                                player["discord_id"] = local_discord[pid]
+                except Exception:
+                    pass  # En cas d'erreur, on garde les données serveur telles quelles
+
             path.write_text(
                 json.dumps(data, indent=2, ensure_ascii=False),
                 encoding="utf-8"
@@ -262,15 +321,31 @@ def notify_round_start_async(
     round_num: "int | None",
     tournament_name: str,
     bracket_round: "str | None" = None,
+    tournament_format: "str | None" = None,
 ) -> None:
     """Notifie le bot Discord que le chrono d'un round vient d'être lancé (non-bloquant)."""
     body = {
-        "tournament_id":   tournament_id,
-        "round_num":       round_num,
-        "tournament_name": tournament_name,
-        "bracket_round":   bracket_round,
+        "tournament_id":     tournament_id,
+        "round_num":         round_num,
+        "tournament_name":   tournament_name,
+        "bracket_round":     bracket_round,
+        "tournament_format": tournament_format,
     }
     threading.Thread(target=_post_notify, args=("round_start", body), daemon=True).start()
+
+
+def notify_finish_async(
+    tournament_id,
+    tournament_name: str,
+    final_ranking: "list[str]",
+) -> None:
+    """Notifie le bot du classement final du tournoi (non-bloquant)."""
+    body = {
+        "tournament_id": tournament_id,
+        "tournament_name": tournament_name,
+        "final_ranking": final_ranking,
+    }
+    threading.Thread(target=_post_notify, args=("finish", body), daemon=True).start()
 
 
 def notify_next_round_async(

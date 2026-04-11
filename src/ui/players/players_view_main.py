@@ -172,7 +172,7 @@ class PlayersViewMain(QWidget):
         table.setObjectName("PlayersTable")
 
         # Colonnes
-        columns = ["Pseudo", "Nom complet", "Téléphone", "Points", "🥇", "🥈", "🥉", "Podiums"]
+        columns = ["Pseudo", "Nom complet", "Téléphone", "Discord", "Points", "🥇", "🥈", "🥉", "Podiums"]
         table.setColumnCount(len(columns))
         table.setHorizontalHeaderLabels(columns)
 
@@ -205,14 +205,15 @@ class PlayersViewMain(QWidget):
 
         # Largeurs des colonnes
         header = table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Pseudo
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Nom complet
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Téléphone
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Points
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Top 1
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Top 2
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Top 3
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Podiums
+        header.setSectionResizeMode(0, QHeaderView.Stretch)          # Pseudo
+        header.setSectionResizeMode(1, QHeaderView.Stretch)          # Nom complet
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents) # Téléphone
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents) # Discord
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents) # Points
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents) # Top 1
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents) # Top 2
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents) # Top 3
+        header.setSectionResizeMode(8, QHeaderView.ResizeToContents) # Podiums
 
         # Menu contextuel
         table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -313,10 +314,12 @@ class PlayersViewMain(QWidget):
         # Utiliser les points calculés depuis les tournois
         calculated_points = self._get_player_points(player)
 
+        discord_label = "🔗" if player.discord_id else "—"
         items = [
             (player.pseudo, player.id),
             (player.full_name, None),
             (self._format_phone(player.phone), None),
+            (discord_label, None),
             (str(calculated_points), None),
             (str(player.top_1), None),
             (str(player.top_2), None),
@@ -331,7 +334,7 @@ class PlayersViewMain(QWidget):
             if data is not None:
                 item.setData(Qt.UserRole, data)
 
-            # Centrer les colonnes numériques
+            # Centrer les colonnes numériques et Discord
             if col >= 3:
                 item.setTextAlignment(Qt.AlignCenter)
 
@@ -358,6 +361,7 @@ class PlayersViewMain(QWidget):
             pseudo=data["pseudo"],
             full_name=data["full_name"],
             phone=data["phone"],
+            discord_id=data["discord_id"],
         )
 
         self._next_id += 1

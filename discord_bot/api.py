@@ -14,7 +14,11 @@ from fastapi.security import APIKeyHeader
 # ── Configuration ─────────────────────────────────────────────────────────────
 
 DATA_DIR = Path(__file__).parent / "data"
-PENDING_FILE = DATA_DIR / "pending_starts.json"
+PENDING_FILE          = DATA_DIR / "pending_starts.json"
+PENDING_ROUND_STARTS  = DATA_DIR / "pending_round_starts.json"
+PENDING_NEXT_ROUNDS   = DATA_DIR / "pending_next_rounds.json"
+PENDING_QUITS         = DATA_DIR / "pending_quits.json"
+PENDING_FINISHES      = DATA_DIR / "pending_finishes.json"
 
 API_KEY = os.getenv("API_KEY", "magictable_secret_2026")
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
@@ -59,8 +63,22 @@ def get_players():
 
 @app.put("/players")
 def put_players(data: list, _: str = Depends(verify_key)):
+    # Fusionner les discord_id déjà présents côté serveur dans les données entrantes.
+    # Empêche que le client (qui peut ignorer les !register récents) ne les écrase.
+    existing = _read("players")
+    if existing:
+        server_discord = {
+            str(p["id"]): p["discord_id"]
+            for p in existing
+            if p.get("discord_id")
+        }
+        for player in data:
+            pid = str(player.get("id", ""))
+            if pid in server_discord and not player.get("discord_id"):
+                player["discord_id"] = server_discord[pid]
     _write("players", data)
-    return {"ok": True}
+    # Retourner les données fusionnées pour que le client mette à jour son fichier local
+    return data
 
 
 @app.get("/tournaments")
@@ -128,3 +146,52 @@ async def tournament_start(request: Request, _: str = Depends(verify_key)):
         PENDING_FILE.write_text(json.dumps(pending, indent=2), encoding="utf-8")
 
     return {"ok": True, "tournament_id": tournament_id}
+
+
+def _append_pending(path: Path, item) -> None:
+    """Ajoute un élément à une liste pending JSON (crée le fichier si besoin)."""
+    if path.exists():
+        try:
+            items = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            items = []
+    else:
+        items = []
+    items.append(item)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+@app.post("/notify/round_start")
+async def notify_round_start(request: Request, _: str = Depends(verify_key)):
+    """Notifié quand le chrono d'un round est lancé."""
+    body = await request.json()
+    _append_pending(PENDING_ROUND_STARTS, body)
+    return {"ok": True}
+
+
+@app.post("/notify/next_round")
+async def notify_next_round(request: Request, _: str = Depends(verify_key)):
+    """Notifié quand on passe au round suivant (Swiss ou bracket)."""
+    body = await request.json()
+    _append_pending(PENDING_NEXT_ROUNDS, body)
+    return {"ok": True}
+
+
+@app.post("/notify/finish")
+async def notify_finish(request: Request, _: str = Depends(verify_key)):
+    """Notifié quand un tournoi est terminé — classement final."""
+    body = await request.json()
+    _append_pending(PENDING_FINISHES, body)
+    return {"ok": True}
+
+
+@app.post("/tournament/quit")
+async def tournament_quit(request: Request, _: str = Depends(verify_key)):
+    """Notifié quand l'utilisateur quitte le dashboard — suppression des canaux."""
+    body = await request.json()
+    tournament_id = body.get("tournament_id", "")
+    if not tournament_id:
+        raise HTTPException(status_code=400, detail="tournament_id requis")
+    _append_pending(PENDING_QUITS, tournament_id)
+    return {"ok": True}

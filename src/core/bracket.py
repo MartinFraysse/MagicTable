@@ -289,7 +289,7 @@ def get_bracket_final_ranking(bracket: "Bracket", swiss_seeded_ids: list[int]) -
         )
         result.append(winner_id)
         already_ranked.add(winner_id)
-        if finalist_id and finalist_id not in already_ranked:
+        if finalist_id is not None and finalist_id not in already_ranked:
             result.append(finalist_id)
             already_ranked.add(finalist_id)
     elif final_match:
