@@ -50,13 +50,15 @@ Categories=Game;
 def _pull_from_server() -> None:
     """Synchronise les données depuis le serveur au démarrage (silencieux si hors-ligne)."""
     try:
-        from sync.server_client import pull_all
+        from sync.server_client import pull_all, push_all_async
         from storage.base import DATA_DIR
         result = pull_all(DATA_DIR)
         synced = result["synced"]
         failed = result["failed"]
         if synced:
-            print(f"✅ Sync serveur : {', '.join(synced)}")
+            print(f"✅ Sync serveur (pull) : {', '.join(synced)}")
+            # Repousser immédiatement pour que le serveur ait les discord_ids fusionnés
+            push_all_async(DATA_DIR)
         if failed:
             print(f"⚠️  Sync serveur — ressources manquantes : {', '.join(failed)}")
         if not synced:

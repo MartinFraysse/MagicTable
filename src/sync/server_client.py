@@ -117,6 +117,39 @@ def push_async(resource: str, data: list) -> None:
     threading.Thread(target=push, args=(resource, data), daemon=True).start()
 
 
+def push_all(local_data_dir: Path) -> dict:
+    """
+    Pousse toutes les ressources locales vers le serveur.
+    Retourne {"pushed": [...], "failed": [...]}.
+    """
+    if not is_configured():
+        return {"pushed": [], "failed": list(_RESOURCE_FILES.keys())}
+
+    pushed: list = []
+    failed: list = []
+
+    for resource, filename in _RESOURCE_FILES.items():
+        path = local_data_dir / filename
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            failed.append(resource)
+            continue
+        if push(resource, data):
+            pushed.append(resource)
+        else:
+            failed.append(resource)
+
+    return {"pushed": pushed, "failed": failed}
+
+
+def push_all_async(local_data_dir: Path) -> None:
+    """Pousse toutes les ressources locales vers le serveur (non-bloquant)."""
+    threading.Thread(target=push_all, args=(local_data_dir,), daemon=True).start()
+
+
 
 
 def push_image(local_file: Path) -> bool:

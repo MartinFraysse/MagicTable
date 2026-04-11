@@ -19,6 +19,13 @@ from ui.dashboard.multi_dashboard_container import MultiDashboardContainer
 from ui.league.league_view_main import LeagueViewMain
 from ui.commanders.commanders_view_main import CommandersViewMain
 
+try:
+    from sync.sync_manager import SyncManager
+    from storage.base import DATA_DIR as _DATA_DIR
+    _SYNC_AVAILABLE = True
+except ImportError:
+    _SYNC_AVAILABLE = False
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -79,6 +86,12 @@ class MainWindow(QMainWindow):
         self.settings_view.data_synced.connect(
             self._on_data_synced
         )
+
+        # ── Sync périodique serveur ────────────────────────────────────────────
+        if _SYNC_AVAILABLE:
+            self._sync_manager = SyncManager(_DATA_DIR, parent=self)
+            self._sync_manager.data_changed.connect(self._on_data_synced)
+            self._sync_manager.start()
 
 
     # ========================

@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Body
 from fastapi.security import APIKeyHeader
 
 # ── Configuration ─────────────────────────────────────────────────────────────
@@ -37,9 +37,16 @@ async def verify_key(key: str = Depends(api_key_header)):
 
 RESOURCES = ["players", "tournaments", "leagues", "commanders"]
 
+FILENAMES = {
+    "players":     "regular_players.json",
+    "tournaments": "tournaments.json",
+    "leagues":     "leagues.json",
+    "commanders":  "commanders.json",
+}
+
 
 def _read(resource: str) -> list:
-    path = DATA_DIR / f"{resource}.json"
+    path = DATA_DIR / FILENAMES.get(resource, f"{resource}.json")
     if not path.exists():
         return []
     try:
@@ -50,7 +57,7 @@ def _read(resource: str) -> list:
 
 def _write(resource: str, data: Any) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / f"{resource}.json"
+    path = DATA_DIR / FILENAMES.get(resource, f"{resource}.json")
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -62,7 +69,7 @@ def get_players():
 
 
 @app.put("/players")
-def put_players(data: list, _: str = Depends(verify_key)):
+def put_players(data: list = Body(...), _: str = Depends(verify_key)):
     # Fusionner les discord_id déjà présents côté serveur dans les données entrantes.
     # Empêche que le client (qui peut ignorer les !register récents) ne les écrase.
     existing = _read("players")
@@ -87,7 +94,7 @@ def get_tournaments():
 
 
 @app.put("/tournaments")
-def put_tournaments(data: list, _: str = Depends(verify_key)):
+def put_tournaments(data: list = Body(...), _: str = Depends(verify_key)):
     _write("tournaments", data)
     return {"ok": True}
 
@@ -98,7 +105,7 @@ def get_leagues():
 
 
 @app.put("/leagues")
-def put_leagues(data: list, _: str = Depends(verify_key)):
+def put_leagues(data: list = Body(...), _: str = Depends(verify_key)):
     _write("leagues", data)
     return {"ok": True}
 
@@ -109,7 +116,7 @@ def get_commanders():
 
 
 @app.put("/commanders")
-def put_commanders(data: list, _: str = Depends(verify_key)):
+def put_commanders(data: list = Body(...), _: str = Depends(verify_key)):
     _write("commanders", data)
     return {"ok": True}
 
