@@ -12,7 +12,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
-INTERVAL_MS = 30_000  # 30 secondes
+INTERVAL_MS = 5_000  # 5 secondes
 
 # Mapping resource API → fichier local (doit rester cohérent avec api.py)
 _FILENAMES: dict[str, str] = {
@@ -102,6 +102,13 @@ class SyncManager(QObject):
             # Comparer (indépendant de l'ordre des clés)
             if json.dumps(server_data, sort_keys=True) != json.dumps(local_data, sort_keys=True):
                 try:
+                    # Pour les commandants : télécharger les images manquantes AVANT
+                    # d'écrire le JSON et d'émettre data_changed — sinon l'UI rafraîchit
+                    # avec un commandant sans image alors que le fichier n'est pas encore là.
+                    # On est déjà dans un thread worker, le blocage est acceptable.
+                    if resource == "commanders":
+                        self._pull_commander_images(server_data)
+
                     local_path.write_text(
                         json.dumps(server_data, indent=2, ensure_ascii=False),
                         encoding="utf-8",
@@ -113,3 +120,34 @@ class SyncManager(QObject):
         if changed:
             # Signal cross-thread : Qt le met en file pour le thread principal
             self.data_changed.emit()
+
+    def _pull_commander_images(self, commanders: list) -> None:
+        """Télécharge depuis le serveur les images de commandants absentes localement."""
+        try:
+            from sync.server_client import _load_config
+        except ImportError:
+            return
+        cfg = _load_config()
+        if not cfg:
+            return
+
+        import urllib.request
+        base_url = cfg["url"].rstrip("/")
+        img_dir  = self._data_dir / "commander_images"
+        img_dir.mkdir(parents=True, exist_ok=True)
+
+        for commander in commanders:
+            image_path = commander.get("image_path", "")
+            if not image_path:
+                continue
+            local_file = self._data_dir / image_path
+            if local_file.exists():
+                continue  # Déjà présente localement
+            filename = local_file.name
+            url = f"{base_url}/commander_images/{filename}"
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "MagicTable/1.0"})
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    local_file.write_bytes(resp.read())
+            except Exception:
+                pass  # Image indisponible → la carte s'affiche sans image

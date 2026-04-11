@@ -485,10 +485,43 @@ class DashboardViewMain(QWidget):
         # Notifier Discord : classement final
         try:
             from sync.server_client import notify_finish_async
+
+            # Construire le classement complet pour l'archive Discord
+            standings_by_id = {}
+            if tournament.is_1v1_format():
+                for e in standings:
+                    standings_by_id[e.player_id] = {
+                        "score": e.match_points,
+                        "wins": e.wins,
+                        "draws": e.draws,
+                        "losses": e.losses,
+                        "omw_pct": round(e.omw_pct * 100, 1),
+                        "gw_pct": round(e.gw_pct * 100, 1) if e.gw_pct else None,
+                    }
+
+            full_standings = []
+            for rank, p in enumerate(players, 1):
+                entry: dict = {"rank": rank, "name": p.name, "commander": p.commander or ""}
+                if p.id in standings_by_id:
+                    entry.update(standings_by_id[p.id])
+                else:
+                    entry["score"] = p.score
+                full_standings.append(entry)
+
+            num_players = len([p for p in tournament.players if not p.dropped])
+            tournament_info = {
+                "format": tournament.format,
+                "date": tournament.date,
+                "num_rounds": len(tournament.rounds),
+                "num_players": num_players,
+            }
+
             notify_finish_async(
                 tournament.id,
                 tournament.name,
                 [p.name for p in players],
+                full_standings=full_standings,
+                tournament_info=tournament_info,
             )
         except Exception:
             pass

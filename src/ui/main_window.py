@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QFrame,
     QButtonGroup, QSizePolicy
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStackedWidget
 from PySide6.QtGui import QPixmap, QIcon
 import os
@@ -38,7 +38,6 @@ class MainWindow(QMainWindow):
 
         self.resize(1380, 920)
         self.setMinimumSize(1024, 710)
-        self.setMaximumSize(1380, 920)
 
         # === CENTRAL ROOT ===
         central = QWidget()
@@ -192,9 +191,7 @@ class MainWindow(QMainWindow):
         if self.isFullScreen():
             self.showNormal()
             self.fullscreen_btn.setText("🖥  Plein écran")
-            QTimer.singleShot(50, lambda: self.setMaximumSize(1380, 920))
         else:
-            self.setMaximumSize(16777215, 16777215)
             self.showFullScreen()
             self.fullscreen_btn.setText("🪟  Fenêtre normale")
 
@@ -266,6 +263,17 @@ class MainWindow(QMainWindow):
         self.stats_view.refresh()
         self.league_view.refresh()
         self.tournaments_view.reload_from_storage()
+        self._sync_active_dashboards()
+
+    def _sync_active_dashboards(self):
+        """Met à jour les dashboards actifs (joueurs + ranking) sans toucher au timer ni au round."""
+        all_t = self.tournaments_view.upcoming_view._tournaments
+        by_id = {t.id: t for t in all_t}
+        for tid, dashboard in self.dashboard_view._dashboards.items():
+            fresh = by_id.get(tid)
+            if fresh and dashboard.current_tournament:
+                dashboard.current_tournament.players = fresh.players
+                dashboard.ranking_view.set_tournament(dashboard.current_tournament)
 
     def start_tournament(self, tournament: Tournament):
         self.stack.setCurrentIndex(0)

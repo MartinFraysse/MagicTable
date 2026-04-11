@@ -1,0 +1,93 @@
+[
+  {
+    "id": 2,
+    "pseudo": "Léa",
+    "full_name": "",
+    "phone": "",
+    "discord_id": "",
+    "discord_pseudo": "",
+    "top_1": 2,
+    "top_2": 1,
+    "top_3": 2,
+    "points": 24,
+    "tournaments_played": 5
+  },
+  {
+    "id": 7,
+    "pseudo": "Marfin",
+    "full_name": "Martin Fraysse",
+    "phone": "06 79 63 88 25",
+    "discord_id": "350372944347791363",
+    "discord_pseudo": "Pso | Marfin",
+    "top_1": 0,
+    "top_2": 1,
+    "top_3": 0,
+    "points": 4,
+    "tournaments_played": 1
+  },
+  {
+    "id": 3,
+    "pseudo": "Sebito",
+    "full_name": "",
+    "phone": "",
+    "discord_id": "",
+    "discord_pseudo": "",
+    "top_1": 1,
+    "top_2": 1,
+    "top_3": 0,
+    "points": 13,
+    "tournaments_played": 3
+  },
+  {
+    "id": 6,
+    "pseudo": "Papa pedro",
+    "full_name": "",
+    "phone": "",
+    "discord_id": "",
+    "discord_pseudo": "",
+    "top_1": 0,
+    "top_2": 1,
+    "top_3": 1,
+    "points": 15,
+    "tournaments_played": 4
+  },
+  {
+    "id": 5,
+    "pseudo": "Pedro",
+    "full_name": "",
+    "phone": "",
+    "discord_id": "",
+    "discord_pseudo": "",
+    "top_1": 1,
+    "top_2": 0,
+    "top_3": 3,
+    "points": 11,
+    "tournaments_played": 5
+  },
+  {
+    "id": 4,
+    "pseudo": "Rounard",
+    "full_name": "",
+    "phone": "",
+    "discord_id": "",
+    "discord_pseudo": "",
+    "top_1": 0,
+    "top_2": 1,
+    "top_3": 0,
+    "points": 7,
+    "tournaments_played": 4
+  },
+  {
+    "id": 8,
+    "pseudo": "sirey e",
+    "full_name": "jean dujardin",
+    "phone": "0000000000",
+    "discord_id": "534003646233313280",
+    "discord_pseudo": "Sirey",
+    "top_1": 1,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 4,
+    "tournaments_played": 1
+  }
+]

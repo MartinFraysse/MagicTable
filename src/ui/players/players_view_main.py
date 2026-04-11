@@ -337,9 +337,7 @@ class PlayersViewMain(QWidget):
             if data is not None:
                 item.setData(Qt.UserRole, data)
 
-            # Centrer les colonnes numériques et Discord
-            if col >= 3:
-                item.setTextAlignment(Qt.AlignCenter)
+            item.setTextAlignment(Qt.AlignCenter)
 
             self.table.setItem(row, col, item)
 

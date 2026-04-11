@@ -171,6 +171,11 @@ class TournamentViewMain(QWidget):
             else:
                 tournament.create_round()
 
+        # Sauvegarder AVANT de notifier le bot Discord :
+        # le bot lit tournaments.json sur le serveur pour trouver les tables.
+        # Si on notifie avant l'upload, le serveur n'a pas encore les pairings.
+        self.upcoming_view._save_all()
+
         self.round_started.emit(tournament)
 
         # Notifier le bot Discord à chaque lancement (création canaux si besoin)
@@ -184,6 +189,15 @@ class TournamentViewMain(QWidget):
         """Recharge les tournois ET l'historique depuis le storage (après sync serveur)."""
         self.upcoming_view.reload_from_storage()
         self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+
+        # Rafraîchir la launch_view si un tournoi y est chargé
+        if self.launch_view._current_tournament:
+            tid = self.launch_view._current_tournament.id
+            updated = next(
+                (t for t in self.upcoming_view._tournaments if t.id == tid), None
+            )
+            if updated:
+                self.launch_view.refresh_if_loaded(updated)
 
     def save_tournaments(self):
         """Sauvegarde tous les tournois (appelé depuis le dashboard)."""

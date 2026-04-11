@@ -371,6 +371,8 @@ def notify_finish_async(
     tournament_id,
     tournament_name: str,
     final_ranking: "list[str]",
+    full_standings: "list[dict] | None" = None,
+    tournament_info: "dict | None" = None,
 ) -> None:
     """Notifie le bot du classement final du tournoi (non-bloquant)."""
     body = {
@@ -378,6 +380,10 @@ def notify_finish_async(
         "tournament_name": tournament_name,
         "final_ranking": final_ranking,
     }
+    if full_standings is not None:
+        body["full_standings"] = full_standings
+    if tournament_info is not None:
+        body["tournament_info"] = tournament_info
     threading.Thread(target=_post_notify, args=("finish", body), daemon=True).start()
 
 

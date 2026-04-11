@@ -53,9 +53,13 @@ class Tournament:
         if not name:
             return None
 
-        # Empêcher les doublons (case-insensitive)
-        if any(p.name.lower() == name.lower() for p in self.players):
-            return None
+        # Si le joueur existe déjà mais est dropped → le réinscrire
+        existing = next((p for p in self.players if p.name.lower() == name.lower()), None)
+        if existing:
+            if existing.dropped:
+                existing.dropped = False
+                return existing
+            return None  # Déjà inscrit et actif → doublon
 
         player = Player(
             id=self._next_player_id,
@@ -631,7 +635,7 @@ class Tournament:
 
     @property
     def player_count(self) -> int:
-        return len(self.players)
+        return len([p for p in self.players if not p.dropped])
 
     # =====================
     # Tables

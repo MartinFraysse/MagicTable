@@ -1,0 +1,72 @@
+[
+  {
+    "id": 3,
+    "name": "Lightning, Army of One",
+    "colors": [
+      "W",
+      "R"
+    ],
+    "image_path": "commander_images/cf4cd2fc6f144a0b90edd6247d838b55.jpg",
+    "duel": true
+  },
+  {
+    "id": 1,
+    "name": "Omo, Queen of Vesuva",
+    "colors": [
+      "U",
+      "G"
+    ],
+    "image_path": "commander_images/6a1ff28b5e2e4e84a98226923898968d.jpg",
+    "duel": true
+  },
+  {
+    "id": 6,
+    "name": "Sin, Spira's Punishment",
+    "colors": [
+      "U",
+      "B",
+      "G"
+    ],
+    "image_path": "commander_images/30476d8e7c06422b84a6185fff62f6b0.jpg",
+    "duel": false
+  },
+  {
+    "id": 4,
+    "name": "Sorin of House Markov // Sorin, Ravenous Neonate",
+    "colors": [
+      "W",
+      "B"
+    ],
+    "image_path": "commander_images/f50efc8b32a5423ebdc69610fe6736f5.jpg",
+    "duel": true
+  },
+  {
+    "id": 2,
+    "name": "Zurgo Bellstriker",
+    "colors": [
+      "R"
+    ],
+    "image_path": "commander_images/66396f6b1359492d8af180325dc3db1f.jpg",
+    "duel": true
+  },
+  {
+    "id": 7,
+    "name": "Sephiroth, Fabled SOLDIER",
+    "colors": [
+      "B"
+    ],
+    "image_path": "commander_images/732b6352676e4cd78291c6c656f0a220.jpg",
+    "duel": false
+  },
+  {
+    "id": 8,
+    "name": "Aang and Katara",
+    "colors": [
+      "G",
+      "U",
+      "W"
+    ],
+    "image_path": "commander_images/286ed566b7214b92945f0003878bc721.jpg",
+    "duel": false
+  }
+]

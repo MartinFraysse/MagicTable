@@ -1,4 +1,10 @@
 import os
+import sys
+
+if not os.getenv("MAGICTABLE_START"):
+    print("❌ Lance le bot via start.sh uniquement.")
+    sys.exit(1)
+
 import json
 import urllib.request
 import urllib.parse
@@ -69,6 +75,8 @@ def save_via_api(resource: str, data: list) -> bool:
         "commanders":  "commanders.json",
     }
     url = f"{API_URL.rstrip('/')}/{resource}"
+    if resource == "tournaments":
+        url += "?source=bot"
     try:
         body = json.dumps(data, ensure_ascii=False).encode()
         req  = urllib.request.Request(url, data=body, method="PUT")
@@ -219,9 +227,9 @@ async def tournois(ctx):
 
 # ── !inscrits ─────────────────────────────────────────────────────────────────
 
-@bot.command()
-async def inscrits(ctx, *, nom_tournoi: str = None):
-    """Joueurs inscrits à un tournoi. Usage : !inscrits <nom>"""
+@bot.command(name="liste")
+async def liste_cmd(ctx, *, nom_tournoi: str = None):
+    """Joueurs inscrits à un tournoi. Usage : !liste <nom>"""
     all_t    = load_json("tournaments.json")
     upcoming = [t for t in all_t if not t.get("archived", False)]
 
@@ -230,7 +238,7 @@ async def inscrits(ctx, *, nom_tournoi: str = None):
             await send_error(ctx, "Aucun tournoi disponible.")
             return
         noms = "\n".join(f"• **{t['name']}**" for t in upcoming)
-        await send_error(ctx, f"Précise le nom du tournoi :\n{noms}\n\nExemple : `!inscrits {upcoming[0]['name']}`")
+        await send_error(ctx, f"Précise le nom du tournoi :\n{noms}\n\nExemple : `!liste {upcoming[0]['name']}`")
         return
 
     tournament = next((t for t in all_t if t.get("name","").lower() == nom_tournoi.lower()), None)
@@ -257,8 +265,8 @@ async def inscrits(ctx, *, nom_tournoi: str = None):
 
 # ── !register ─────────────────────────────────────────────────────────────────
 
-@bot.command()
-async def register(ctx):
+@bot.command(name="profil")
+async def profil_cmd(ctx):
     """Créer ou lier ton profil de joueur permanent MagicTable."""
 
     # Ouvrir le DM
@@ -336,12 +344,15 @@ async def register(ctx):
             return
 
         if linked_id == ctx.author.id:
+            # Mettre à jour le pseudo Discord au cas où il aurait changé
+            taken["discord_pseudo"] = ctx.author.display_name
             await dm.send(f"✅ **{pseudo}** est déjà ton profil MagicTable !")
             save_via_api("players", all_players)
             return
 
         # Profil existant non lié → on lie
-        taken["discord_id"] = str(ctx.author.id)
+        taken["discord_id"]     = str(ctx.author.id)
+        taken["discord_pseudo"] = ctx.author.display_name
         save_via_api("players", all_players)
         embed = discord.Embed(
             title="🔗 Profil lié à ton Discord !",
@@ -372,6 +383,7 @@ async def register(ctx):
         "full_name":          full_name,
         "phone":              phone,
         "discord_id":         str(ctx.author.id),
+        "discord_pseudo":     ctx.author.display_name,
         "top_1":              0,
         "top_2":              0,
         "top_3":              0,
@@ -388,7 +400,7 @@ async def register(ctx):
         embed.add_field(name="Pseudo",    value=pseudo,       inline=True)
         embed.add_field(name="Nom",       value=full_name,    inline=True)
         embed.add_field(name="Téléphone", value=phone or "—", inline=True)
-        embed.set_footer(text="Tu peux maintenant t'inscrire aux tournois avec !inscription")
+        embed.set_footer(text="Tu peux maintenant t'inscrire aux tournois avec !join")
         await dm.send(embed=embed)
     else:
         await dm.send("❌ Erreur lors de la création du profil, réessaie dans un instant.")
@@ -412,8 +424,8 @@ async def _fetch_scryfall(name: str) -> dict | None:
 
 
 async def _download_image(url: str, dest: Path) -> bool:
-    """Télécharge l'art_crop — même algo que l'application MagicTable."""
-    headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+    """Télécharge l'art_crop depuis Scryfall CDN."""
+    headers = {"User-Agent": "MagicTable/1.0"}
     try:
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
@@ -460,6 +472,9 @@ async def _create_commander(ctx, all_commanders: list, is_duel: bool, channel=No
     else:
         # Nom exact depuis Scryfall (corrige coquilles / casse)
         name   = card.get("name", name)
+        # Commandants double-face : n'afficher que la première face ("A // B" → "A")
+        if " // " in name:
+            name = name.split(" // ")[0].strip()
         colors = card.get("color_identity", [])
 
         # Image art_crop — même logique que l'app (double-face : card_faces[0])
@@ -500,14 +515,14 @@ async def _create_commander(ctx, all_commanders: list, is_duel: bool, channel=No
 
 # ── !inscription ──────────────────────────────────────────────────────────────
 
-@bot.command()
-async def inscription(ctx, *, nom_tournoi: str = None):
-    """S'inscrire à un tournoi. Usage : !inscription [nom du tournoi]"""
+@bot.command(name="join")
+async def join_cmd(ctx, *, nom_tournoi: str = None):
+    """S'inscrire à un tournoi. Usage : !join [nom du tournoi]"""
     all_t    = load_json("tournaments.json")
     upcoming = [t for t in all_t if not t.get("archived", False)]
 
     if not upcoming:
-        await send_error(ctx, "Aucun tournoi disponible. Tape `!tournois` pour vérifier.")
+        await send_error(ctx, "Aucun tournoi disponible. Tape `!tournois` pour vérifier les tournois à venir.")
         return
 
     # dm sera ouvert seulement si nécessaire
@@ -570,21 +585,94 @@ async def inscription(ctx, *, nom_tournoi: str = None):
     if not profile:
         warn = (
             f"⚠️ Tu n'as pas encore de profil MagicTable.\n"
-            f"Tape `!register` pour en créer un et suivre tes stats.\n\n"
+            f"Tape `!profil` pour en créer un et suivre tes stats.\n\n"
             f"*(Inscription continue avec ton pseudo Discord : **{player_name}**)*"
         )
         await (dest or ctx).send(warn)
 
-    # Déjà inscrit ?
-    players_list = tournament.get("players", [])
-    if any(p.get("name","").lower() == player_name.lower() for p in players_list):
-        await (dest or ctx).send(f"{ctx.author.mention} Tu es déjà inscrit à **{tournament['name']}** ! ✅")
-        return
-
-    # ── Sélection du commandant si format Commander/Duel ─────────────────────
+    # ── Format du tournoi (nécessaire pour les deux chemins : inscrit / réinscrit) ──
     fmt          = tournament.get("format", "")
     is_duel      = "⚔️" in fmt or "duel" in fmt.lower()
     is_commander = "👑" in fmt or is_duel
+
+    # Déjà inscrit ?
+    players_list = tournament.get("players", [])
+    existing = next((p for p in players_list if p.get("name","").lower() == player_name.lower()), None)
+    if existing:
+        if not existing.get("dropped", False):
+            await (dest or ctx).send(f"{ctx.author.mention} Tu es déjà inscrit à **{tournament['name']}** ! ✅")
+            return
+
+        # Était désinscrit → réinscrire avec un nouveau choix de commandant
+        chosen_commander = ""
+        if is_commander:
+            if not await open_dm():
+                return
+
+            all_commanders = load_json("commanders.json")
+            if is_duel and "👑" not in fmt:
+                filtered = sorted([c for c in all_commanders if c.get("duel", False)], key=lambda c: c.get("name",""))
+                title    = "⚔️ Commandants Duel Commander"
+            else:
+                filtered = sorted(all_commanders, key=lambda c: c.get("name",""))
+                title    = "👑 Commandants Commander"
+
+            COLORS_EMOJI = {"W":"⚪","U":"🔵","B":"⚫","R":"🔴","G":"🟢"}
+
+            if not filtered:
+                await dm.send("⚠️ Aucun commandant enregistré.")
+                create = await ask(ctx, "Veux-tu ajouter ton commandant maintenant ? (`oui` / `non`)", channel=dm)
+                if create and create.lower() == "oui":
+                    chosen_commander = await _create_commander(ctx, all_commanders, is_duel, channel=dm)
+            else:
+                lines = []
+                for i, c in enumerate(filtered, 1):
+                    colors = "".join(COLORS_EMOJI.get(col,"") for col in c.get("colors",[]))
+                    lines.append(f"`{i:>2}.` {colors} {c.get('name','?')}")
+                lines.append(f"`  0.` ➕ Mon commandant n'est pas dans la liste")
+
+                chunks = [lines[j:j+20] for j in range(0, len(lines), 20)]
+                for k, chunk in enumerate(chunks):
+                    embed = discord.Embed(
+                        title       = title if k == 0 else "\u200b",
+                        description = "\n".join(chunk),
+                        color       = COLOR
+                    )
+                    if k == len(chunks) - 1:
+                        embed.set_footer(text="Entre le numéro de ton commandant · 0 pour en ajouter un nouveau (tu as 60s)")
+                    await dm.send(embed=embed)
+
+                rep = await ask(ctx, "", channel=dm)
+                if rep is None:
+                    return
+                if rep.strip() == "0":
+                    chosen_commander = await _create_commander(ctx, all_commanders, is_duel, channel=dm)
+                else:
+                    try:
+                        idx = int(rep.strip()) - 1
+                        if not (0 <= idx < len(filtered)):
+                            raise ValueError
+                        chosen_commander = filtered[idx].get("name","")
+                    except ValueError:
+                        await dm.send("❌ Numéro invalide, réinscription annulée.")
+                        return
+
+        existing["dropped"]    = False
+        existing["commander"]  = chosen_commander
+        tournament["players"]  = players_list
+        if save_via_api("tournaments", all_t):
+            embed = discord.Embed(title="✅ Réinscription confirmée !", color=COLOR)
+            embed.add_field(name="Tournoi", value=tournament["name"],         inline=True)
+            embed.add_field(name="Format",  value=fmt,                        inline=True)
+            embed.add_field(name="Date",    value=tournament.get("date","?"), inline=True)
+            if chosen_commander:
+                embed.add_field(name="Commandant", value=chosen_commander, inline=True)
+            await (dest or ctx).send(f"{ctx.author.mention}", embed=embed)
+        else:
+            await send_error(ctx, "❌ Erreur lors de la réinscription, réessaie dans un instant.")
+        return
+
+    # ── Sélection du commandant si format Commander/Duel ─────────────────────
     chosen_commander = ""
 
     if is_commander:
@@ -805,7 +893,7 @@ async def stats_cmd(ctx, *, pseudo: str = None):
             await send_error(
                 ctx,
                 "❌ Tu n'as pas de profil lié.\n"
-                "Tape `!register` pour créer ou lier ton profil, "
+                "Tape `!profil` pour créer ou lier ton profil, "
                 "ou utilise `!stats <pseudo>` pour voir les stats d'un joueur."
             )
             return
@@ -945,7 +1033,7 @@ async def help_cmd(ctx):
     embed.add_field(
         name="👤 Profil joueur",
         value=(
-            "`!register` — Créer ou lier ton profil MagicTable\n"
+            "`!profil` — Créer ou lier ton profil MagicTable\n"
             "*(La procédure se déroule en message privé)*"
         ),
         inline=False
@@ -955,9 +1043,9 @@ async def help_cmd(ctx):
         name="🏆 Tournois",
         value=(
             "`!tournois` — Liste des tournois à venir\n"
-            "`!inscription <nom>` — S'inscrire (en MP si choix nécessaire)\n"
-            "`!desinscrire <nom>` — Se désinscrire d'un tournoi\n"
-            "`!inscrits <nom>` — Voir les joueurs inscrits à un tournoi"
+            "`!join <nom>` — S'inscrire (en MP si choix nécessaire)\n"
+            "`!leave <nom>` — Se désinscrire d'un tournoi\n"
+            "`!liste <nom>` — Voir les joueurs inscrits à un tournoi"
         ),
         inline=False
     )
@@ -975,7 +1063,7 @@ async def help_cmd(ctx):
         name="👥 Joueurs",
         value=(
             "`!players` — Classement des joueurs permanents\n"
-            "`!commandants` — Liste des commandants (filtrable par couleur)\n"
+            "`!cmds` — Liste des commandants (filtrable par couleur)\n"
             "`!stats` — Tes stats personnelles\n"
             "`!stats <pseudo>` — Stats d'un joueur"
         ),
@@ -986,24 +1074,7 @@ async def help_cmd(ctx):
         name="📜 Tournois passés",
         value=(
             "`!result <nom>` — Résultats complets d'un tournoi archivé\n"
-            "`!historique` — Liste de tous les tournois passés"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🔔 Organisation",
-        value=(
-            "`!starttournoi <nom>` — Lance un tournoi et crée le channel dédié\n"
-            "`!rappel <nom>` — Envoie un rappel en DM à tous les inscrits"
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="🃏 Deckbuilding",
-        value=(
-            "`!commander <nom>` — Infos + image + liens EDHRec/Scryfall"
+            "`!histo` — Liste des tournois passés (filtrable par mois)"
         ),
         inline=False
     )
@@ -1021,11 +1092,11 @@ async def help_cmd(ctx):
     await ctx.send(embed=embed)
 
 
-# ── !desinscrire ──────────────────────────────────────────────────────────────
+# ── !leave ────────────────────────────────────────────────────────────────────
 
-@bot.command()
-async def desinscrire(ctx, *, nom_tournoi: str = None):
-    """Se désinscrire d'un tournoi. Usage : !desinscrire <nom>"""
+@bot.command(name="leave")
+async def leave_cmd(ctx, *, nom_tournoi: str = None):
+    """Se désinscrire d'un tournoi. Usage : !leave <nom>"""
     all_t    = load_json("tournaments.json")
     upcoming = [t for t in all_t if not t.get("archived", False)]
 
@@ -1034,7 +1105,7 @@ async def desinscrire(ctx, *, nom_tournoi: str = None):
             await ctx.send("Aucun tournoi disponible.")
             return
         noms = "\n".join(f"• **{t['name']}**" for t in upcoming)
-        await ctx.send(f"Précise le nom du tournoi :\n{noms}\n\nExemple : `!desinscrire {upcoming[0]['name']}`")
+        await ctx.send(f"Précise le nom du tournoi :\n{noms}\n\nExemple : `!leave {upcoming[0]['name']}`")
         return
 
     tournament = next((t for t in all_t if t.get("name","").lower() == nom_tournoi.lower()), None)
@@ -1119,9 +1190,9 @@ def _parse_color_filter(filtre: str) -> list[str] | None:
         return codes
 
 
-@bot.command(name="commandants")
-async def commandants_cmd(ctx, *, filtre: str = None):
-    """Liste des commandants. Usage : !commandants [couleur(s)]"""
+@bot.command(name="cmds")
+async def cmds_cmd(ctx, *, filtre: str = None):
+    """Liste des commandants. Usage : !cmds [couleur(s)]"""
     all_commanders = load_json("commanders.json")
 
     COLORS_EMOJI = {"W": "⚪", "U": "🔵", "B": "⚫", "R": "🔴", "G": "🟢"}
@@ -1133,7 +1204,7 @@ async def commandants_cmd(ctx, *, filtre: str = None):
         if color_filters is None:
             await ctx.send(
                 f"❌ Filtre « {filtre} » non reconnu.\n"
-                f"Exemples : `WU` · `blanc bleu` · `rouge` · `R` · `incolore`"
+                f"Exemples : `!cmds WU` · `!cmds blanc bleu` · `!cmds rouge` · `!cmds incolore`"
             )
             return
 
@@ -1364,9 +1435,9 @@ def _parse_month_arg(arg: str) -> tuple[int, int] | None:
     return (m, y)
 
 
-@bot.command(name="historique")
-async def historique_cmd(ctx, *, filtre_mois: str = None):
-    """Tournois passés. Usage : !historique [mois] [année]"""
+@bot.command(name="histo")
+async def histo_cmd(ctx, *, filtre_mois: str = None):
+    """Tournois passés. Usage : !histo [mois] [année]"""
     all_t    = load_json("tournaments.json")
     now      = datetime.now()
     archived = sorted(
@@ -1386,7 +1457,7 @@ async def historique_cmd(ctx, *, filtre_mois: str = None):
             await send_error(
                 ctx,
                 f"❌ Mois « {filtre_mois} » non reconnu.\n"
-                f"Exemples : `!historique mars` · `!historique mars 2026` · `!historique 03/2026`"
+                f"Exemples : `!histo mars` · `!histo mars 2026` · `!histo 03/2026`"
             )
             return
         m, y       = parsed
@@ -1410,7 +1481,7 @@ async def historique_cmd(ctx, *, filtre_mois: str = None):
         if filtre_mois:
             await send_error(ctx, f"Aucun tournoi trouvé pour **{filtre_mois}**.")
         else:
-            await send_error(ctx, "Aucun tournoi dans les 2 derniers mois.\nEssaie `!historique <mois>` pour chercher plus loin.")
+            await send_error(ctx, "Aucun tournoi dans les 2 derniers mois.\nEssaie `!histo <mois>` pour chercher plus loin.")
         return
 
     # ── Construire les lignes ─────────────────────────────────────────────────
@@ -1433,128 +1504,11 @@ async def historique_cmd(ctx, *, filtre_mois: str = None):
         title = f"📜 Historique — {titre_mois}" if k == 0 else "\u200b"
         embed = discord.Embed(title=title, description="\n\n".join(chunk), color=COLOR)
         if k == 0:
-            embed.set_footer(text=f"{len(filtered)} tournoi{'s' if len(filtered)>1 else ''} · !historique <mois> pour filtrer")
+            embed.set_footer(text=f"{len(filtered)} tournoi{'s' if len(filtered)>1 else ''} · !histo <mois> pour filtrer")
         await ctx.send(embed=embed)
 
 
 # ── !rappel ───────────────────────────────────────────────────────────────────
-
-
-# ── !commander ────────────────────────────────────────────────────────────────
-
-def _edhrec_slug(name: str) -> str:
-    """Convertit un nom de carte en slug EDHRec (ex: Aragorn, the Uniter → aragorn-the-uniter)."""
-    slug   = name.lower()
-    result = []
-    for ch in slug:
-        if ch.isalnum():
-            result.append(ch)
-        elif ch in " -,'":
-            result.append("-")
-        # apostrophes et autres caractères ignorés
-    slug = "".join(result)
-    while "--" in slug:
-        slug = slug.replace("--", "-")
-    return slug.strip("-")
-
-
-@bot.command(name="commander")
-async def commander_cmd(ctx, *, nom: str = None):
-    """Infos sur un commandant. Usage : !commander <nom>"""
-    if nom is None:
-        await send_error(ctx, "Usage : `!commander <nom>` — ex: `!commander Aragorn`")
-        return
-
-    COLORS_EMOJI = {"W":"⚪","U":"🔵","B":"⚫","R":"🔴","G":"🟢"}
-
-    all_commanders = load_json("commanders.json")
-    def _match_commander(c: dict, search: str) -> bool:
-        """Retourne True si le commandant correspond à la recherche.
-        Gère les cartes double-face (ex: 'Valki' matche 'Valki // Tibalt')."""
-        c_name = c.get("name", "").lower().strip()
-        s      = search.lower().strip()
-        if c_name == s:
-            return True
-        # Double-face : comparer la première face uniquement
-        if " // " in c_name and c_name.split(" // ")[0].strip() == s:
-            return True
-        return False
-
-    nom_low = nom.lower().strip()
-
-    # Chercher d'abord dans la base locale (match exact, DFC, ou sous-chaîne)
-    db_matches = [
-        c for c in all_commanders
-        if _match_commander(c, nom)
-        or nom_low in c.get("name","").lower()
-    ]
-    local = db_matches[0] if db_matches else None
-
-    async with ctx.typing():
-        card = await _fetch_scryfall(nom)
-        # Si Scryfall échoue (nom ambigu) mais qu'on a un nom complet en base,
-        # relancer avec ce nom précis pour récupérer l'image
-        if card is None and db_matches:
-            full_name = db_matches[0]["name"].split(" // ")[0].strip()
-            if full_name.lower() != nom.lower():
-                card = await _fetch_scryfall(full_name)
-
-    # Ajouter les résultats Scryfall aux db_matches si le nom diffère
-    if card:
-        scryfall_name = card.get("name", nom)
-        for c in all_commanders:
-            if _match_commander(c, scryfall_name) and c not in db_matches:
-                db_matches.append(c)
-
-    if card is None and not db_matches:
-        await send_error(ctx, f"❌ Commandant « {nom} » introuvable sur Scryfall et absent de la base locale.")
-        return
-
-    if card:
-        name   = card.get("name", nom)
-        colors = card.get("color_identity", [])
-
-        image_uris = card.get("image_uris") or {}
-        if not image_uris:
-            faces      = card.get("card_faces", [])
-            image_uris = faces[0].get("image_uris", {}) if faces else {}
-        img_url = image_uris.get("art_crop","")
-
-        edhrec_url   = f"https://edhrec.com/commanders/{_edhrec_slug(name)}"
-        scryfall_url = card.get("scryfall_uri", "")
-    else:
-        # Scryfall introuvable mais présent en base locale
-        name         = local.get("name", nom)
-        colors       = local.get("colors", [])
-        img_url      = ""
-        edhrec_url   = f"https://edhrec.com/commanders/{_edhrec_slug(name)}"
-        scryfall_url = ""
-
-    # Image locale en fallback (servie par l'API)
-    if not img_url and local and local.get("image_path"):
-        img_url = f"{API_URL.rstrip('/')}/{local['image_path']}"
-
-    colors_str = "".join(COLORS_EMOJI.get(c,"") for c in colors) or "⬜ Incolore"
-
-    if db_matches:
-        shown = db_matches[0]["name"]
-        extra = f" *(+{len(db_matches)-1})*" if len(db_matches) > 1 else ""
-        db_str = f"✅ **{shown}**{extra}"
-    else:
-        db_str = "❌ Pas encore ajouté"
-
-    links = f"[EDHRec]({edhrec_url})"
-    if scryfall_url:
-        links += f"  ·  [Scryfall]({scryfall_url})"
-
-    embed = discord.Embed(title=f"👑 {name}", color=COLOR)
-    embed.add_field(name="Couleurs",    value=colors_str, inline=True)
-    embed.add_field(name="MagicTable",  value=db_str,     inline=True)
-    embed.add_field(name="Liens",       value=links,       inline=False)
-    if img_url:
-        embed.set_image(url=img_url)
-
-    await ctx.send(embed=embed)
 
 
 # ── !starttournoi ─────────────────────────────────────────────────────────────
@@ -1562,6 +1516,7 @@ async def commander_cmd(ctx, *, nom: str = None):
 TOURNAMENT_CATEGORY_NAME     = "🏆 TOURNOIS"
 CHANNEL_RESULTATS_SUFFIX     = "résultats"
 CHANNEL_CLASSEMENT_SUFFIX    = "classement"
+CHANNEL_RESULTATS_GLOBAUX    = "résultats-des-tournois"
 TOURNAMENT_ROLE_NAMES        = ["Tournoi 1", "Tournoi 2", "Tournoi 3"]
 MAX_SIMULTANEOUS_TOURNAMENTS = 3
 SLOTS_FILE                   = DATA_DIR / "tournament_slots.json"
@@ -1771,13 +1726,25 @@ async def score_cmd(ctx, *, resultat: str = None):
         await err(f"❌ `!score` fonctionne uniquement dans le canal résultats du tournoi.")
         return
 
-    # 2. Trouver le tournoi actif dans cette catégorie
+    # 2. Trouver le tournoi actif correspondant à ce canal
     all_t   = load_json("tournaments.json")
     actives = [t for t in all_t if not t.get("archived", False) and t.get("rounds")]
     if not actives:
         await err("❌ Aucun tournoi actif avec des rounds en cours.")
         return
-    tournament = actives[-1]
+
+    # Identifier le tournoi depuis le canal (évite les erreurs avec plusieurs tournois simultanés)
+    tournament = None
+    for t in actives:
+        t_name = t.get("name", "")
+        t_id   = str(t.get("id", ""))
+        ch_res, _ = _find_channels(ctx.guild, t_name, t_id)
+        if ch_res and ch_res.id == ctx.channel.id:
+            tournament = t
+            break
+    if tournament is None:
+        tournament = actives[-1]  # fallback : dernier tournoi actif
+
     rounds     = tournament.get("rounds", [])
     cur_round  = rounds[-1]
     round_num  = cur_round.get("number", len(rounds))
@@ -1787,7 +1754,7 @@ async def score_cmd(ctx, *, resultat: str = None):
     all_regular = load_json("regular_players.json")
     regular     = next((p for p in all_regular if p.get("discord_id") and _match_discord(p["discord_id"], discord_id)), None)
     if not regular:
-        await err("❌ Ton compte Discord n'est pas lié. Utilise `!register` d'abord.")
+        await err("❌ Ton compte Discord n'est pas lié. Utilise `!profil` d'abord.")
         return
 
     pseudo       = regular.get("pseudo", "").lower()
@@ -2284,7 +2251,7 @@ async def _create_tournament_channels_auto(guild: discord.Guild, tournament: dic
     if no_account:
         embed.add_field(
             name  = "⚠️ Sans compte Discord lié",
-            value = ", ".join(no_account) + "\n*Tape `!register` pour lier ton compte.*",
+            value = ", ".join(no_account) + "\n*Tape `!profil` pour lier ton compte.*",
             inline=False,
         )
 
@@ -2641,6 +2608,66 @@ async def check_pending_next_rounds():
 
 # ── Polling : fin de tournoi ──────────────────────────────────────────────────
 
+def _build_results_embed(t_name: str, full_standings: list, t_info: dict) -> discord.Embed:
+    """Construit l'embed de résultats complets pour le canal #résultats-des-tournois."""
+    fmt         = t_info.get("format", "")
+    date        = t_info.get("date", "")
+    num_rounds  = t_info.get("num_rounds", 0)
+    num_players = t_info.get("num_players", len(full_standings))
+    is_1v1      = fmt != "👑 Commander"
+
+    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+    lines  = []
+    for p in full_standings:
+        rank  = p.get("rank", 0)
+        name  = p.get("name", "?")
+        score = p.get("score", 0)
+        cmd   = p.get("commander", "")
+        prefix = medals.get(rank, f"`{rank}.`")
+
+        if is_1v1:
+            wins   = p.get("wins", 0)
+            draws  = p.get("draws", 0)
+            losses = p.get("losses", 0)
+            omw    = p.get("omw_pct")
+            gw     = p.get("gw_pct")
+            detail = f"{wins}V-{draws}N-{losses}D"
+            if omw is not None:
+                detail += f"  OMW: {omw}%"
+            if gw:
+                detail += f"  GW: {gw}%"
+            line = f"{prefix}  **{name}** — {score} pts  |  {detail}"
+        else:
+            line = f"{prefix}  **{name}** — {score} pts"
+            if cmd:
+                line += f"  *(cmd: {cmd})*"
+
+        lines.append(line)
+
+    description = "\n".join(lines) if lines else "Aucun résultat disponible."
+
+    # Découper si trop long (limite Discord: 4096 chars)
+    if len(description) > 4000:
+        description = description[:3990] + "\n…"
+
+    footer_parts = []
+    if fmt:
+        footer_parts.append(fmt)
+    if date:
+        footer_parts.append(date)
+    if num_rounds:
+        footer_parts.append(f"{num_rounds} rounds")
+    footer_parts.append(f"{num_players} joueurs")
+
+    embed = discord.Embed(
+        title       = f"🏆  {t_name} — Résultats finaux",
+        description = description,
+        color       = COLOR_FINISH,
+    )
+    embed.set_footer(text="  ·  ".join(footer_parts))
+    return embed
+
+
 @tasks.loop(seconds=2)
 async def check_pending_finishes():
     """Affiche le classement final et clôture le tournoi."""
@@ -2658,10 +2685,16 @@ async def check_pending_finishes():
         t_name        = entry.get("tournament_name", "Tournoi")
         t_id          = str(entry.get("tournament_id", ""))
         final_ranking = entry.get("final_ranking", [])
+        full_standings = entry.get("full_standings", [])
+        t_info         = entry.get("tournament_info", {})
 
         # Trouver le rôle associé à ce tournoi via le slot
         slot_entry = _get_slot_entry(t_id) if t_id else None
         role_name  = TOURNAMENT_ROLE_NAMES[slot_entry["slot"] - 1] if slot_entry else None
+
+        # Charger la map discord_id une seule fois
+        all_regular = load_json("regular_players.json")
+        discord_map = {p.get("pseudo","").lower(): p.get("discord_id") for p in all_regular if p.get("discord_id")}
 
         handled = False
         for guild in bot.guilds:
@@ -2672,7 +2705,7 @@ async def check_pending_finishes():
             # ── Séparateur ────────────────────────────────────────────────────
             await ch_cl.send("** **\n**═══════════════════ FIN DU TOURNOI ═══════════════════**")
 
-            # ── Embed classement final ────────────────────────────────────────
+            # ── Embed classement final (résumé dans le canal du tournoi) ───────
             medals = {0: "🥇", 1: "🥈", 2: "🥉"}
             lines  = []
             for i, name in enumerate(final_ranking):
@@ -2690,11 +2723,21 @@ async def check_pending_finishes():
             # ── Mention du vainqueur ──────────────────────────────────────────
             if final_ranking:
                 winner_name = final_ranking[0]
-                all_regular = load_json("regular_players.json")
-                discord_map = {p.get("pseudo","").lower(): p.get("discord_id") for p in all_regular if p.get("discord_id")}
                 did = discord_map.get(winner_name.lower())
                 mention = f"<@{did}>" if did else f"**{winner_name}**"
                 await ch_cl.send(f"🎊 Félicitations à {mention} pour sa victoire !")
+
+            # ── Canal résultats globaux ───────────────────────────────────────
+            ch_global = discord.utils.get(guild.text_channels, name=CHANNEL_RESULTATS_GLOBAUX)
+            if ch_global and full_standings:
+                results_embed = _build_results_embed(t_name, full_standings, t_info)
+                await ch_global.send(embed=results_embed)
+                # Mention du vainqueur dans le canal global aussi
+                if final_ranking:
+                    winner_name = final_ranking[0]
+                    did = discord_map.get(winner_name.lower())
+                    mention = f"<@{did}>" if did else f"**{winner_name}**"
+                    await ch_global.send(f"🎊 Félicitations à {mention} pour sa victoire !")
 
             # ── Retirer le rôle et libérer le slot ───────────────────────────
             if role_name:

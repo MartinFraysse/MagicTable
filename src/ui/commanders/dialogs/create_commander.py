@@ -170,7 +170,11 @@ class CreateCommanderDialog(QDialog):
         self._dropdown.show()
 
     def _on_suggestion_clicked(self, item: QListWidgetItem):
-        self.name_input.setText(item.text())
+        name = item.text()
+        # Commandants double-face ("A // B") : n'afficher que la première face
+        if " // " in name:
+            name = name.split(" // ")[0].strip()
+        self.name_input.setText(name)
         self._dropdown.hide()
         self._ac_timer.stop()
         self._clear_error()
@@ -397,7 +401,7 @@ class CreateCommanderDialog(QDialog):
             filename = f"{uuid.uuid4().hex}.jpg"
 
             img_req = urllib.request.Request(
-                art_url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+                art_url, headers={"User-Agent": "MagicTable/1.0"}
             )
             with urllib.request.urlopen(img_req, timeout=15, context=_ssl_context()) as img_resp:
                 (dest_dir / filename).write_bytes(img_resp.read())

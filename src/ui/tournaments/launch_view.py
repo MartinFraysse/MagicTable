@@ -174,8 +174,8 @@ class BrowsePlayersDialog(QDialog):
         self._refresh_list()
 
     def _in_tournament(self) -> dict:
-        """Retourne {nom_lowercase: player_id} pour les joueurs inscrits."""
-        return {p.name.lower().strip(): p.id for p in self._tournament.players}
+        """Retourne {nom_lowercase: player_id} pour les joueurs actifs (non dropped)."""
+        return {p.name.lower().strip(): p.id for p in self._tournament.players if not p.dropped}
 
     def _refresh_list(self):
         f = self.filter_input.text().lower().strip()
@@ -771,6 +771,17 @@ class LaunchView(QWidget):
         self._save_all()
         self._refresh_players_ui()
 
+    def refresh_if_loaded(self, updated: Tournament) -> None:
+        """Met à jour silencieusement la liste des joueurs si ce tournoi est chargé.
+
+        Appelé par le sync serveur — n'effectue pas de sauvegarde ni de réinitialisation
+        de l'interface (titre, placeholder, etc.), juste un rafraîchissement des joueurs.
+        """
+        if self._current_tournament is None or self._current_tournament.id != updated.id:
+            return
+        self._current_tournament = updated
+        self._refresh_players_ui()
+
     def _edit_current_tournament(self):
         if self._current_tournament:
             self.edit_requested.emit(self._current_tournament)
@@ -1151,6 +1162,8 @@ class LaunchView(QWidget):
 
         self.players_list.clear()
         for player in self._current_tournament.players:
+            if player.dropped:
+                continue
             # Ajouter une pastille si c'est un joueur régulier
             player_name_lower = player.name.lower().strip()
             if player_name_lower in regular_pseudos:
@@ -1194,10 +1207,9 @@ class LaunchView(QWidget):
 
         # Duel Commander : tous les commandants requis
         if self._current_tournament.format == "⚔️ Duel Commander":
-            all_have_commander = all(
-                p.commander for p in self._current_tournament.players
-            )
-            if self._current_tournament.players and not all_have_commander:
+            active_players = [p for p in self._current_tournament.players if not p.dropped]
+            all_have_commander = all(p.commander for p in active_players)
+            if active_players and not all_have_commander:
                 can_start = False
                 self.commander_warning.setText(
                     "⚠️ Tous les commandants doivent être renseignés"
@@ -1229,6 +1241,11 @@ class LaunchView(QWidget):
                 )
                 if reply != QMessageBox.Yes:
                     return
+
+        # Retirer définitivement les joueurs désinscrits avant le lancement
+        # (dropped avant le 1er round = désinscription, pas un abandon mid-tournoi)
+        t.players = [p for p in t.players if not p.dropped]
+        self._save_all()
 
         self.start_requested.emit(t)
 
