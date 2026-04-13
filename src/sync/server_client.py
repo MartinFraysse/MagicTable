@@ -235,7 +235,8 @@ def pull_all(local_data_dir: Path) -> dict:
     """
     Télécharge tous les JSON depuis le serveur et les écrit localement.
     Télécharge aussi les images des commandants manquantes.
-    Retourne {"synced": [...], "failed": [...]} avec les noms des ressources.
+    Retourne {"synced": [...], "failed": [...], "discord_ids_merged": bool}.
+    Le serveur est source de vérité absolue — le local est un simple cache.
     """
     RESOURCES = {
         "players":     "regular_players.json",
@@ -244,27 +245,17 @@ def pull_all(local_data_dir: Path) -> dict:
         "commanders":  "commanders.json",
     }
     if not is_configured():
-        return {"synced": [], "failed": list(RESOURCES.keys())}
+        return {"synced": [], "failed": list(RESOURCES.keys()), "discord_ids_merged": False}
 
     synced: list = []
     failed: list = []
     commanders_data = None
+    discord_ids_merged = False
 
     for resource, filename in RESOURCES.items():
         data = fetch(resource)
         if data is not None:
             path = local_data_dir / filename
-
-            # Garde-fou : ne jamais écraser des données locales existantes
-            # par une liste vide du serveur (erreur transitoire, fichier corrompu…).
-            if not data and path.exists():
-                try:
-                    local_content = json.loads(path.read_text(encoding="utf-8"))
-                    if local_content:
-                        failed.append(resource)
-                        continue
-                except Exception:
-                    pass
 
             # Pour les joueurs : préserver les discord_id définis localement
             # si le serveur ne les a pas encore (push non terminé avant fermeture).
@@ -281,6 +272,7 @@ def pull_all(local_data_dir: Path) -> dict:
                             pid = player.get("id")
                             if pid in local_discord and not player.get("discord_id"):
                                 player["discord_id"] = local_discord[pid]
+                                discord_ids_merged = True
                 except Exception:
                     pass  # En cas d'erreur, on garde les données serveur telles quelles
 
@@ -298,7 +290,7 @@ def pull_all(local_data_dir: Path) -> dict:
     if commanders_data:
         _pull_commander_images(local_data_dir, commanders_data)
 
-    return {"synced": synced, "failed": failed}
+    return {"synced": synced, "failed": failed, "discord_ids_merged": discord_ids_merged}
 
 
 def _pull_commander_images(local_data_dir: Path, commanders: list) -> None:
