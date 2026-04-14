@@ -89,5 +89,18 @@
     "top_3": 0,
     "points": 4,
     "tournaments_played": 1
+  },
+  {
+    "id": 9,
+    "pseudo": "Mathilde",
+    "full_name": "Mathilde machin",
+    "phone": "076887690",
+    "discord_id": "1479046070318403585",
+    "discord_pseudo": "La Loutre",
+    "top_1": 0,
+    "top_2": 0,
+    "top_3": 0,
+    "points": 0,
+    "tournaments_played": 0
   }
 ]

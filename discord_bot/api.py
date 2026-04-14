@@ -144,8 +144,8 @@ async def tournament_start(request: Request, _: str = Depends(verify_key)):
     Ajoute l'ID dans pending_starts.json pour que le bot le prenne en charge.
     """
     body = await request.json()
-    tournament_id = body.get("tournament_id", "")
-    if not tournament_id:
+    tournament_id = body.get("tournament_id")
+    if tournament_id is None:
         raise HTTPException(status_code=400, detail="tournament_id requis")
 
     # Lire la file existante
@@ -207,8 +207,8 @@ async def notify_finish(request: Request, _: str = Depends(verify_key)):
 async def tournament_quit(request: Request, _: str = Depends(verify_key)):
     """Notifié quand l'utilisateur quitte le dashboard — suppression des canaux."""
     body = await request.json()
-    tournament_id = body.get("tournament_id", "")
-    if not tournament_id:
+    tournament_id = body.get("tournament_id")
+    if tournament_id is None:
         raise HTTPException(status_code=400, detail="tournament_id requis")
     _append_pending(PENDING_QUITS, tournament_id)
     return {"ok": True}

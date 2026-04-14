@@ -8,11 +8,16 @@ Gestionnaire de synchronisation périodique avec le serveur.
 
 import json
 import threading
+import time
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
 INTERVAL_MS = 5_000  # 5 secondes
+
+# Délai de protection après une écriture locale (push en transit vers le serveur).
+# Pendant cette fenêtre, on ne tire pas depuis le serveur pour ce fichier.
+WRITE_COOLDOWN_S = 20  # secondes
 
 # Mapping resource API → fichier local (doit rester cohérent avec api.py)
 _FILENAMES: dict[str, str] = {
@@ -85,6 +90,17 @@ class SyncManager(QObject):
                 continue  # Serveur inaccessible → on garde le cache local
 
             local_path = self._data_dir / filename
+
+            # Garde-fou : ne pas tirer si le fichier local a été écrit récemment
+            # (push en transit — le serveur n'a pas encore la nouvelle version).
+            if local_path.exists():
+                try:
+                    age = time.time() - local_path.stat().st_mtime
+                    if age < WRITE_COOLDOWN_S:
+                        continue
+                except Exception:
+                    pass
+
             try:
                 local_data = (
                     json.loads(local_path.read_text(encoding="utf-8"))
