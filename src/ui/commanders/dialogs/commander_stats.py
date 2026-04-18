@@ -830,7 +830,7 @@ def _compute_global_stats() -> dict:
             'duel':       [(name, count, img_path), ...],  # triés par nb tournois Duel joués
         }
     """
-    tournaments = TournamentStorage.load()
+    tournaments = [t for t in TournamentStorage.load() if t.get("archived", False)]
     commanders_raw = CommanderStorage.load()
     img_map: dict[str, str | None] = {c["name"]: c.get("image_path") for c in commanders_raw}
 

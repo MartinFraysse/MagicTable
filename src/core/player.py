@@ -22,6 +22,9 @@ class Player:
     # Drop / forfait
     dropped: bool = False      # Joueur qui a abandonné le tournoi
 
+    # Lien explicite vers le joueur permanent (None = joueur anonyme du tournoi)
+    regular_player_id: int | None = None
+
     def add_score(self, points: int) -> None:
         self.score += points
 

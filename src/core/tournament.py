@@ -48,7 +48,7 @@ class Tournament:
             max_rounds=max_rounds,
         )
 
-    def add_player(self, name: str) -> Player | None:
+    def add_player(self, name: str, regular_player_id: int | None = None) -> Player | None:
         name = name.strip()
         if not name:
             return None
@@ -58,12 +58,15 @@ class Tournament:
         if existing:
             if existing.dropped:
                 existing.dropped = False
+                if regular_player_id is not None:
+                    existing.regular_player_id = regular_player_id
                 return existing
             return None  # Déjà inscrit et actif → doublon
 
         player = Player(
             id=self._next_player_id,
             name=name,
+            regular_player_id=regular_player_id,
         )
         self.players.append(player)
         self._next_player_id += 1
@@ -672,6 +675,7 @@ class Tournament:
                     "sos": p.sos,
                     "had_bye": p.had_bye,
                     "dropped": p.dropped,
+                    "regular_player_id": p.regular_player_id,
                 }
                 for p in self.players
             ],
@@ -709,6 +713,7 @@ class Tournament:
                 sos=p.get("sos", 0.0),
                 had_bye=p.get("had_bye", False),
                 dropped=p.get("dropped", False),
+                regular_player_id=p.get("regular_player_id"),
             )
             tournament.players.append(player)
             tournament._next_player_id = max(

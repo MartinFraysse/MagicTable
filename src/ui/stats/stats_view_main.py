@@ -45,7 +45,7 @@ class StatsViewMain(QWidget):
         layout.addWidget(self.tabs)
 
     def refresh(self):
-        raw_tournaments = TournamentStorage.load()
+        raw_tournaments = [t for t in TournamentStorage.load() if t.get("archived", False)]
         tournaments = [Tournament.from_dict(t) for t in raw_tournaments]
 
         raw_regular = RegularPlayerStorage.load()

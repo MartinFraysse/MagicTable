@@ -192,20 +192,22 @@ class BrowsePlayersDialog(QDialog):
                 item.setForeground(QBrush(QColor(130, 130, 130)))
             else:
                 item = QListWidgetItem(player.pseudo)
-            # UserRole = pseudo, UserRole+1 = player_id si inscrit (None sinon)
+            # UserRole = pseudo, UserRole+1 = tournament player_id si inscrit, UserRole+2 = regular_player.id
             item.setData(Qt.UserRole, player.pseudo)
             item.setData(Qt.UserRole + 1, player_id)
+            item.setData(Qt.UserRole + 2, player.id)
             self.list_widget.addItem(item)
 
     def _on_item_clicked(self, item: QListWidgetItem):
         pseudo = item.data(Qt.UserRole)
         player_id = item.data(Qt.UserRole + 1)
+        rp_id = item.data(Qt.UserRole + 2)
         if player_id is not None:
             # Déjà inscrit → retirer du tournoi
             self._tournament.remove_player(player_id)
         else:
-            # Pas encore inscrit → ajouter
-            self._tournament.add_player(pseudo)
+            # Pas encore inscrit → ajouter avec le lien explicite
+            self._tournament.add_player(pseudo, regular_player_id=rp_id)
         self._refresh_list()
 
     def _add_player(self, name: str):
@@ -816,7 +818,14 @@ class LaunchView(QWidget):
         if not name:
             return
 
-        player = self._current_tournament.add_player(name)
+        # Lien explicite si le nom correspond exactement à un joueur permanent
+        name_lower = name.lower().strip()
+        regular_player_id = next(
+            (rp.id for rp in self._regular_players if rp.pseudo.lower().strip() == name_lower),
+            None,
+        )
+
+        player = self._current_tournament.add_player(name, regular_player_id=regular_player_id)
         if player is None:
             QMessageBox.warning(
                 self,
@@ -1040,6 +1049,14 @@ class LaunchView(QWidget):
 
         # Sauvegarder
         RegularPlayerStorage.save([p.to_dict() for p in regular_players])
+
+        # Lier rétroactivement le joueur du tournoi courant
+        if self._current_tournament:
+            for tp in self._current_tournament.players:
+                if tp.name.lower().strip() == name_lower:
+                    tp.regular_player_id = new_player.id
+                    break
+            self._save_all()
 
         # Rafraîchir l'affichage pour montrer l'étoile
         self._refresh_players_ui()

@@ -242,25 +242,28 @@ class PlayersViewMain(QWidget):
         self._refresh_table()
 
     def _calculate_points_from_tournaments(self):
-        """Calcule les points de chaque joueur depuis les tournois archivés."""
-        raw_tournaments = TournamentStorage.load()
+        """Calcule les points de chaque joueur depuis les tournois archivés (lien explicite uniquement)."""
+        raw_tournaments = [t for t in TournamentStorage.load() if t.get("archived", False)]
         tournaments = [Tournament.from_dict(t) for t in raw_tournaments]
 
         self._analyzer = StatsAnalyzer(tournaments)
-        top_players = self._analyzer.get_top_players(limit=1000)
 
-        self._calculated_points = {
-            p.name.lower().strip(): p.total_points
-            for p in top_players
-        }
+        # Points calculés par regular_player_id — ne compte que les joueurs explicitement liés
+        self._calculated_points: dict[int, int] = {}
+        for tournament in tournaments:
+            for player in tournament.players:
+                if player.regular_player_id is not None:
+                    self._calculated_points[player.regular_player_id] = (
+                        self._calculated_points.get(player.regular_player_id, 0) + player.score
+                    )
 
     def _save_players(self):
         """Sauvegarde les joueurs dans le storage."""
         RegularPlayerStorage.save([p.to_dict() for p in self._players])
 
     def _get_player_points(self, player: RegularPlayer) -> int:
-        """Retourne les points calculés pour un joueur."""
-        return self._calculated_points.get(player.pseudo.lower().strip(), 0)
+        """Retourne les points calculés pour un joueur (lien explicite uniquement)."""
+        return self._calculated_points.get(player.id, 0)
 
     def _on_search_changed(self, text: str):
         self._search_text = text.strip().lower()

@@ -1178,7 +1178,7 @@ class DashboardViewMain(QWidget):
         # Charger les joueurs réguliers
         raw = RegularPlayerStorage.load()
         regular_players = [RegularPlayer.from_dict(d) for d in raw]
-        regular_by_pseudo = {p.pseudo.lower().strip(): p for p in regular_players}
+        regular_by_id = {p.id: p for p in regular_players}
 
         # Obtenir le classement final (bracket prioritaire sur Swiss si disponible)
         tournament = self.current_tournament
@@ -1200,20 +1200,19 @@ class DashboardViewMain(QWidget):
         else:
             ranked_players = swiss_ordered
 
-        # Enregistrer les participations, points et podiums
+        # Enregistrer les participations, points et podiums (lien explicite uniquement)
         players_updated = False
         for rank, player in enumerate(ranked_players, 1):
-            pseudo_lower = player.name.lower().strip()
-            if pseudo_lower in regular_by_pseudo:
-                regular_player = regular_by_pseudo[pseudo_lower]
-                # Incrémenter le nombre de tournois joués
-                regular_player.tournaments_played += 1
-                # Ajouter les points du tournoi
-                regular_player.points += player.score
-                players_updated = True
-                # Ajouter le podium si top 3
-                if rank <= 3:
-                    regular_player.add_top(rank)
+            if player.regular_player_id is None:
+                continue
+            regular_player = regular_by_id.get(player.regular_player_id)
+            if regular_player is None:
+                continue
+            regular_player.tournaments_played += 1
+            regular_player.points += player.score
+            players_updated = True
+            if rank <= 3:
+                regular_player.add_top(rank)
 
         # Sauvegarder si des joueurs ont été mis à jour
         if players_updated:
