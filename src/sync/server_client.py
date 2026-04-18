@@ -11,11 +11,18 @@ avec ses fichiers locaux.
 
 import sys
 import json
+import ssl
 import threading
 import urllib.request
 import urllib.error
 from pathlib import Path
 from typing import Optional
+
+try:
+    import certifi
+    _SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    _SSL_CONTEXT = None
 
 
 def _get_config_path() -> Path:
@@ -61,7 +68,7 @@ def fetch(resource: str, timeout: int = 5) -> Optional[list]:
     url = f"{cfg['url'].rstrip('/')}/{resource}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "MagicTable/1.0"})
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CONTEXT) as resp:
             return json.loads(resp.read().decode())
     except Exception:
         return None
@@ -94,7 +101,7 @@ def push(resource: str, data: list) -> bool:
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
         req.add_header("User-Agent", "MagicTable/1.0")
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=5, context=_SSL_CONTEXT) as resp:
             try:
                 merged = json.loads(resp.read().decode())
                 # Si le serveur renvoie la liste fusionnée, on met à jour le fichier local
@@ -169,7 +176,7 @@ def push_image(local_file: Path) -> bool:
         req.add_header("Content-Type", "application/octet-stream")
         req.add_header("x-api-key", api_key)
         req.add_header("User-Agent", "MagicTable/1.0")
-        with urllib.request.urlopen(req, timeout=30):
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CONTEXT):
             return True
     except Exception:
         return False
@@ -200,7 +207,7 @@ def notify_start(tournament_id: str) -> bool:
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
         req.add_header("User-Agent", "MagicTable/1.0")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5, context=_SSL_CONTEXT):
             return True
     except Exception:
         return False
@@ -224,7 +231,7 @@ def notify_quit(tournament_id) -> bool:
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
         req.add_header("User-Agent", "MagicTable/1.0")
-        with urllib.request.urlopen(req, timeout=5):
+        with urllib.request.urlopen(req, timeout=5, context=_SSL_CONTEXT):
             return True
     except Exception:
         return False
@@ -319,7 +326,7 @@ def _pull_commander_images(local_data_dir: Path, commanders: list) -> None:
         url = f"{base_url}/commander_images/{filename}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "MagicTable/1.0"})
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10, context=_SSL_CONTEXT) as resp:
                 local_file.write_bytes(resp.read())
         except Exception:
             pass  # Image indisponible, la carte s'affichera sans image
@@ -340,7 +347,7 @@ def _post_notify(endpoint: str, body: dict) -> bool:
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
         req.add_header("User-Agent", "MagicTable/1.0")
-        with urllib.request.urlopen(req, timeout=8):
+        with urllib.request.urlopen(req, timeout=8, context=_SSL_CONTEXT):
             return True
     except Exception:
         return False
