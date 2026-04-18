@@ -60,7 +60,7 @@ def fetch(resource: str, timeout: int = 5) -> Optional[list]:
         return None
     url = f"{cfg['url'].rstrip('/')}/{resource}"
     try:
-        req = urllib.request.Request(url)
+        req = urllib.request.Request(url, headers={"User-Agent": "MagicTable/1.0"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode())
     except Exception:
@@ -93,6 +93,7 @@ def push(resource: str, data: list) -> bool:
         req = urllib.request.Request(url, data=body, method="PUT")
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
+        req.add_header("User-Agent", "MagicTable/1.0")
         with urllib.request.urlopen(req, timeout=5) as resp:
             try:
                 merged = json.loads(resp.read().decode())
@@ -167,6 +168,7 @@ def push_image(local_file: Path) -> bool:
         req = urllib.request.Request(url, data=data, method="POST")
         req.add_header("Content-Type", "application/octet-stream")
         req.add_header("x-api-key", api_key)
+        req.add_header("User-Agent", "MagicTable/1.0")
         with urllib.request.urlopen(req, timeout=30):
             return True
     except Exception:
@@ -197,6 +199,7 @@ def notify_start(tournament_id: str) -> bool:
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
+        req.add_header("User-Agent", "MagicTable/1.0")
         with urllib.request.urlopen(req, timeout=5):
             return True
     except Exception:
@@ -220,6 +223,7 @@ def notify_quit(tournament_id) -> bool:
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
+        req.add_header("User-Agent", "MagicTable/1.0")
         with urllib.request.urlopen(req, timeout=5):
             return True
     except Exception:
@@ -335,6 +339,7 @@ def _post_notify(endpoint: str, body: dict) -> bool:
         req  = urllib.request.Request(url, data=data, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("x-api-key", api_key)
+        req.add_header("User-Agent", "MagicTable/1.0")
         with urllib.request.urlopen(req, timeout=8):
             return True
     except Exception:

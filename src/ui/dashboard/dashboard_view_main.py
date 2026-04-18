@@ -764,6 +764,22 @@ class DashboardViewMain(QWidget):
 
         self.current_tournament.calculate_swiss_tiebreakers()
 
+    def _recalculate_commander_scores(self):
+        """Recalcule tous les scores Commander depuis les résultats bruts (reset + replay)."""
+        POINTS_BY_POSITION = {1: 3, 2: 2, 3: 1, 4: 1}
+        players_by_id = {p.id: p for p in self.current_tournament.players}
+
+        for player in players_by_id.values():
+            player.score = 0
+
+        for rnd in self.current_tournament.rounds:
+            for table in rnd.tables:
+                if not table.finished:
+                    continue
+                for player in table.players:
+                    position = table.results.get(player.id, len(table.players))
+                    player.score += POINTS_BY_POSITION.get(position, 1)
+
     # ======================================================
     # Bracket (phase d'élimination)
     # ======================================================
@@ -1362,9 +1378,11 @@ class DashboardViewMain(QWidget):
                 changed = True
 
         if changed:
-            # Recalculer les standings si format 1v1
+            # Recalculer les scores depuis les résultats bruts
             if self.current_tournament.is_1v1_format():
                 self._apply_1v1_standings()
+            else:
+                self._recalculate_commander_scores()
             # Sauvegarder localement
             self.tournament_changed.emit()
             # Rafraîchir les vues tables et classement

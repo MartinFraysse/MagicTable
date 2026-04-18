@@ -90,6 +90,328 @@
     "bracket": null
   },
   {
+    "id": 3,
+    "name": "AP",
+    "format": "🏆 AP",
+    "date": "30/06/2001",
+    "max_rounds": 3,
+    "archived": false,
+    "podiums_recorded": false,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 0,
+        "name": "Léa",
+        "score": 9,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 11.0,
+        "sos": 3.6666666666666665,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 1,
+        "name": "Marfin",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 14.0,
+        "sos": 4.666666666666667,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "Mathilde",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 7.0,
+        "sos": 2.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "Papa pedro",
+        "score": 4,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 20.0,
+        "sos": 6.666666666666667,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "Pedro",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 10.0,
+        "sos": 3.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 5,
+        "name": "Rounard",
+        "score": 0,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 12.0,
+        "sos": 4.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 6,
+        "name": "Sebito",
+        "score": 4,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 17.0,
+        "sos": 5.666666666666667,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 7,
+        "name": "sirey e",
+        "score": 5,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 11.0,
+        "sos": 3.6666666666666665,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "0": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              2,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "2": 1,
+              "3": 2
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              4,
+              5
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "5": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "5": 1
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              6,
+              7
+            ],
+            "finished": true,
+            "results": {
+              "6": 2,
+              "7": 2
+            },
+            "game_scores": {
+              "6": 1,
+              "7": 1
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "0": 2,
+              "3": 0
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              4,
+              6
+            ],
+            "finished": true,
+            "results": {
+              "6": 1,
+              "4": 2
+            },
+            "game_scores": {
+              "4": 1,
+              "6": 2
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              7,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "7": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "7": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              2,
+              5
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "5": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "5": 1
+            }
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              0,
+              6
+            ],
+            "finished": true,
+            "results": {
+              "0": 1,
+              "6": 2
+            },
+            "game_scores": {
+              "0": 2,
+              "6": 0
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              7,
+              3
+            ],
+            "finished": true,
+            "results": {
+              "7": 2,
+              "3": 2
+            },
+            "game_scores": {
+              "7": 1,
+              "3": 1
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              4,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "4": 2
+            },
+            "game_scores": {
+              "4": 1,
+              "2": 2
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              1,
+              5
+            ],
+            "finished": true,
+            "results": {
+              "1": 1,
+              "5": 2
+            },
+            "game_scores": {
+              "1": 1,
+              "5": 0
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": null
+  },
+  {
     "id": 0,
     "name": "Test bug Multi",
     "format": "👑 Commander",
@@ -241,10 +563,10 @@
           {
             "number": 1,
             "player_ids": [
-              2,
-              9,
-              6,
-              1
+              3,
+              1,
+              0,
+              10
             ],
             "finished": false,
             "results": {},
@@ -253,9 +575,9 @@
           {
             "number": 2,
             "player_ids": [
-              4,
-              3,
+              6,
               8,
+              5,
               7
             ],
             "finished": false,
@@ -265,9 +587,9 @@
           {
             "number": 3,
             "player_ids": [
-              0,
-              10,
-              5
+              2,
+              9,
+              4
             ],
             "finished": false,
             "results": {},
@@ -277,5 +599,957 @@
       }
     ],
     "bracket": null
+  },
+  {
+    "id": 2,
+    "name": "Avant Première Strixhaven",
+    "format": "🏆 AP",
+    "date": "18/04/2026",
+    "max_rounds": 3,
+    "archived": true,
+    "podiums_recorded": false,
+    "pairing_system": "swiss",
+    "bye_history": [],
+    "players": [
+      {
+        "id": 1,
+        "name": "valentin",
+        "score": 4,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 6.0,
+        "sos": 2.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 2,
+        "name": "maxime",
+        "score": 4,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 3,
+        "name": "charles",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 12.0,
+        "sos": 4.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 4,
+        "name": "julien",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 21.0,
+        "sos": 7.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 5,
+        "name": "vincent",
+        "score": 1,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 10.0,
+        "sos": 3.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 6,
+        "name": "calvin",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 10.0,
+        "sos": 3.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 7,
+        "name": "Radouane",
+        "score": 1,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 14.0,
+        "sos": 4.666666666666667,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 8,
+        "name": "Lucas",
+        "score": 1,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 7.0,
+        "sos": 2.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 9,
+        "name": "Aslan",
+        "score": 2,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 9.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 10,
+        "name": "Boris",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 11,
+        "name": "Alison",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 12,
+        "name": "Antoine",
+        "score": 2,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 14.0,
+        "sos": 4.666666666666667,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 13,
+        "name": "Victor",
+        "score": 1,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 10.0,
+        "sos": 3.3333333333333335,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 14,
+        "name": "Quentin",
+        "score": 9,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 15,
+        "name": "Pierre",
+        "score": 4,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 12.0,
+        "sos": 4.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 17,
+        "name": "Edward",
+        "score": 9,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 9.0,
+        "sos": 3.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 18,
+        "name": "Adam",
+        "score": 9,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 12.0,
+        "sos": 4.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 21,
+        "name": "lou",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 8.0,
+        "sos": 2.6666666666666665,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 22,
+        "name": "Seb",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 13.0,
+        "sos": 4.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 23,
+        "name": "Gael",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 16.0,
+        "sos": 5.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 24,
+        "name": "sofia",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 13.0,
+        "sos": 4.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 25,
+        "name": "thomas Toutou",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 12.0,
+        "sos": 4.0,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 26,
+        "name": "Tristan",
+        "score": 3,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 13.0,
+        "sos": 4.333333333333333,
+        "had_bye": false,
+        "dropped": false
+      },
+      {
+        "id": 27,
+        "name": "Steven",
+        "score": 6,
+        "robustness": 0,
+        "reward_claimed": false,
+        "commander": "",
+        "buchholz": 18.0,
+        "sos": 6.0,
+        "had_bye": false,
+        "dropped": false
+      }
+    ],
+    "rounds": [
+      {
+        "number": 1,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              18,
+              11
+            ],
+            "finished": true,
+            "results": {
+              "18": 1,
+              "11": 2
+            },
+            "game_scores": {
+              "18": 2,
+              "11": 0
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              12,
+              9
+            ],
+            "finished": true,
+            "results": {
+              "12": 2,
+              "9": 2
+            },
+            "game_scores": {
+              "12": 1,
+              "9": 1
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              10,
+              17
+            ],
+            "finished": true,
+            "results": {
+              "17": 1,
+              "10": 2
+            },
+            "game_scores": {
+              "10": 1,
+              "17": 2
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              23,
+              8
+            ],
+            "finished": true,
+            "results": {
+              "23": 1,
+              "8": 2
+            },
+            "game_scores": {
+              "23": 2,
+              "8": 0
+            }
+          },
+          {
+            "number": 5,
+            "player_ids": [
+              15,
+              14
+            ],
+            "finished": true,
+            "results": {
+              "14": 1,
+              "15": 2
+            },
+            "game_scores": {
+              "15": 0,
+              "14": 2
+            }
+          },
+          {
+            "number": 6,
+            "player_ids": [
+              7,
+              22
+            ],
+            "finished": true,
+            "results": {
+              "22": 1,
+              "7": 2
+            },
+            "game_scores": {
+              "7": 0,
+              "22": 2
+            }
+          },
+          {
+            "number": 7,
+            "player_ids": [
+              27,
+              26
+            ],
+            "finished": true,
+            "results": {
+              "27": 1,
+              "26": 2
+            },
+            "game_scores": {
+              "27": 2,
+              "26": 0
+            }
+          },
+          {
+            "number": 8,
+            "player_ids": [
+              13,
+              6
+            ],
+            "finished": true,
+            "results": {
+              "6": 1,
+              "13": 2
+            },
+            "game_scores": {
+              "13": 0,
+              "6": 2
+            }
+          },
+          {
+            "number": 9,
+            "player_ids": [
+              3,
+              4
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "3": 2
+            },
+            "game_scores": {
+              "3": 0,
+              "4": 2
+            }
+          },
+          {
+            "number": 10,
+            "player_ids": [
+              21,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "21": 2,
+              "2": 2
+            },
+            "game_scores": {
+              "21": 1,
+              "2": 1
+            }
+          },
+          {
+            "number": 11,
+            "player_ids": [
+              24,
+              25
+            ],
+            "finished": true,
+            "results": {
+              "25": 1,
+              "24": 2
+            },
+            "game_scores": {
+              "24": 0,
+              "25": 2
+            }
+          },
+          {
+            "number": 12,
+            "player_ids": [
+              1,
+              5
+            ],
+            "finished": true,
+            "results": {
+              "1": 2,
+              "5": 2
+            },
+            "game_scores": {
+              "1": 1,
+              "5": 1
+            }
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              18,
+              23
+            ],
+            "finished": true,
+            "results": {
+              "18": 1,
+              "23": 2
+            },
+            "game_scores": {
+              "18": 2,
+              "23": 0
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              14,
+              22
+            ],
+            "finished": true,
+            "results": {
+              "14": 1,
+              "22": 2
+            },
+            "game_scores": {
+              "14": 2,
+              "22": 0
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              27,
+              6
+            ],
+            "finished": true,
+            "results": {
+              "27": 1,
+              "6": 2
+            },
+            "game_scores": {
+              "27": 2,
+              "6": 0
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              4,
+              25
+            ],
+            "finished": true,
+            "results": {
+              "4": 1,
+              "25": 2
+            },
+            "game_scores": {
+              "4": 2,
+              "25": 1
+            }
+          },
+          {
+            "number": 5,
+            "player_ids": [
+              17,
+              12
+            ],
+            "finished": true,
+            "results": {
+              "17": 1,
+              "12": 2
+            },
+            "game_scores": {
+              "17": 2,
+              "12": 0
+            }
+          },
+          {
+            "number": 6,
+            "player_ids": [
+              9,
+              21
+            ],
+            "finished": true,
+            "results": {
+              "9": 2,
+              "21": 2
+            },
+            "game_scores": {
+              "9": 1,
+              "21": 1
+            }
+          },
+          {
+            "number": 7,
+            "player_ids": [
+              2,
+              1
+            ],
+            "finished": true,
+            "results": {
+              "2": 1,
+              "1": 2
+            },
+            "game_scores": {
+              "2": 2,
+              "1": 1
+            }
+          },
+          {
+            "number": 8,
+            "player_ids": [
+              5,
+              10
+            ],
+            "finished": true,
+            "results": {
+              "10": 1,
+              "5": 2
+            },
+            "game_scores": {
+              "5": 1,
+              "10": 2
+            }
+          },
+          {
+            "number": 9,
+            "player_ids": [
+              11,
+              8
+            ],
+            "finished": true,
+            "results": {
+              "11": 1,
+              "8": 2
+            },
+            "game_scores": {
+              "11": 1,
+              "8": 0
+            }
+          },
+          {
+            "number": 10,
+            "player_ids": [
+              15,
+              7
+            ],
+            "finished": true,
+            "results": {
+              "15": 2,
+              "7": 2
+            },
+            "game_scores": {
+              "15": 1,
+              "7": 1
+            }
+          },
+          {
+            "number": 11,
+            "player_ids": [
+              26,
+              13
+            ],
+            "finished": true,
+            "results": {
+              "26": 1,
+              "13": 2
+            },
+            "game_scores": {
+              "26": 2,
+              "13": 0
+            }
+          },
+          {
+            "number": 12,
+            "player_ids": [
+              3,
+              24
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "24": 2
+            },
+            "game_scores": {
+              "3": 2,
+              "24": 1
+            }
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "state": "in_progress",
+        "tables": [
+          {
+            "number": 1,
+            "player_ids": [
+              27,
+              18
+            ],
+            "finished": true,
+            "results": {
+              "18": 1,
+              "27": 2
+            },
+            "game_scores": {
+              "27": 1,
+              "18": 2
+            }
+          },
+          {
+            "number": 2,
+            "player_ids": [
+              4,
+              14
+            ],
+            "finished": true,
+            "results": {
+              "14": 1,
+              "4": 2
+            },
+            "game_scores": {
+              "4": 0,
+              "14": 2
+            }
+          },
+          {
+            "number": 3,
+            "player_ids": [
+              17,
+              2
+            ],
+            "finished": true,
+            "results": {
+              "17": 1,
+              "2": 2
+            },
+            "game_scores": {
+              "17": 2,
+              "2": 0
+            }
+          },
+          {
+            "number": 4,
+            "player_ids": [
+              25,
+              23
+            ],
+            "finished": true,
+            "results": {
+              "25": 1,
+              "23": 2
+            },
+            "game_scores": {
+              "25": 2,
+              "23": 1
+            }
+          },
+          {
+            "number": 5,
+            "player_ids": [
+              22,
+              26
+            ],
+            "finished": true,
+            "results": {
+              "22": 1,
+              "26": 2
+            },
+            "game_scores": {
+              "22": 2,
+              "26": 1
+            }
+          },
+          {
+            "number": 6,
+            "player_ids": [
+              6,
+              10
+            ],
+            "finished": true,
+            "results": {
+              "6": 1,
+              "10": 2
+            },
+            "game_scores": {
+              "6": 2,
+              "10": 0
+            }
+          },
+          {
+            "number": 7,
+            "player_ids": [
+              3,
+              11
+            ],
+            "finished": true,
+            "results": {
+              "3": 1,
+              "11": 2
+            },
+            "game_scores": {
+              "3": 2,
+              "11": 1
+            }
+          },
+          {
+            "number": 8,
+            "player_ids": [
+              21,
+              12
+            ],
+            "finished": true,
+            "results": {
+              "21": 2,
+              "12": 2
+            },
+            "game_scores": {
+              "21": 1,
+              "12": 1
+            }
+          },
+          {
+            "number": 9,
+            "player_ids": [
+              9,
+              15
+            ],
+            "finished": true,
+            "results": {
+              "15": 1,
+              "9": 2
+            },
+            "game_scores": {
+              "9": 0,
+              "15": 2
+            }
+          },
+          {
+            "number": 10,
+            "player_ids": [
+              1,
+              7
+            ],
+            "finished": true,
+            "results": {
+              "1": 1,
+              "7": 2
+            },
+            "game_scores": {
+              "1": 2,
+              "7": 0
+            }
+          },
+          {
+            "number": 11,
+            "player_ids": [
+              5,
+              24
+            ],
+            "finished": true,
+            "results": {
+              "24": 1,
+              "5": 2
+            },
+            "game_scores": {
+              "5": 0,
+              "24": 2
+            }
+          },
+          {
+            "number": 12,
+            "player_ids": [
+              13,
+              8
+            ],
+            "finished": true,
+            "results": {
+              "13": 2,
+              "8": 2
+            },
+            "game_scores": {
+              "13": 1,
+              "8": 1
+            }
+          }
+        ]
+      }
+    ],
+    "bracket": {
+      "bracket_type": "demi",
+      "matches": [
+        {
+          "match_id": 0,
+          "round_name": "demi",
+          "position": 0,
+          "player1_id": 14,
+          "player2_id": 4,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 1,
+          "round_name": "demi",
+          "position": 1,
+          "player1_id": 18,
+          "player2_id": 17,
+          "winner_id": 17,
+          "finished": true,
+          "next_match_id": 3,
+          "loser_next_match_id": 2,
+          "is_third_place": false
+        },
+        {
+          "match_id": 2,
+          "round_name": "final",
+          "position": 0,
+          "player1_id": 18,
+          "player2_id": 14,
+          "winner_id": 14,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": true
+        },
+        {
+          "match_id": 3,
+          "round_name": "final",
+          "position": 1,
+          "player1_id": 17,
+          "player2_id": 4,
+          "winner_id": 4,
+          "finished": true,
+          "next_match_id": null,
+          "loser_next_match_id": null,
+          "is_third_place": false
+        }
+      ],
+      "finished": true,
+      "started_round": "final"
+    }
   }
 ]
