@@ -242,28 +242,68 @@ class PlayersViewMain(QWidget):
         self._refresh_table()
 
     def _calculate_points_from_tournaments(self):
-        """Calcule les points de chaque joueur depuis les tournois archivés (lien explicite uniquement)."""
+        """Calcule points, podiums et tournois joués depuis les archives (lien explicite uniquement)."""
+        from core.league import get_tournament_final_ranking
+
         raw_tournaments = [t for t in TournamentStorage.load() if t.get("archived", False)]
         tournaments = [Tournament.from_dict(t) for t in raw_tournaments]
 
         self._analyzer = StatsAnalyzer(tournaments)
 
-        # Points calculés par regular_player_id — ne compte que les joueurs explicitement liés
-        self._calculated_points: dict[int, int] = {}
+        self._calculated_points: dict[int, int] = {}       # rp_id → score total
+        self._calculated_top1: dict[int, int] = {}         # rp_id → nb de 1ères places
+        self._calculated_top2: dict[int, int] = {}
+        self._calculated_top3: dict[int, int] = {}
+        self._calculated_played: dict[int, int] = {}       # rp_id → tournois joués
+
         for tournament in tournaments:
+            # nom_lowercase → regular_player_id pour ce tournoi
+            name_to_rp: dict[str, int] = {
+                p.name.lower(): p.regular_player_id
+                for p in tournament.players
+                if p.regular_player_id is not None
+            }
+            if not name_to_rp:
+                continue
+
             for player in tournament.players:
-                if player.regular_player_id is not None:
-                    self._calculated_points[player.regular_player_id] = (
-                        self._calculated_points.get(player.regular_player_id, 0) + player.score
-                    )
+                rp_id = player.regular_player_id
+                if rp_id is None:
+                    continue
+                self._calculated_points[rp_id] = self._calculated_points.get(rp_id, 0) + player.score
+                self._calculated_played[rp_id] = self._calculated_played.get(rp_id, 0) + 1
+
+            # Classement final pour les podiums
+            ranking = get_tournament_final_ranking(tournament)  # [name, name, ...]
+            for rank, name in enumerate(ranking, 1):
+                rp_id = name_to_rp.get(name.lower())
+                if rp_id is None or rank > 3:
+                    continue
+                if rank == 1:
+                    self._calculated_top1[rp_id] = self._calculated_top1.get(rp_id, 0) + 1
+                elif rank == 2:
+                    self._calculated_top2[rp_id] = self._calculated_top2.get(rp_id, 0) + 1
+                elif rank == 3:
+                    self._calculated_top3[rp_id] = self._calculated_top3.get(rp_id, 0) + 1
 
     def _save_players(self):
         """Sauvegarde les joueurs dans le storage."""
         RegularPlayerStorage.save([p.to_dict() for p in self._players])
 
     def _get_player_points(self, player: RegularPlayer) -> int:
-        """Retourne les points calculés pour un joueur (lien explicite uniquement)."""
         return self._calculated_points.get(player.id, 0)
+
+    def _get_player_top1(self, player: RegularPlayer) -> int:
+        return self._calculated_top1.get(player.id, 0)
+
+    def _get_player_top2(self, player: RegularPlayer) -> int:
+        return self._calculated_top2.get(player.id, 0)
+
+    def _get_player_top3(self, player: RegularPlayer) -> int:
+        return self._calculated_top3.get(player.id, 0)
+
+    def _get_player_played(self, player: RegularPlayer) -> int:
+        return self._calculated_played.get(player.id, 0)
 
     def _on_search_changed(self, text: str):
         self._search_text = text.strip().lower()
@@ -313,9 +353,10 @@ class PlayersViewMain(QWidget):
         return phone
 
     def _set_row(self, row: int, player: RegularPlayer):
-        """Remplit une ligne de la table."""
-        # Utiliser les points calculés depuis les tournois
-        calculated_points = self._get_player_points(player)
+        """Remplit une ligne de la table avec les stats calculées à la volée."""
+        top1 = self._get_player_top1(player)
+        top2 = self._get_player_top2(player)
+        top3 = self._get_player_top3(player)
 
         if player.discord_id:
             discord_label = player.discord_pseudo if player.discord_pseudo else "🔗 Lié"
@@ -326,11 +367,11 @@ class PlayersViewMain(QWidget):
             (player.full_name, None),
             (self._format_phone(player.phone), None),
             (discord_label, None),
-            (str(calculated_points), None),
-            (str(player.top_1), None),
-            (str(player.top_2), None),
-            (str(player.top_3), None),
-            (str(player.total_podiums), None),
+            (str(self._get_player_points(player)), None),
+            (str(top1), None),
+            (str(top2), None),
+            (str(top3), None),
+            (str(top1 + top2 + top3), None),
         ]
 
         for col, (text, data) in enumerate(items):
