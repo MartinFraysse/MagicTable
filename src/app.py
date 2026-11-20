@@ -47,42 +47,7 @@ Categories=Game;
     subprocess.run(["gtk-update-icon-cache", "-f", "-t", str(icon_dst.parent.parent.parent)], capture_output=True)
     subprocess.run(["update-desktop-database", str(desktop_dst.parent)], capture_output=True)
 
-def _pull_from_server() -> None:
-    """Synchronise les données depuis le serveur au démarrage (silencieux si hors-ligne).
-    Le serveur est source de vérité — le local est un simple cache.
-    Après le pull, on ne repousse QUE les joueurs si des discord_ids ont été fusionnés.
-    """
-    try:
-        from sync.server_client import pull_all, push
-        from storage.base import DATA_DIR
-        import json
-        result = pull_all(DATA_DIR)
-        synced = result["synced"]
-        failed = result["failed"]
-        if synced:
-            print(f"✅ Sync serveur (pull) : {', '.join(synced)}")
-            # Repousser uniquement les joueurs si des discord_ids locaux ont été fusionnés
-            if result.get("discord_ids_merged") and "players" in synced:
-                players_path = DATA_DIR / "regular_players.json"
-                try:
-                    players_data = json.loads(players_path.read_text(encoding="utf-8"))
-                    import threading
-                    threading.Thread(
-                        target=push, args=("players", players_data), daemon=True
-                    ).start()
-                    print("✅ Discord IDs fusionnés repoussés vers le serveur")
-                except Exception:
-                    pass
-        if failed:
-            print(f"⚠️  Sync serveur — ressources manquantes : {', '.join(failed)}")
-        if not synced:
-            print("⚠️  Serveur inaccessible, démarrage avec les données locales")
-    except Exception as e:
-        print(f"⚠️  Sync serveur ignorée : {e}")
-
-
 def main():
-    _pull_from_server()
     app = QApplication(sys.argv)
 
     app.setStyle(QStyleFactory.create("Fusion"))

@@ -15,7 +15,7 @@ from storage.tournaments import TournamentStorage
 from ui.league.dialogs.create_league_dialog import CreateLeagueDialog
 from ui.league.dialogs.add_tournament_dialog import AddTournamentDialog
 from ui.league.dialogs.player_detail_dialog import PlayerDetailDialog
-from ui.tournaments.historic_view import TournamentDetailDialog
+from ui.tournaments.dialogs.historic_dialogs import TournamentDetailDialog
 
 
 class LeagueViewMain(QWidget):

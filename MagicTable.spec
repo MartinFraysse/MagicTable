@@ -30,6 +30,10 @@ a = Analysis(
         "PySide6.QtNetwork",
         "ssl",
         "certifi",
+        # Appariement Swiss (couplage optimal)
+        "networkx.algorithms.matching",
+        # Export PDF des tournois
+        "fpdf",
     ],
     hookspath=[],
     hooksconfig={},

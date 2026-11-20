@@ -1,22 +1,14 @@
 """Dialog de création / édition d'une ligue."""
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QLineEdit, QComboBox, QSpinBox, QLabel,
-    QPushButton, QFrame, QDialogButtonBox,
+    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QLineEdit, QComboBox, QSpinBox, QLabel,
+    QFrame, QDialogButtonBox
 )
 from PySide6.QtCore import Qt
 
 from core.league import League, DEFAULT_SCORING, DEFAULT_PARTICIPATION_PTS, next_free_league_id
 
-FORMATS = [
-    "👑 Commander",
-    "⚔️ Duel Commander",
-    "🃏 Draft",
-    "🏆 AP",
-    "⚡ Pokemon",
-    "🔥 Rise",
-]
+from core.formats import FORMATS
 
 _POSITION_LABELS = ["1er", "2e", "3e", "4e", "5e", "6e", "7e", "8e"]
 

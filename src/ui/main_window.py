@@ -19,13 +19,6 @@ from ui.dashboard.multi_dashboard_container import MultiDashboardContainer
 from ui.league.league_view_main import LeagueViewMain
 from ui.commanders.commanders_view_main import CommandersViewMain
 
-try:
-    from sync.sync_manager import SyncManager
-    from storage.base import DATA_DIR as _DATA_DIR
-    _SYNC_AVAILABLE = True
-except ImportError:
-    _SYNC_AVAILABLE = False
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -81,16 +74,6 @@ class MainWindow(QMainWindow):
             self._on_tournaments_cleared
         )
 
-        # Recharger toutes les données après une synchro serveur
-        self.settings_view.data_synced.connect(
-            self._on_data_synced
-        )
-
-        # ── Sync périodique serveur ────────────────────────────────────────────
-        if _SYNC_AVAILABLE:
-            self._sync_manager = SyncManager(_DATA_DIR, parent=self)
-            self._sync_manager.data_changed.connect(self._on_data_synced)
-            self._sync_manager.start()
 
 
     # ========================
@@ -253,27 +236,8 @@ class MainWindow(QMainWindow):
     def _on_tournaments_cleared(self):
         """Recharge les tournois en mémoire après suppression depuis les paramètres."""
         self.dashboard_view.close_all()
-        self.tournaments_view.launch_view._clear_tournament()
+        self.tournaments_view.launch_view.clear_tournament()
         self.tournaments_view.upcoming_view.reload_from_storage()
-
-    def _on_data_synced(self):
-        """Recharge toutes les vues après une synchro serveur — sans redémarrer l'app."""
-        self.players_view.refresh()
-        self.commanders_view.refresh()
-        self.stats_view.refresh()
-        self.league_view.refresh()
-        self.tournaments_view.reload_from_storage()
-        self._sync_active_dashboards()
-
-    def _sync_active_dashboards(self):
-        """Met à jour les dashboards actifs (joueurs + ranking) sans toucher au timer ni au round."""
-        all_t = self.tournaments_view.upcoming_view._tournaments
-        by_id = {t.id: t for t in all_t}
-        for tid, dashboard in self.dashboard_view._dashboards.items():
-            fresh = by_id.get(tid)
-            if fresh and dashboard.current_tournament:
-                dashboard.current_tournament.players = fresh.players
-                dashboard.ranking_view.set_tournament(dashboard.current_tournament)
 
     def start_tournament(self, tournament: Tournament):
         self.stack.setCurrentIndex(0)
@@ -281,15 +245,3 @@ class MainWindow(QMainWindow):
 
         timer_duration = self.settings_view.get_timer_duration()
         self.dashboard_view.start_tournament(tournament, timer_duration)
-
-    def closeEvent(self, event):
-        """Notifie le bot Discord de supprimer les canaux pour tout tournoi encore ouvert."""
-        active_ids = list(self.dashboard_view._dashboards.keys())
-        if active_ids:
-            try:
-                from sync.server_client import notify_quit
-                for tid in active_ids:
-                    notify_quit(tid)
-            except Exception:
-                pass
-        super().closeEvent(event)

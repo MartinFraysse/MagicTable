@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+  MODÈLE D'UNE PAGE SUJET. Claude le copie en sujets/AAAA-MM-JJ-titre-court.html
+  (minuscules, tirets, sans accents) et remplit les parties dans l'ordre :
+    1. à la proposition : statut « propose », Le besoin, Ce que je propose (+ schéma si utile) ;
+       les parties Décision et Ce que j'ai fait restent avec leur texte « à venir » ;
+    2. après ta réponse : Décision (choix + date), statut « en-cours » ;
+    3. après la réalisation : Ce que j'ai fait (fichiers, schéma, vérifications), statut « fait » ;
+    4. À savoir : seulement s'il y a des limites ou des suites ; sinon supprimer la partie.
+  Statuts possibles (classe .pill) : propose · en-cours · fait · abandonne.
+  Peu de texte : phrases courtes, tableaux, schémas SVG (classes .box, .box-a, .box-c,
+  .box-ok, .box-w, .arrow, .t, .sub ; garder le <defs> de la flèche).
+  Ne pas oublier : ajouter/mettre à jour la ligne du sujet dans ../index.html.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicTable · Titre du sujet</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <span class="projet">MagicTable</span>
+  <a href="../index.html" class="actif">Sujets</a>
+  <a href="../construction.html">Construction</a>
+</nav>
+<main>
+
+<header class="hero">
+  <div class="kicker">Sujet · JJ/MM/AAAA</div>
+  <h1>Titre du sujet <span class="pill propose">Proposé</span></h1>
+  <p class="lead">Une phrase&nbsp;: de quoi il s'agit.</p>
+</header>
+
+<h2>Le besoin</h2>
+<div class="sec besoin">
+  <p>Ce que tu as demandé, en une ou deux phrases, et pourquoi.</p>
+</div>
+
+<h2>Ce que je propose</h2>
+<div class="sec proposition">
+  <div class="options">
+    <div class="option reco">
+      <h3>A · Nom de l'option</h3>
+      <p>Ce que ça donne, en une phrase.</p>
+      <p class="plus">ce que ça apporte</p>
+      <p class="moins">ce que ça coûte</p>
+    </div>
+    <div class="option">
+      <h3>B · Autre option</h3>
+      <p>Ce que ça donne, en une phrase.</p>
+      <p class="plus">ce que ça apporte</p>
+      <p class="moins">ce que ça coûte</p>
+    </div>
+  </div>
+  <p><b>Mon choix&nbsp;: A</b>, parce que… (une phrase).</p>
+  <figure class="schema">
+    <svg viewBox="0 0 860 140" role="img" aria-label="Schéma de la proposition">
+      <defs><marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/></marker></defs>
+      <rect x="60" y="35" width="220" height="70" rx="12" class="box"/>
+      <text class="t" x="170" y="66" text-anchor="middle">Avant</text>
+      <text class="sub" x="170" y="86" text-anchor="middle">ce qui existe</text>
+      <rect x="580" y="35" width="220" height="70" rx="12" class="box-a"/>
+      <text class="t" x="690" y="66" text-anchor="middle">Après</text>
+      <text class="sub" x="690" y="86" text-anchor="middle">ce que l'option A change</text>
+      <path class="arrow" d="M280,70 L578,70"/>
+    </svg>
+    <figcaption>Un schéma seulement s'il aide à comprendre (flux, parties, avant/après).</figcaption>
+  </figure>
+</div>
+
+<h2>Décision</h2>
+<div class="sec decision">
+  <p class="muted">À venir&nbsp;: ce que tu as choisi, et la date.</p>
+</div>
+
+<h2>Ce que j'ai fait</h2>
+<div class="sec fait">
+  <p class="muted">À venir, après la réalisation&nbsp;:</p>
+  <table>
+    <tr><th>Fichier</th><th>Changement</th></tr>
+    <tr><td><code>src/…</code></td><td>créé · modifié · supprimé, et pourquoi en quelques mots</td></tr>
+  </table>
+  <p class="muted">Puis&nbsp;: comment ça marche maintenant (schéma), et ce qui a été vérifié (tests lancés, essai réel) ou non.</p>
+</div>
+
+<h2>À savoir</h2>
+<div class="sec savoir">
+  <p>Limites, points ouverts, prochaines étapes. Supprimer cette partie s'il n'y a rien.</p>
+</div>
+
+<footer><a href="../index.html">← Tous les sujets</a></footer>
+</main>
+</body>
+</html>

@@ -4,14 +4,6 @@ import json
 from pathlib import Path
 from json import JSONDecodeError
 
-try:
-    from sync.server_client import fetch, is_configured, push_async, push_commander_images_async
-except ImportError:
-    fetch = None                         # type: ignore
-    is_configured = lambda: False        # type: ignore
-    push_async = None                    # type: ignore
-    push_commander_images_async = None   # type: ignore
-
 
 def _resolve_data_dir() -> Path:
     """
@@ -43,34 +35,8 @@ class JsonStorage:
     def _file(cls) -> Path:
         return DATA_DIR / cls.filename
 
-    # Correspondance filename → resource API
-    _RESOURCE_MAP: dict[str, str] = {
-        "regular_players.json": "players",
-        "tournaments.json":     "tournaments",
-        "leagues.json":         "leagues",
-        "commanders.json":      "commanders",
-    }
-
     @classmethod
     def load(cls) -> list[dict]:
-        resource = cls._RESOURCE_MAP.get(cls.filename)
-
-        # ── Lecture depuis le serveur (source de vérité) ──────────────────────
-        if resource and fetch is not None and is_configured():
-            data = fetch(resource, timeout=2)
-            if data is not None:
-                # Mettre en cache localement (fallback offline)
-                try:
-                    path = cls._file()
-                    path.write_text(
-                        json.dumps(data, indent=2, ensure_ascii=False),
-                        encoding="utf-8",
-                    )
-                except Exception:
-                    pass
-                return data
-
-        # ── Fallback : fichier local ──────────────────────────────────────────
         path = cls._file()
         if not path.exists() or path.stat().st_size == 0:
             return []
@@ -86,11 +52,3 @@ class JsonStorage:
 
         with open(cls._file(), "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-
-        # Push vers le serveur en arrière-plan (non-bloquant)
-        resource = cls._RESOURCE_MAP.get(cls.filename)
-        if resource and push_async is not None:
-            push_async(resource, data)
-            # Pour les commandants : synchroniser aussi les images
-            if resource == "commanders" and push_commander_images_async is not None:
-                push_commander_images_async(DATA_DIR, data)

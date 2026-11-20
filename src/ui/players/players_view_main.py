@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QRect, QModelIndex
+from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtGui import QPalette, QColor, QPainter, QBrush, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QWidget,
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from core.regular_player import RegularPlayer
 from core.tournament import Tournament
-from core.stats_analyzer import StatsAnalyzer
+from core.stats_analyzer import StatsAnalyzer, PlayerStats
 from storage.regular_players import RegularPlayerStorage
 from storage.tournaments import TournamentStorage
 from ui.players.dialogs.create_player import CreatePlayerDialog
@@ -172,7 +172,7 @@ class PlayersViewMain(QWidget):
         table.setObjectName("PlayersTable")
 
         # Colonnes
-        columns = ["Pseudo", "Nom complet", "Téléphone", "Discord", "Points", "🥇", "🥈", "🥉", "Podiums"]
+        columns = ["Pseudo", "Nom complet", "Téléphone", "Points", "🥇", "🥈", "🥉", "Podiums"]
         table.setColumnCount(len(columns))
         table.setHorizontalHeaderLabels(columns)
 
@@ -208,12 +208,11 @@ class PlayersViewMain(QWidget):
         header.setSectionResizeMode(0, QHeaderView.Stretch)          # Pseudo
         header.setSectionResizeMode(1, QHeaderView.Stretch)          # Nom complet
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents) # Téléphone
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents) # Discord
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents) # Points
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents) # Top 1
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents) # Top 2
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents) # Top 3
-        header.setSectionResizeMode(8, QHeaderView.ResizeToContents) # Podiums
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents) # Points
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents) # Top 1
+        header.setSectionResizeMode(5, QHeaderView.ResizeToContents) # Top 2
+        header.setSectionResizeMode(6, QHeaderView.ResizeToContents) # Top 3
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents) # Podiums
 
         # Menu contextuel
         table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -242,68 +241,17 @@ class PlayersViewMain(QWidget):
         self._refresh_table()
 
     def _calculate_points_from_tournaments(self):
-        """Calcule points, podiums et tournois joués depuis les archives (lien explicite uniquement)."""
-        from core.league import get_tournament_final_ranking
-
+        """Calcule points, podiums et tournois joués depuis les archives (source unique)."""
         raw_tournaments = [t for t in TournamentStorage.load() if t.get("archived", False)]
         tournaments = [Tournament.from_dict(t) for t in raw_tournaments]
-
-        self._analyzer = StatsAnalyzer(tournaments)
-
-        self._calculated_points: dict[int, int] = {}       # rp_id → score total
-        self._calculated_top1: dict[int, int] = {}         # rp_id → nb de 1ères places
-        self._calculated_top2: dict[int, int] = {}
-        self._calculated_top3: dict[int, int] = {}
-        self._calculated_played: dict[int, int] = {}       # rp_id → tournois joués
-
-        for tournament in tournaments:
-            # nom_lowercase → regular_player_id pour ce tournoi
-            name_to_rp: dict[str, int] = {
-                p.name.lower(): p.regular_player_id
-                for p in tournament.players
-                if p.regular_player_id is not None
-            }
-            if not name_to_rp:
-                continue
-
-            for player in tournament.players:
-                rp_id = player.regular_player_id
-                if rp_id is None:
-                    continue
-                self._calculated_points[rp_id] = self._calculated_points.get(rp_id, 0) + player.score
-                self._calculated_played[rp_id] = self._calculated_played.get(rp_id, 0) + 1
-
-            # Classement final pour les podiums
-            ranking = get_tournament_final_ranking(tournament)  # [name, name, ...]
-            for rank, name in enumerate(ranking, 1):
-                rp_id = name_to_rp.get(name.lower())
-                if rp_id is None or rank > 3:
-                    continue
-                if rank == 1:
-                    self._calculated_top1[rp_id] = self._calculated_top1.get(rp_id, 0) + 1
-                elif rank == 2:
-                    self._calculated_top2[rp_id] = self._calculated_top2.get(rp_id, 0) + 1
-                elif rank == 3:
-                    self._calculated_top3[rp_id] = self._calculated_top3.get(rp_id, 0) + 1
+        self._analyzer = StatsAnalyzer(tournaments, regular_players=self._players)
 
     def _save_players(self):
         """Sauvegarde les joueurs dans le storage."""
         RegularPlayerStorage.save([p.to_dict() for p in self._players])
 
-    def _get_player_points(self, player: RegularPlayer) -> int:
-        return self._calculated_points.get(player.id, 0)
-
-    def _get_player_top1(self, player: RegularPlayer) -> int:
-        return self._calculated_top1.get(player.id, 0)
-
-    def _get_player_top2(self, player: RegularPlayer) -> int:
-        return self._calculated_top2.get(player.id, 0)
-
-    def _get_player_top3(self, player: RegularPlayer) -> int:
-        return self._calculated_top3.get(player.id, 0)
-
-    def _get_player_played(self, player: RegularPlayer) -> int:
-        return self._calculated_played.get(player.id, 0)
+    def _player_stats(self, player: RegularPlayer) -> PlayerStats:
+        return self._analyzer.get_regular_player_stats(player.id)
 
     def _on_search_changed(self, text: str):
         self._search_text = text.strip().lower()
@@ -312,7 +260,7 @@ class PlayersViewMain(QWidget):
     def _refresh_table(self):
         """Rafraîchit la table des joueurs."""
         # Trier par points calculés décroissants, puis par pseudo
-        self._players.sort(key=lambda p: (-self._get_player_points(p), p.pseudo.lower()))
+        self._players.sort(key=lambda p: (-self._player_stats(p).total_points, p.pseudo.lower()))
 
         # Filtrer selon la recherche
         filtered = self._players
@@ -354,24 +302,17 @@ class PlayersViewMain(QWidget):
 
     def _set_row(self, row: int, player: RegularPlayer):
         """Remplit une ligne de la table avec les stats calculées à la volée."""
-        top1 = self._get_player_top1(player)
-        top2 = self._get_player_top2(player)
-        top3 = self._get_player_top3(player)
+        stats = self._player_stats(player)
 
-        if player.discord_id:
-            discord_label = player.discord_pseudo if player.discord_pseudo else "🔗 Lié"
-        else:
-            discord_label = "—"
         items = [
             (player.pseudo, player.id),
             (player.full_name, None),
             (self._format_phone(player.phone), None),
-            (discord_label, None),
-            (str(self._get_player_points(player)), None),
-            (str(top1), None),
-            (str(top2), None),
-            (str(top3), None),
-            (str(top1 + top2 + top3), None),
+            (str(stats.total_points), None),
+            (str(stats.top_1), None),
+            (str(stats.top_2), None),
+            (str(stats.top_3), None),
+            (str(stats.total_podiums), None),
         ]
 
         for col, (text, data) in enumerate(items):
@@ -406,7 +347,6 @@ class PlayersViewMain(QWidget):
             pseudo=data["pseudo"],
             full_name=data["full_name"],
             phone=data["phone"],
-            discord_id=data["discord_id"],
         )
 
         self._next_id += 1
@@ -483,20 +423,11 @@ class PlayersViewMain(QWidget):
         if not item:
             return
 
-        row = self.table.currentRow()
-        player = self._get_selected_player()
-
         menu = QMenu(self)
 
         stats_action = menu.addAction("📊 Statistiques")
         menu.addSeparator()
         edit_action = menu.addAction("✏️ Modifier")
-
-        unlink_action = None
-        if player and player.discord_id:
-            menu.addSeparator()
-            label = f"🔓 Délier Discord ({player.discord_pseudo})" if player.discord_pseudo else "🔓 Délier Discord"
-            unlink_action = menu.addAction(label)
 
         menu.addSeparator()
         delete_action = menu.addAction("🗑️ Supprimer")
@@ -507,8 +438,6 @@ class PlayersViewMain(QWidget):
             self._show_player_stats()
         elif action == edit_action:
             self._edit_selected_player()
-        elif unlink_action and action == unlink_action:
-            self._unlink_discord(player)
         elif action == delete_action:
             self._delete_selected_player()
 
@@ -522,24 +451,6 @@ class PlayersViewMain(QWidget):
             return None
         player_id = item.data(Qt.UserRole)
         return next((p for p in self._players if p.id == player_id), None)
-
-    def _unlink_discord(self, player: "RegularPlayer"):
-        """Délie le compte Discord du joueur."""
-        name = player.discord_pseudo or player.discord_id
-        reply = QMessageBox.question(
-            self,
-            "Délier Discord",
-            f"Délier le compte Discord « {name} » du joueur « {player.pseudo} » ?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        if reply != QMessageBox.Yes:
-            return
-
-        player.discord_id = ""
-        player.discord_pseudo = ""
-        self._save_players()
-        self._refresh_table()
 
     def _show_player_stats(self):
         """Affiche les statistiques du joueur sélectionné."""

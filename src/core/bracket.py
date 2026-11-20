@@ -145,9 +145,7 @@ class Bracket:
                     petite_match.player2_id = loser_id
 
         # Verifier si le bracket est termine
-        final_matches = self.get_matches_for_round(BracketRoundName.FINAL)
-        if final_matches and all(m.finished for m in final_matches):
-            self.finished = True
+        self._update_finished()
 
     def reset_result(self, match_id: int) -> None:
         """
@@ -193,25 +191,57 @@ class Bracket:
                 if petite_match.finished:
                     self.reset_result(petite_match.match_id)
 
+    def _has_pending_feeder(self, match: BracketMatch) -> bool:
+        """True si un match non terminé doit encore envoyer un joueur dans `match`."""
+        return any(
+            not m.finished
+            and match.match_id in (m.next_match_id, m.loser_next_match_id)
+            for m in self.matches
+        )
+
     def auto_resolve_dropped(self, dropped_ids: set[int]) -> list[int]:
         """
-        Pour tout match non terminé dont l'un des joueurs a droppé ou est absent (None),
-        donne automatiquement la victoire à l'adversaire.
+        Résout automatiquement les matchs qui ne pourront pas être joués :
+        - un joueur présent face à un slot définitivement vide ou à un joueur droppé
+          → victoire par forfait du joueur présent ;
+        - aucun joueur possible des deux côtés → match clos sans vainqueur.
+
+        Un slot vide n'est « définitif » que si aucun match non terminé ne doit
+        encore l'alimenter (sinon on attend le résultat du match précédent).
         Retourne la liste des match_ids auto-résolus.
         """
-        resolved = []
-        for match in self.matches:
-            if match.finished:
-                continue
-            p1_absent = match.player1_id is None or match.player1_id in dropped_ids
-            p2_absent = match.player2_id is None or match.player2_id in dropped_ids
-            if p1_absent and match.player2_id is not None and match.player2_id not in dropped_ids:
-                self.record_result(match.match_id, match.player2_id)
+        resolved: list[int] = []
+        changed = True
+        while changed:
+            changed = False
+            for match in self.matches:
+                if match.finished:
+                    continue
+                pending = self._has_pending_feeder(match)
+                p1_ok = match.player1_id is not None and match.player1_id not in dropped_ids
+                p2_ok = match.player2_id is not None and match.player2_id not in dropped_ids
+                # Slot absent = joueur droppé, ou slot vide qui ne sera plus rempli
+                p1_absent = (match.player1_id in dropped_ids) or (match.player1_id is None and not pending)
+                p2_absent = (match.player2_id in dropped_ids) or (match.player2_id is None and not pending)
+
+                if p1_ok and p2_absent:
+                    self.record_result(match.match_id, match.player1_id)
+                elif p2_ok and p1_absent:
+                    self.record_result(match.match_id, match.player2_id)
+                elif p1_absent and p2_absent:
+                    # Personne ne peut jouer ce match (ex. petite finale sans perdants)
+                    match.finished = True
+                    match.winner_id = None
+                    self._update_finished()
+                else:
+                    continue
                 resolved.append(match.match_id)
-            elif p2_absent and match.player1_id is not None and match.player1_id not in dropped_ids:
-                self.record_result(match.match_id, match.player1_id)
-                resolved.append(match.match_id)
+                changed = True
         return resolved
+
+    def _update_finished(self) -> None:
+        final_matches = self.get_matches_for_round(BracketRoundName.FINAL)
+        self.finished = bool(final_matches) and all(m.finished for m in final_matches)
 
     def get_round_order(self) -> list[BracketRoundName]:
         return _ROUND_ORDER[self.bracket_type]

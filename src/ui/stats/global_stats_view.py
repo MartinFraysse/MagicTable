@@ -11,7 +11,10 @@ from PySide6.QtGui import (
 )
 
 from core.stats_analyzer import StatsAnalyzer
-from ui.commanders.dialogs.commander_stats import _compute_global_stats, _RankingRow
+from core.commander_stats import compute_global_stats
+from storage.commanders import CommanderStorage
+from storage.tournaments import TournamentStorage
+from ui.stats.commander_ranking_row import CommanderRankingRow
 from storage.base import DATA_DIR
 
 
@@ -280,7 +283,7 @@ class GlobalStatsView(QWidget):
 
         self._update_format_distribution(analyzer.get_format_distribution())
 
-        data = _compute_global_stats()
+        data = compute_global_stats(TournamentStorage.load(), CommanderStorage.load())
         self._update_victory_tiles(data)
         self._update_played_lists(data)
 
@@ -373,7 +376,7 @@ class GlobalStatsView(QWidget):
             else:
                 for rank, (name, count, img) in enumerate(entries, 1):
                     s = "s" if count > 1 else ""
-                    layout.addWidget(_RankingRow(rank, name, count, f"tournoi{s}", img))
+                    layout.addWidget(CommanderRankingRow(rank, name, count, f"tournoi{s}", img))
 
         self._played_multi_layout.addStretch()
         self._played_duel_layout.addStretch()

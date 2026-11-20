@@ -1,8 +1,8 @@
 """Dialog pour ajouter un tournoi archivé à une ligue."""
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QScrollArea, QWidget,
-    QFrame, QHBoxLayout, QDialogButtonBox, QPushButton,
+    QDialog, QVBoxLayout, QLabel, QScrollArea, QWidget, QFrame, QHBoxLayout,
+    QDialogButtonBox
 )
 from PySide6.QtCore import Qt
 

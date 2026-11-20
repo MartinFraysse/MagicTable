@@ -14,10 +14,7 @@ class Player:
     reward_claimed: bool = False
     commander: str = ""
 
-    # Champs Swiss (départage)
-    buchholz: float = 0.0      # Somme des scores des adversaires
-    sos: float = 0.0           # Strength of Schedule (moyenne des scores adverses)
-    had_bye: bool = False      # A reçu un bye dans ce tournoi
+    had_bye: bool = False      # A reçu un bye dans ce tournoi (Swiss)
 
     # Drop / forfait
     dropped: bool = False      # Joueur qui a abandonné le tournoi

@@ -75,18 +75,9 @@ class RankingsView(QWidget):
         self.empty_label.hide()
         layout.addWidget(self.empty_label)
 
-    def update_stats(self, analyzer: StatsAnalyzer, regular_pseudos: set[str] = None):
-        """Met à jour le classement (uniquement joueurs réguliers si spécifié)."""
-        all_players = analyzer.get_top_players(limit=100)
-
-        # Filtrer pour ne garder que les joueurs réguliers
-        if regular_pseudos:
-            players = [
-                p for p in all_players
-                if p.name.lower().strip() in regular_pseudos
-            ]
-        else:
-            players = all_players
+    def update_stats(self, analyzer: StatsAnalyzer):
+        """Met à jour le classement des joueurs réguliers."""
+        players = analyzer.get_regular_players_ranking()[:100]
 
         self._players = players
 

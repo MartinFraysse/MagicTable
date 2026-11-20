@@ -141,10 +141,10 @@ class TournamentViewMain(QWidget):
         """
         Lance un tournoi dans LaunchView (clic droit).
         """
-        if self.launch_view._current_tournament:
+        if self.launch_view.current_tournament:
             return
 
-        self.launch_view._load_tournament(tournament)
+        self.launch_view.load_tournament(tournament)
         self.upcoming_view.hide_tournament_card(tournament.id)
 
     def _edit_from_launch(self, tournament: Tournament):
@@ -159,70 +159,54 @@ class TournamentViewMain(QWidget):
         dialog.apply_changes()
 
         self.upcoming_view.refresh_tournament(tournament)
-        self.launch_view._load_tournament(tournament)
-        self.upcoming_view._update_league_affiliation(tournament.id, old_league_id, new_league_id)
+        self.launch_view.load_tournament(tournament)
+        self.upcoming_view.update_league_affiliation(tournament.id, old_league_id, new_league_id)
 
     def _start_tournament(self, tournament: Tournament):
         # Ne créer un round que si le tournoi n'en a pas encore
         if not tournament.rounds:
             # Utiliser l'algorithme approprié selon le système d'appariement
-            if tournament.is_swiss_format():
-                tournament.create_round_swiss()
-            else:
-                tournament.create_round()
+            tournament.create_round()
 
-        # Sauvegarder AVANT de notifier le bot Discord :
-        # le bot lit tournaments.json sur le serveur pour trouver les tables.
-        # Si on notifie avant l'upload, le serveur n'a pas encore les pairings.
-        self.upcoming_view._save_all()
+        self.upcoming_view.save_all()
 
         self.round_started.emit(tournament)
 
-        # Notifier le bot Discord à chaque lancement (création canaux si besoin)
-        try:
-            from sync.server_client import notify_start_async
-            notify_start_async(tournament.id)
-        except Exception as e:
-            print(f"[sync] notify_start_async ignoré : {e}")
-
     def reload_from_storage(self):
-        """Recharge les tournois ET l'historique depuis le storage (après sync serveur)."""
+        """Recharge les tournois ET l'historique depuis le storage."""
         self.upcoming_view.reload_from_storage()
-        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view.tournaments)
 
         # Rafraîchir la launch_view si un tournoi y est chargé
-        if self.launch_view._current_tournament:
-            tid = self.launch_view._current_tournament.id
+        if self.launch_view.current_tournament:
+            tid = self.launch_view.current_tournament.id
             updated = next(
-                (t for t in self.upcoming_view._tournaments if t.id == tid), None
+                (t for t in self.upcoming_view.tournaments if t.id == tid), None
             )
             if updated:
                 self.launch_view.refresh_if_loaded(updated)
 
     def save_tournaments(self):
         """Sauvegarde tous les tournois (appelé depuis le dashboard)."""
-        self.upcoming_view._save_all()
+        self.upcoming_view.save_all()
 
     def _init_historic(self):
         """Initialise la vue historique avec les tournois archivés."""
-        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view.tournaments)
         self.historic_view.tournament_deleted.connect(self._on_historic_tournament_deleted)
         self.historic_view.tournaments_changed.connect(self._on_historic_tournaments_changed)
 
     def _on_historic_tournaments_changed(self):
         """Appelé quand les données d'un tournoi archivé sont modifiées."""
-        self.upcoming_view._save_all()
+        self.upcoming_view.save_all()
 
     def _on_historic_tournament_deleted(self, tournament_id: int):
         """Appelé quand un tournoi archivé est supprimé depuis l'historique."""
-        self.upcoming_view._tournaments = [
-            t for t in self.upcoming_view._tournaments if t.id != tournament_id
-        ]
-        self.upcoming_view._save_all()
+        self.upcoming_view.remove_tournament(tournament_id)
 
     def on_tournament_archived(self, tournament_id: int):
         """Appelé quand un tournoi est archivé depuis le dashboard."""
         self.upcoming_view.remove_archived_tournament(tournament_id)
-        self.launch_view._clear_tournament()
-        self.historic_view.refresh_archived_tournaments(self.upcoming_view._tournaments)
+        self.launch_view.clear_tournament()
+        self.historic_view.refresh_archived_tournaments(self.upcoming_view.tournaments)
  

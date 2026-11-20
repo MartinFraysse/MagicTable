@@ -52,8 +52,8 @@ class StatsViewMain(QWidget):
         regular_players = [RegularPlayer.from_dict(d) for d in raw_regular]
         regular_pseudos = {p.pseudo.lower().strip() for p in regular_players}
 
-        analyzer = StatsAnalyzer(tournaments)
+        analyzer = StatsAnalyzer(tournaments, regular_players=regular_players)
 
         self.global_stats_view.update_stats(analyzer)
-        self.rankings_view.update_stats(analyzer, regular_pseudos)
+        self.rankings_view.update_stats(analyzer)
         self.head_to_head_view.update_stats(analyzer, regular_pseudos)

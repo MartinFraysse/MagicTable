@@ -69,12 +69,14 @@ def build_standings(tournament: Tournament) -> list[StandingEntry]:
 
             players = table.players
 
-            # --- Bye (1 seul joueur) : victoire automatique, pas d'adversaire ---
+            # --- Bye (1 seul joueur) : victoire 2-0 (MTR), pas d'adversaire ---
             if len(players) == 1:
                 pid = players[0].id
                 if pid in stats:
                     stats[pid].wins += 1
                     stats[pid].matches_played += 1
+                    stats[pid].games_won += 2
+                    stats[pid].games_played += 2
                     # Pas d'adversaire → pas ajouté à opponents
                 continue
 
@@ -157,7 +159,8 @@ def build_standings(tournament: Tournament) -> list[StandingEntry]:
         count = 0
         for opp_id in s.opponents:
             opp = stats.get(opp_id)
-            if opp is None:
+            # Adversaire sans aucun score BO3 saisi : pas de GW% → ignoré
+            if opp is None or opp.games_played == 0:
                 continue
             total += max(opp.gw_pct, 0.33)
             count += 1

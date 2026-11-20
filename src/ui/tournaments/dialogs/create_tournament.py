@@ -4,8 +4,9 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QSpinBox, QAbstractSpinBox,
     QStyledItemDelegate, QSizePolicy,
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 from core.tournament import Tournament
+from core.formats import FORMATS, is_multiplayer_format
 from core.league import League
 from storage.leagues import LeagueStorage
 
@@ -66,14 +67,7 @@ class CreateTournamentDialog(QDialog):
         self.format_input.addItem("🎴 Format du tournoi")
         
         # Formats prédéfinis
-        self.format_input.addItems([
-            "👑 Commander",
-            "⚔️ Duel Commander",
-            "🃏 Draft",
-            "🏆 AP",
-            "⚡ Pokemon",
-            "🔥 Rise",
-        ])
+        self.format_input.addItems(FORMATS)
 
         self.format_input.currentIndexChanged.connect(self._update_state)
         root.addWidget(self.format_input)
@@ -230,7 +224,7 @@ class CreateTournamentDialog(QDialog):
     def _on_format_changed(self):
         """Les formats 1v1 utilisent toujours Swiss, Commander toujours Standard."""
         current = self.format_input.currentText()
-        is_1v1 = current not in ["👑 Commander", "🎴 Format du tournoi"]
+        is_1v1 = self.format_input.currentIndex() > 0 and not is_multiplayer_format(current)
         if is_1v1:
             self.pairing_combo.setCurrentIndex(1)  # Swiss
         else:
@@ -281,7 +275,7 @@ class CreateTournamentDialog(QDialog):
     def get_pairing_system(self) -> str:
         """Retourne 'swiss' pour les formats 1v1 (dont Draft), 'standard' pour Commander."""
         current = self.format_input.currentText()
-        is_1v1 = current not in ["👑 Commander", "🎴 Format du tournoi"]
+        is_1v1 = self.format_input.currentIndex() > 0 and not is_multiplayer_format(current)
         return "swiss" if is_1v1 else "standard"
 
     def _update_league_combo(self) -> None:

@@ -2,11 +2,18 @@
 Analyseur de statistiques pour les tournois et face-à-face.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from collections import defaultdict
+from typing import TYPE_CHECKING
+
 from core.tournament import Tournament
-from core.standings import build_standings
-from core.bracket import get_bracket_final_ranking
+from core.ranking import final_ranking
+
+if TYPE_CHECKING:
+    from core.player import Player
+    from core.regular_player import RegularPlayer
 
 
 
@@ -65,14 +72,41 @@ class PlayerStats:
 class StatsAnalyzer:
     """Analyseur de statistiques pour les tournois."""
 
-    def __init__(self, tournaments: list[Tournament]):
+    def __init__(
+        self,
+        tournaments: list[Tournament],
+        regular_players: list[RegularPlayer] | None = None,
+    ):
         self._tournaments = [t for t in tournaments if t.archived]
         self._player_stats: dict[str, PlayerStats] = {}
+
+        # Stats par joueur régulier (source unique pour les vues Joueurs / Stats)
+        self._regular_players = list(regular_players or [])
+        self._regular_ids = {rp.id for rp in self._regular_players}
+        self._regular_by_pseudo = {
+            self._normalize_name(rp.pseudo): rp.id for rp in self._regular_players
+        }
+        self._regular_stats: dict[int, PlayerStats] = {
+            rp.id: PlayerStats(name=rp.pseudo) for rp in self._regular_players
+        }
+
         self._analyze_all()
 
     def _normalize_name(self, name: str) -> str:
         """Normalise un nom pour la comparaison."""
         return name.lower().strip()
+
+    def _resolve_regular_id(self, player: Player) -> int | None:
+        """
+        Joueur régulier correspondant à un joueur de tournoi :
+        lien explicite (regular_player_id) en priorité, sinon pseudo identique
+        (tournois archivés avant l'introduction du lien).
+        """
+        if player.regular_player_id in self._regular_ids:
+            return player.regular_player_id
+        if player.regular_player_id is not None:
+            return None  # lien vers un joueur régulier supprimé
+        return self._regular_by_pseudo.get(self._normalize_name(player.name))
 
     def _analyze_all(self):
         """Analyse tous les tournois pour extraire les statistiques."""
@@ -81,25 +115,8 @@ class StatsAnalyzer:
 
     def _analyze_tournament(self, tournament: Tournament):
         """Analyse un tournoi pour extraire les stats des joueurs."""
-        players_by_id = {p.id: p for p in tournament.players}
-
-        # Classement Swiss de base
-        if tournament.is_1v1_format():
-            standings = build_standings(tournament)
-            swiss_ordered = [players_by_id[e.player_id] for e in standings if e.player_id in players_by_id]
-        else:
-            swiss_ordered = sorted(
-                tournament.players,
-                key=lambda p: (-p.score, -p.robustness, p.name),
-            )
-
-        # Si bracket présent, il prime sur le classement Swiss
-        if tournament.bracket:
-            swiss_ids = [p.id for p in swiss_ordered]
-            final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
-            ranked = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
-        else:
-            ranked = swiss_ordered
+        # Classement final (bracket prioritaire sur les rondes)
+        ranked = final_ranking(tournament)
 
         # Pré-calculer les matchs individuels (victoires/défaites) par joueur
         player_match_stats: dict[int, tuple[int, int]] = {}  # id -> (played, won)
@@ -129,25 +146,31 @@ class StatsAnalyzer:
                         won += 1
             player_match_stats[player.id] = (played, won)
 
+        counted_regulars: set[int] = set()
         for rank, player in enumerate(ranked, 1):
             name_key = self._normalize_name(player.name)
 
             if name_key not in self._player_stats:
                 self._player_stats[name_key] = PlayerStats(name=player.name)
 
-            stats = self._player_stats[name_key]
-            stats.tournaments_played += 1
-            stats.total_points += player.score
+            p_played, _ = player_match_stats.get(player.id, (0, 0))
+            targets = [self._player_stats[name_key]]
 
-            if rank == 1:
-                stats.top_1 += 1
-            elif rank == 2:
-                stats.top_2 += 1
-            elif rank == 3:
-                stats.top_3 += 1
+            rp_id = self._resolve_regular_id(player)
+            if rp_id is not None and rp_id not in counted_regulars:
+                counted_regulars.add(rp_id)
+                targets.append(self._regular_stats[rp_id])
 
-            p_played, p_won = player_match_stats.get(player.id, (0, 0))
-            stats.total_matches += p_played
+            for stats in targets:
+                stats.tournaments_played += 1
+                stats.total_points += player.score
+                stats.total_matches += p_played
+                if rank == 1:
+                    stats.top_1 += 1
+                elif rank == 2:
+                    stats.top_2 += 1
+                elif rank == 3:
+                    stats.top_3 += 1
 
     def get_global_stats(self) -> dict:
         """Retourne les statistiques globales."""
@@ -182,6 +205,16 @@ class StatsAnalyzer:
         # Trier par top_1, puis top_2, puis top_3, puis points
         players.sort(key=lambda p: (-p.top_1, -p.top_2, -p.top_3, -p.total_points))
         return players[:limit]
+
+    def get_regular_player_stats(self, regular_player_id: int) -> PlayerStats:
+        """Stats cumulées d'un joueur régulier (zéros s'il n'a joué aucun tournoi archivé)."""
+        return self._regular_stats.get(regular_player_id) or PlayerStats(name="")
+
+    def get_regular_players_ranking(self) -> list[PlayerStats]:
+        """Joueurs réguliers ayant joué au moins un tournoi archivé, triés comme get_top_players."""
+        players = [s for s in self._regular_stats.values() if s.tournaments_played > 0]
+        players.sort(key=lambda p: (-p.top_1, -p.top_2, -p.top_3, -p.total_points))
+        return players
 
     def get_all_players(self) -> list[str]:
         """Retourne la liste de tous les joueurs uniques."""

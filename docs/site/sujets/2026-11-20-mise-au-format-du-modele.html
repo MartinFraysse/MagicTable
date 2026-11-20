@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicTable · Mise au format du modèle de projet</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <span class="projet">MagicTable</span>
+  <a href="../index.html" class="actif">Sujets</a>
+  <a href="../construction.html">Construction</a>
+</nav>
+<main>
+
+<header class="hero">
+  <div class="kicker">Sujet · 20/11/2026</div>
+  <h1>Mise au format du modèle de projet <span class="pill fait">Fait</span></h1>
+  <p class="lead">Appliquer le modèle <code>~/Documents/projets/.template</code> à MagicTable, sans toucher au code.</p>
+</header>
+
+<h2>Le besoin</h2>
+<div class="sec besoin">
+  <p>MagicTable venait d'une ancienne version du modèle.</p>
+  <p>Tu voulais la structure actuelle (Claude, journal, site de suivi, doc, PDF) sans changer la logique de l'appli.</p>
+</div>
+
+<h2>Ce que je propose</h2>
+<div class="sec proposition">
+  <div class="options">
+    <div class="option reco">
+      <h3>A · Garder, ranger</h3>
+      <p>README au format du modèle, sections de l'appli conservées ; doc technique déplacée dans <code>docs/</code>.</p>
+      <p class="plus">rien n'est réécrit, rien n'est perdu</p>
+      <p class="moins">la doc n'est pas encore en chapitres (hors PDF)</p>
+    </div>
+    <div class="option">
+      <h3>B · Migrer en chapitres</h3>
+      <p>Réécrire toute la doc dans <code>docs/NN-*/</code> et générer le PDF.</p>
+      <p class="plus">doc complète dans le PDF</p>
+      <p class="moins">vraie rédaction, plus longue</p>
+    </div>
+    <div class="option">
+      <h3>C · Ne rien déplacer</h3>
+      <p>Ajouter seulement les fichiers manquants du modèle.</p>
+      <p class="plus">minimal</p>
+      <p class="moins">racine encombrée, doc hors des règles du modèle</p>
+    </div>
+  </div>
+  <p><b>Mon choix&nbsp;: A</b>, parce qu'il applique le modèle sans réécrire ta doc ; B reste possible ensuite.</p>
+</div>
+
+<h2>Décision</h2>
+<div class="sec decision">
+  <p><b>A · Garder, ranger</b> — 20/11/2026.</p>
+</div>
+
+<h2>Ce que j'ai fait</h2>
+<div class="sec fait">
+  <table>
+    <tr><th>Fichier</th><th>Changement</th></tr>
+    <tr><td><code>.claude/</code></td><td>créé : CLAUDE.md, regles-doc.md, regles-site.md, hooks/journal.sh, settings.json, SESSION_LOG.md · supprimé : rules.md (ancien modèle)</td></tr>
+    <tr><td><code>README.md</code></td><td>recomposé : Commandes, Organisation du dépôt, branches (modèle) + Fonctionnalités, Formats, Installation, Utilisation, Tests (conservés)</td></tr>
+    <tr><td><code>src/README.md</code></td><td>rempli au format du modèle : stack, organisation, commandes, conventions</td></tr>
+    <tr><td><code>docs/</code></td><td>créé : README.md (règles), .claude_doc.md, pdf/page-de-garde.typ, site/ · supprimé : COMMITS.md (ancien modèle)</td></tr>
+    <tr><td><code>docs/technical-doc.md</code>, <code>docs/architecture.md</code></td><td>déplacés depuis <code>TECHNICAL_DOC.md</code> et <code>docs/ARCHITECTURE.md</code>, contenu inchangé</td></tr>
+    <tr><td><code>.gitignore</code>, <code>.editorconfig</code></td><td>version du modèle (+ note sur <code>src/data/</code>)</td></tr>
+    <tr><td><code>GIT.md</code>, <code>INIT.md</code>, <code>.env.example</code></td><td>version du modèle</td></tr>
+  </table>
+  <figure class="schema">
+    <svg viewBox="0 0 860 150" role="img" aria-label="Les trois fichiers vivants">
+      <defs><marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/></marker></defs>
+      <rect x="30" y="40" width="230" height="70" rx="12" class="box-c"/>
+      <text class="t" x="145" y="70" text-anchor="middle">docs/site/</text>
+      <text class="sub" x="145" y="90" text-anchor="middle">propositions et réalisations</text>
+      <rect x="315" y="40" width="230" height="70" rx="12" class="box-a"/>
+      <text class="t" x="430" y="70" text-anchor="middle">docs/.claude_doc.md</text>
+      <text class="sub" x="430" y="90" text-anchor="middle">notes → pages → PDF</text>
+      <rect x="600" y="40" width="230" height="70" rx="12" class="box-ok"/>
+      <text class="t" x="715" y="70" text-anchor="middle">.claude/SESSION_LOG.md</text>
+      <text class="sub" x="715" y="90" text-anchor="middle">journal entre sessions</text>
+    </svg>
+    <figcaption>Les trois fichiers que Claude tient à jour au fil du travail.</figcaption>
+  </figure>
+  <p>Vérifié&nbsp;: plus aucun <code>&lt;PROJECT_NAME&gt;</code>, plus de lien vers les anciens fichiers ; <code>src/</code> et les tests inchangés par ce sujet.</p>
+</div>
+
+<h2>À savoir</h2>
+<div class="sec savoir">
+  <p>La doc technique est hors PDF tant qu'elle n'est pas reprise en chapitres (« rédige la doc »).</p>
+  <p>Rien n'est commité.</p>
+</div>
+
+<footer><a href="../index.html">← Tous les sujets</a></footer>
+</main>
+</body>
+</html>

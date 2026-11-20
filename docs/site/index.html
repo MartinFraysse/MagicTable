@@ -1,0 +1,73 @@
+<!doctype html>
+<!--
+  Accueil du site de suivi. Tenu par Claude (règles : .claude/regles-site.md).
+  - Le schéma « Le projet en un coup d'œil » : remplacé quand le projet prend forme.
+  - La liste des sujets : un <li> par page de sujets/, LE PLUS RÉCENT EN HAUT,
+    avec le même statut que sur la page (propose, en-cours, fait, abandonne).
+  - Au premier sujet ajouté : supprimer le paragraphe <p class="vide">.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicTable · Suivi</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <span class="projet">MagicTable</span>
+  <a href="index.html" class="actif">Sujets</a>
+  <a href="construction.html">Construction</a>
+</nav>
+<main>
+
+<header class="hero">
+  <div class="kicker">Suivi du projet</div>
+  <h1>MagicTable</h1>
+  <p class="lead">Ce que Claude propose et ce qu'il a fait, sujet par sujet. Pour l'état actuel du projet&nbsp;: <a href="construction.html">Construction</a>.</p>
+</header>
+
+<h2>Le projet en un coup d'œil</h2>
+<figure class="schema">
+  <svg viewBox="0 0 860 170" role="img" aria-label="MagicTable : interface, cœur métier, stockage">
+    <defs><marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/></marker></defs>
+    <rect x="30" y="50" width="230" height="74" rx="12" class="box-c"/>
+    <text class="t" x="145" y="82" text-anchor="middle">Interface PySide6</text>
+    <text class="sub" x="145" y="102" text-anchor="middle">src/ui/ · dashboard, tournois, stats</text>
+    <rect x="315" y="50" width="230" height="74" rx="12" class="box-a"/>
+    <text class="t" x="430" y="82" text-anchor="middle">Cœur métier</text>
+    <text class="sub" x="430" y="102" text-anchor="middle">src/core/ · Swiss, standings, bracket</text>
+    <rect x="600" y="50" width="230" height="74" rx="12" class="box-ok"/>
+    <text class="t" x="715" y="82" text-anchor="middle">Données locales</text>
+    <text class="sub" x="715" y="102" text-anchor="middle">src/storage/ → data/*.json</text>
+    <path class="arrow" d="M260,87 L313,87"/>
+    <path class="arrow" d="M545,87 L598,87"/>
+  </svg>
+  <figcaption>Application desktop 100&nbsp;% locale&nbsp;: l'interface appelle le cœur métier, qui lit et écrit les fichiers JSON.</figcaption>
+</figure>
+
+<h2>Sujets</h2>
+<ul class="sujets">
+  <li><a href="sujets/2026-11-20-plan-de-la-documentation.html">
+    <span class="titre">Plan de la documentation<span class="resume">Doc Markdown en 5 chapitres, exportée en PDF.</span></span>
+    <span class="pill fait">Fait</span>
+    <span class="date">20/11</span>
+  </a></li>
+  <li><a href="sujets/2026-11-20-mise-au-format-du-modele.html">
+    <span class="titre">Mise au format du modèle de projet<span class="resume">Structure du modèle appliquée, doc existante conservée et rangée.</span></span>
+    <span class="pill fait">Fait</span>
+    <span class="date">20/11</span>
+  </a></li>
+  <!-- Claude ajoute ici un <li> par sujet, le plus récent en haut :
+  <li><a href="sujets/AAAA-MM-JJ-titre.html">
+    <span class="titre">Titre du sujet<span class="resume">Une phrase : de quoi il s'agit.</span></span>
+    <span class="pill propose">Proposé</span>
+    <span class="date">JJ/MM</span>
+  </a></li>
+  -->
+</ul>
+
+<footer>Site de suivi de MagicTable · tenu par Claude · <code>docs/site/</code></footer>
+</main>
+</body>
+</html>
