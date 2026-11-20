@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QScrollArea
-from PySide6.QtCore import Qt
 
 
 class HorizontalScrollArea(QScrollArea):

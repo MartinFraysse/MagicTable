@@ -118,35 +118,9 @@ def get_tournament_final_ranking(tournament: "Tournament") -> list[str]:
     Retourne les noms des joueurs dans leur ordre de classement final (1er en tête).
     Prend en compte le bracket si présent.
     """
-    from core.standings import build_standings
-    from core.bracket import get_bracket_final_ranking
+    from core.ranking import final_ranking
 
-    if not tournament.players:
-        return []
-
-    players_by_id = {p.id: p for p in tournament.players}
-
-    if tournament.is_1v1_format():
-        standings = build_standings(tournament)
-        swiss_ordered = [
-            players_by_id[e.player_id]
-            for e in standings
-            if e.player_id in players_by_id
-        ]
-    else:
-        swiss_ordered = sorted(
-            tournament.players,
-            key=lambda p: (-p.score, -p.robustness, p.name),
-        )
-
-    if tournament.bracket:
-        swiss_ids = [p.id for p in swiss_ordered]
-        final_ids = get_bracket_final_ranking(tournament.bracket, swiss_ids)
-        ranked = [players_by_id[pid] for pid in final_ids if pid in players_by_id]
-    else:
-        ranked = swiss_ordered
-
-    return [p.name for p in ranked]
+    return [p.name for p in final_ranking(tournament)]
 
 
 # ── Utils ────────────────────────────────────────────────────────────────────

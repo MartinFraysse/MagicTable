@@ -147,6 +147,6 @@ class MultiDashboardContainer(QWidget):
     @staticmethod
     def _tab_label(tournament: Tournament) -> str:
         """Génère le label de l'onglet : icône format + nom court."""
-        icon = "👑" if tournament.format == "👑 Commander" else "⚔️"
+        icon = "⚔️" if tournament.is_1v1_format() else "👑"
         name = tournament.name if len(tournament.name) <= 20 else tournament.name[:18] + "…"
         return f"{icon} {name}"

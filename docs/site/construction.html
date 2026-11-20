@@ -1,0 +1,103 @@
+<!doctype html>
+<!--
+  « Construction » : le projet TEL QU'IL EST AUJOURD'HUI. Tenu par Claude.
+  Mis à jour après chaque sujet réalisé (pas d'historique ici : l'historique, ce sont les sujets).
+  Garder les 4 parties ; remplacer les lignes « à venir » ; un schéma plutôt qu'un paragraphe.
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicTable · Construction</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <span class="projet">MagicTable</span>
+  <a href="index.html">Sujets</a>
+  <a href="construction.html" class="actif">Construction</a>
+</nav>
+<main>
+
+<header class="hero">
+  <div class="kicker">Comment c'est construit</div>
+  <h1>Construction</h1>
+  <p class="lead">L'état actuel de MagicTable&nbsp;: ses parties, comment elles communiquent, les fichiers qui comptent et les technos utilisées.</p>
+</header>
+
+<h2>Vue d'ensemble</h2>
+<figure class="schema">
+  <svg viewBox="0 0 860 230" role="img" aria-label="Architecture de MagicTable">
+    <defs><marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/></marker></defs>
+    <rect x="30" y="30" width="230" height="74" rx="12" class="box-c"/>
+    <text class="t" x="145" y="62" text-anchor="middle">Interface (src/ui/)</text>
+    <text class="sub" x="145" y="82" text-anchor="middle">PySide6 · dashboard, tournois, stats</text>
+    <rect x="315" y="30" width="230" height="74" rx="12" class="box-a"/>
+    <text class="t" x="430" y="62" text-anchor="middle">Cœur métier (src/core/)</text>
+    <text class="sub" x="430" y="82" text-anchor="middle">Tournament · Swiss · standings · bracket</text>
+    <rect x="600" y="30" width="230" height="74" rx="12" class="box-ok"/>
+    <text class="t" x="715" y="62" text-anchor="middle">Stockage (src/storage/)</text>
+    <text class="sub" x="715" y="82" text-anchor="middle">JSON dans data/</text>
+    <rect x="30" y="140" width="230" height="64" rx="12" class="box"/>
+    <text class="t" x="145" y="170" text-anchor="middle">Export PDF</text>
+    <text class="sub" x="145" y="188" text-anchor="middle">src/export/ · fpdf2</text>
+    <rect x="315" y="140" width="230" height="64" rx="12" class="box"/>
+    <text class="t" x="430" y="170" text-anchor="middle">Classements, stats</text>
+    <text class="sub" x="430" y="188" text-anchor="middle">ranking · stats_analyzer · league</text>
+    <rect x="600" y="140" width="230" height="64" rx="12" class="box-w"/>
+    <text class="t" x="715" y="170" text-anchor="middle">Mise à jour</text>
+    <text class="sub" x="715" y="188" text-anchor="middle">updater.py → releases GitHub</text>
+    <path class="arrow" d="M260,67 L313,67"/>
+    <path class="arrow" d="M545,67 L598,67"/>
+    <path class="arrow" d="M430,104 L430,138"/>
+    <path class="arrow" d="M145,104 L145,138"/>
+  </svg>
+  <figcaption>Application desktop 100&nbsp;% locale. L'interface ne touche jamais aux fichiers&nbsp;: elle passe par le cœur et le stockage.</figcaption>
+</figure>
+
+<h2>Les parties</h2>
+<div class="grid">
+  <div class="card"><h3>Interface</h3><p class="muted"><code>src/ui/</code>&nbsp;: onglets Dashboard (rondes, tables, chrono, bracket, projection), Tournois, Joueurs, Stats, Ligue, Commandants, Paramètres.</p></div>
+  <div class="card"><h3>Tournoi</h3><p class="muted"><code>core/tournament.py</code>&nbsp;: joueurs, rondes, abandons, undo, sérialisation. <code>create_round()</code> choisit Swiss (1v1) ou tables 3-4 (Commander).</p></div>
+  <div class="card"><h3>Swiss</h3><p class="muted"><code>core/swiss_pairing.py</code>&nbsp;: couplage optimal (networkx). Priorités&nbsp;: pas de 2<sup>e</sup> bye, pas de revanche, bye au dernier, écarts de points minimaux, hasard.</p></div>
+  <div class="card"><h3>Classements</h3><p class="muted"><code>core/standings.py</code> (points, OMW%, GW%, OGW%), <code>core/ranking.py</code> (classement final, bracket prioritaire), <code>core/bracket.py</code> (Top 2/4/8).</p></div>
+  <div class="card"><h3>Statistiques</h3><p class="muted"><code>core/stats_analyzer.py</code>, <code>core/commander_stats.py</code>, <code>core/league.py</code>&nbsp;: calculées à partir des tournois archivés.</p></div>
+  <div class="card"><h3>Stockage</h3><p class="muted"><code>src/storage/</code>&nbsp;: un JSON par ressource (tournois, joueurs, ligues, commandants) dans <code>src/data/</code> ou <code>%APPDATA%\MagicTable\data</code>.</p></div>
+</div>
+
+<h2>Fichiers maîtres</h2>
+<div class="card">
+<table>
+  <tr><th>Fichier</th><th>Rôle</th></tr>
+  <tr><td><code>src/app.py</code></td><td>Point d'entrée de l'application</td></tr>
+  <tr><td><code>src/core/tournament.py</code></td><td>Entité centrale du tournoi</td></tr>
+  <tr><td><code>src/core/swiss_pairing.py</code></td><td>Appariement Swiss</td></tr>
+  <tr><td><code>src/ui/dashboard/dashboard_view_main.py</code></td><td>Déroulé d'un tournoi en cours</td></tr>
+  <tr><td><code>requirements.txt</code>, <code>MagicTable.spec</code></td><td>Dépendances, build PyInstaller du .exe</td></tr>
+  <tr><td><code>.github/workflows/build.yml</code></td><td>Build Windows et release sur un tag <code>v*</code></td></tr>
+  <tr><td><code>tests/</code></td><td>Tests pytest (standings, Swiss, bracket, stats)</td></tr>
+  <tr><td><code>README.md</code></td><td>Présentation du projet et organisation du dépôt</td></tr>
+  <tr><td><code>.claude/CLAUDE.md</code></td><td>Règles de travail de Claude sur ce projet</td></tr>
+  <tr><td><code>docs/0N-*/</code>, <code>docs/pdf/MagicTable.pdf</code></td><td>Documentation (5 chapitres) et son export PDF</td></tr>
+  <tr><td><code>docs/site/</code></td><td>Ce site&nbsp;: propositions et réalisations de Claude</td></tr>
+</table>
+</div>
+
+<h2>Technos</h2>
+<div class="card">
+<table>
+  <tr><th>Techno</th><th>Version</th><th>Pourquoi</th></tr>
+  <tr><td>Python</td><td>3.10+ (dév. 3.14)</td><td>Langage de l'application</td></tr>
+  <tr><td>PySide6</td><td>≥ 6.6</td><td>Interface Qt 6</td></tr>
+  <tr><td>networkx</td><td>≥ 3.2</td><td>Appariement Swiss optimal (couplage de poids minimal)</td></tr>
+  <tr><td>certifi</td><td>—</td><td>Certificats HTTPS de la mise à jour automatique (Windows)</td></tr>
+  <tr><td>fpdf2</td><td>≥ 2.7</td><td>Export PDF d'un tournoi</td></tr>
+  <tr><td>PyInstaller</td><td>≥ 6.0</td><td>Exécutable Windows</td></tr>
+  <tr><td>pytest</td><td>—</td><td>Tests (développement)</td></tr>
+</table>
+</div>
+
+<footer>Site de suivi de MagicTable · tenu par Claude · <code>docs/site/</code></footer>
+</main>
+</body>
+</html>

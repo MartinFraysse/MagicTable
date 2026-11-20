@@ -10,6 +10,7 @@ from PySide6.QtGui import QColor, QPainter, QPixmap, QLinearGradient, QBrush
 from core.commander import Commander
 from core.regular_player import RegularPlayer
 from core.standings import build_standings
+from core.ranking import commander_points, commander_sort_key
 from storage.base import DATA_DIR
 from storage.commanders import CommanderStorage
 from storage.regular_players import RegularPlayerStorage
@@ -94,7 +95,6 @@ class DashboardRankingView(QFrame):
 
         self._tournament = None
         self._previous_ranks = {}  # player_id -> rank at previous round
-        self._swiss_mode = False
         self._1v1_mode = False
 
         # =====================
@@ -157,13 +157,6 @@ class DashboardRankingView(QFrame):
     # =================================================
     # Public API
     # =================================================
-    def set_swiss_mode(self, enabled: bool):
-        """Configure l'affichage pour le mode Swiss (Commander multiplayer)."""
-        self._swiss_mode = enabled
-        if self._1v1_mode:
-            return  # Le mode 1v1 prend le dessus
-        self._apply_column_layout()
-
     def set_1v1_mode(self, enabled: bool):
         """Configure l'affichage pour les formats 1v1 (avec OMW%)."""
         self._1v1_mode = enabled
@@ -190,16 +183,6 @@ class DashboardRankingView(QFrame):
             header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
 
-        elif self._swiss_mode:
-            table.setColumnCount(5)
-            table.setHorizontalHeaderLabels(["#", "Joueur", "Score", "Buchholz", "SOS"])
-
-            header = table.horizontalHeader()
-            header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(1, QHeaderView.Stretch)
-            header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         else:
             # Commander standard : score + robustesse comme départage
             table.setColumnCount(4)
@@ -350,13 +333,8 @@ class DashboardRankingView(QFrame):
         if override_order:
             players_by_id = {p.id: p for p in tournament.players}
             all_players = [players_by_id[pid] for pid in override_order if pid in players_by_id]
-        elif self._swiss_mode:
-            all_players = tournament.sort_players_swiss()
         else:
-            all_players = sorted(
-                tournament.players,
-                key=lambda p: (-p.score, -p.robustness, p.name)
-            )
+            all_players = sorted(tournament.players, key=commander_sort_key)
 
         table.blockSignals(True)
         table.setRowCount(len(all_players))
@@ -390,22 +368,11 @@ class DashboardRankingView(QFrame):
             item_score.setForeground(QColor("#aaaaaa"))
             table.setItem(row, 2, item_score)
 
-            # --- Colonnes de départage Commander
-            if self._swiss_mode:
-                item_buchholz = QTableWidgetItem(f"{player.buchholz:.0f}")
-                item_buchholz.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-                item_buchholz.setForeground(QColor("#aaaaaa"))
-                table.setItem(row, 3, item_buchholz)
-
-                item_sos = QTableWidgetItem(f"{player.sos:.1f}")
-                item_sos.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-                item_sos.setForeground(QColor("#aaaaaa"))
-                table.setItem(row, 4, item_sos)
-            else:
-                item_rob = QTableWidgetItem(str(player.robustness))
-                item_rob.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-                item_rob.setForeground(QColor("#aaaaaa"))
-                table.setItem(row, 3, item_rob)
+            # --- Départage Commander : robustesse
+            item_rob = QTableWidgetItem(str(player.robustness))
+            item_rob.setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+            item_rob.setForeground(QColor("#aaaaaa"))
+            table.setItem(row, 3, item_rob)
 
             if is_dropped:
                 self._apply_dropped_style(row)
@@ -421,7 +388,6 @@ class DashboardRankingView(QFrame):
             return self._compute_previous_ranks_1v1(tournament)
 
         # Commander multiplayer : scoring par position
-        points_by_position = {1: 3, 2: 2, 3: 1, 4: 1}
         scores = {p.id: 0 for p in tournament.players}
 
         rounds_to_consider = tournament.rounds[:-1]
@@ -433,7 +399,7 @@ class DashboardRankingView(QFrame):
                 if tbl.finished:
                     for player in tbl.players:
                         position = tbl.results.get(player.id, 3)
-                        scores[player.id] += points_by_position.get(position, 1)
+                        scores[player.id] += commander_points(position)
 
         sorted_players = sorted(
             tournament.players,
@@ -500,7 +466,7 @@ class DashboardRankingView(QFrame):
         if action == summary_action:
             self._show_round_summary(player_id)
         elif add_action and action == add_action:
-            self._add_to_regular_players(player.name)
+            self._add_to_regular_players(player)
         elif action == remove_action:
             self.player_remove_requested.emit(player_id)
 
@@ -517,39 +483,23 @@ class DashboardRankingView(QFrame):
         name_lower = name.lower().strip()
         return any(p.pseudo.lower().strip() == name_lower for p in regular_players)
 
-    def _add_to_regular_players(self, name: str):
-        """Ajoute un joueur à la liste des joueurs permanents."""
-        # Charger les joueurs existants
-        raw = RegularPlayerStorage.load()
-        regular_players = [RegularPlayer.from_dict(d) for d in raw]
-
-        # Vérifier si le joueur existe déjà
-        name_lower = name.lower().strip()
-        if any(p.pseudo.lower().strip() == name_lower for p in regular_players):
+    def _add_to_regular_players(self, player):
+        """Ajoute un joueur du tournoi aux joueurs permanents et le lie à sa fiche."""
+        new_player = RegularPlayerStorage.add_player(player.name)
+        if new_player is None:
             QMessageBox.information(
                 self,
                 "Joueur existant",
-                f"« {name} » est déjà dans la liste des joueurs permanents."
+                f"« {player.name} » est déjà dans la liste des joueurs permanents."
             )
             return
 
-        # Créer le nouveau joueur
-        next_id = max((p.id for p in regular_players), default=0) + 1
-        new_player = RegularPlayer(
-            id=next_id,
-            pseudo=name,
-        )
-
-        regular_players.append(new_player)
-
-        # Sauvegarder
-        RegularPlayerStorage.save([p.to_dict() for p in regular_players])
-
-        # Notifier
-        self.player_added_to_regulars.emit(name)
+        player.regular_player_id = new_player.id
+        # Le dashboard sauvegarde le tournoi (lien) à réception du signal
+        self.player_added_to_regulars.emit(player.name)
 
         QMessageBox.information(
             self,
             "Joueur ajouté",
-            f"« {name} » a été ajouté aux joueurs permanents."
+            f"« {player.name} » a été ajouté aux joueurs permanents."
         )

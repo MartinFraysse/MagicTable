@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MagicTable · Plan de la documentation</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <span class="projet">MagicTable</span>
+  <a href="../index.html" class="actif">Sujets</a>
+  <a href="../construction.html">Construction</a>
+</nav>
+<main>
+
+<header class="hero">
+  <div class="kicker">Sujet · 20/11/2026</div>
+  <h1>Plan de la documentation <span class="pill fait">Fait</span></h1>
+  <p class="lead">Les chapitres et les pages de la doc Markdown (<code>docs/NN-*/</code>), avant de les écrire.</p>
+</header>
+
+<h2>Le besoin</h2>
+<div class="sec besoin">
+  <p>Tu veux la doc Markdown du projet, exportable en PDF par <code>genpdf</code>.</p>
+  <p>Aujourd'hui, elle tient dans deux gros fichiers hors PDF, en partie périmés (<code>technical-doc.md</code>, <code>architecture.md</code>).</p>
+</div>
+
+<h2>Ce que je propose</h2>
+<div class="sec proposition">
+  <div class="options">
+    <div class="option reco">
+      <h3>A · Complète, 5 chapitres</h3>
+      <p>Présentation, Guides, Architecture (+ décisions), Référence, Exploitation. 13 pages + 3 fiches de décision.</p>
+      <p class="plus">couvre l'usage, le code, les données et le build ; chaque page répond à un seul besoin</p>
+      <p class="moins">plus long à écrire et à relire</p>
+    </div>
+    <div class="option">
+      <h3>B · Compacte, 3 chapitres</h3>
+      <p>Présentation et guides · Architecture · Référence. 8 pages, sans fiches de décision.</p>
+      <p class="plus">rapide, suffisant pour utiliser l'appli</p>
+      <p class="moins">pas de build/dépannage ; le « pourquoi » des choix (Swiss, appli locale) se perd</p>
+    </div>
+  </div>
+  <p><b>Mon choix&nbsp;: A</b>, parce que l'appli a un vrai cycle de build/release et des choix récents (Swiss, appli locale) qui méritent d'être tracés.</p>
+
+  <h3>Le plan A en détail</h3>
+  <table>
+    <tr><th>Chapitre</th><th>Page</th><th>Pour</th></tr>
+    <tr><td rowspan="2"><code>01-presentation</code></td><td><code>index.md</code></td><td>ouverture du document : ce qu'est MagicTable, pour qui, par où commencer</td></tr>
+    <tr><td><code>glossaire.md</code></td><td>Swiss, bye, OMW%, GW%, robustesse, seed, bracket, joueur régulier…</td></tr>
+    <tr><td rowspan="4"><code>02-guides</code></td><td><code>installation.md</code></td><td>installer et lancer (Linux, venv, dépendances)</td></tr>
+    <tr><td><code>organiser-un-tournoi.md</code></td><td>créer, inscrire, rondes, résultats, abandons, bracket, archiver, export PDF</td></tr>
+    <tr><td><code>joueurs-et-statistiques.md</code></td><td>joueurs réguliers, stats, tête-à-tête, ligues, commandants</td></tr>
+    <tr><td><code>index.md</code></td><td>ouverture du chapitre</td></tr>
+    <tr><td rowspan="3"><code>03-architecture</code></td><td><code>fonctionnement.md</code></td><td>les couches (ui → core → storage), le déroulé d'un tournoi dans le code</td></tr>
+    <tr><td><code>appariements-et-classements.md</code></td><td>Swiss (couplage optimal), tables Commander, standings MTG, bracket, classement final</td></tr>
+    <tr><td><code>decisions/</code></td><td>0001 appli 100 % locale · 0002 Swiss par couplage optimal · 0003 stats calculées depuis les archives</td></tr>
+    <tr><td rowspan="3"><code>04-reference</code></td><td><code>formats-et-bareme.md</code></td><td>formats, effectifs minimum, points, départages</td></tr>
+    <tr><td><code>donnees.md</code></td><td>fichiers JSON (structure, emplacement Linux / Windows)</td></tr>
+    <tr><td><code>commandes.md</code></td><td>lancer, tester, linter, construire</td></tr>
+    <tr><td rowspan="2"><code>05-exploitation</code></td><td><code>build-et-mises-a-jour.md</code></td><td>exe Windows (PyInstaller), release sur tag, mise à jour automatique</td></tr>
+    <tr><td><code>depannage.md</code></td><td>symptôme → cause → solution</td></tr>
+  </table>
+  <p class="muted">Chaque chapitre a son <code>index.md</code> (ouverture). Une fois la doc écrite, <code>docs/technical-doc.md</code> et <code>docs/architecture.md</code> sont supprimés : leur contenu à jour est repris dans les pages.</p>
+</div>
+
+<h2>Décision</h2>
+<div class="sec decision">
+  <p><b>A · Complète, 5 chapitres</b> — 20/11/2026.</p>
+</div>
+
+<h2>Ce que j'ai fait</h2>
+<div class="sec fait">
+  <table>
+    <tr><th>Fichier</th><th>Changement</th></tr>
+    <tr><td><code>docs/01-presentation/</code></td><td>créé : index (ouverture du document), glossaire</td></tr>
+    <tr><td><code>docs/02-guides/</code></td><td>créé : index, installation, organiser-un-tournoi, joueurs-et-statistiques</td></tr>
+    <tr><td><code>docs/03-architecture/</code></td><td>créé : index, fonctionnement, appariements-et-classements, decisions/0001 à 0003</td></tr>
+    <tr><td><code>docs/04-reference/</code></td><td>créé : index, formats-et-bareme, donnees, commandes</td></tr>
+    <tr><td><code>docs/05-exploitation/</code></td><td>créé : index, build-et-mises-a-jour, depannage</td></tr>
+    <tr><td><code>docs/pdf/MagicTable.pdf</code></td><td>régénéré : 40 pages</td></tr>
+    <tr><td><code>docs/technical-doc.md</code>, <code>docs/architecture.md</code></td><td>supprimés : contenu à jour repris dans les chapitres</td></tr>
+    <tr><td><code>README.md</code>, <code>construction.html</code></td><td>arbre et fichiers maîtres mis à jour</td></tr>
+  </table>
+  <figure class="schema">
+    <svg viewBox="0 0 860 120" role="img" aria-label="De la doc Markdown au PDF">
+      <defs><marker id="fleche" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9CA3AF"/></marker></defs>
+      <rect x="40" y="25" width="300" height="70" rx="12" class="box-a"/>
+      <text class="t" x="190" y="56" text-anchor="middle">docs/01 … 05-*/*.md</text>
+      <text class="sub" x="190" y="76" text-anchor="middle">5 chapitres · 16 pages · 3 ADR</text>
+      <rect x="520" y="25" width="300" height="70" rx="12" class="box-ok"/>
+      <text class="t" x="670" y="56" text-anchor="middle">docs/pdf/MagicTable.pdf</text>
+      <text class="sub" x="670" y="76" text-anchor="middle">page de garde · sommaire · 40 pages</text>
+      <path class="arrow" d="M340,60 L518,60"/>
+      <text class="sub" x="430" y="50" text-anchor="middle">genpdf</text>
+    </svg>
+  </figure>
+  <p>Vérifié&nbsp;: les libellés des guides sont relevés dans le code (boutons, menus, conditions) ; PDF généré et relu en image (sommaire, ouvertures de chapitre, tableaux, schémas ASCII ramenés à 76 caractères pour ne pas déborder).</p>
+</div>
+
+<h2>À savoir</h2>
+<div class="sec savoir">
+  <p>En rédigeant, j'ai relevé des écarts dans l'appli (non corrigés, le code n'était pas le sujet)&nbsp;:</p>
+  <table>
+    <tr><th>Constat</th><th>Conséquence</th></tr>
+    <tr><td><code>fpdf2</code> absent de <code>requirements.txt</code></td><td>corrigé en 1.7.0 (dépendance ajoutée, export sans police Unicode réparé)</td></tr>
+    <tr><td>Boutons « Archiver » et « Exporter PDF » du Dashboard jamais affichés</td><td>export uniquement depuis l'historique</td></tr>
+    <tr><td>Durée du chrono non mémorisée</td><td>revient à 50 min à chaque démarrage</td></tr>
+    <tr><td>Texte de Paramètres › Notation</td><td>dit le bracket disponible « à tout moment » et sans effet sur le classement ; oublie « Rise »</td></tr>
+    <tr><td>« Terminer le tournoi » visible à côté de « Lancer le bracket »</td><td>un clic termine le tournoi sans phase finale</td></tr>
+  </table>
+</div>
+
+<footer><a href="../index.html">← Tous les sujets</a></footer>
+</main>
+</body>
+</html>

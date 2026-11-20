@@ -217,9 +217,8 @@ class DashboardTablesView(QFrame):
 
         edit_action = menu.addAction("✏️ Définir les résultats")
 
-        # (prévu pour plus tard)
         menu.addSeparator()
-        close_action = menu.addAction("❌ Annuler")
+        menu.addAction("❌ Annuler")  # ferme simplement le menu
 
         action = menu.exec(card.mapToGlobal(pos))
 

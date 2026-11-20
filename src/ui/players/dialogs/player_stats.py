@@ -1,22 +1,11 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QFrame,
-    QGridLayout,
-    QScrollArea,
-    QWidget,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
-    QAbstractItemView,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QGridLayout,
+    QScrollArea, QWidget
 )
 
 from core.regular_player import RegularPlayer
-from core.stats_analyzer import StatsAnalyzer
+from core.stats_analyzer import StatsAnalyzer, PlayerStats
 
 
 class PlayerStatsDialog(QDialog):
@@ -31,7 +20,10 @@ class PlayerStatsDialog(QDialog):
         self.setObjectName("PlayerStatsDialog")
 
         self._player = player
-        self._analyzer = analyzer
+        # Stats calculées depuis les tournois archivés (même source que la vue Joueurs)
+        self._stats = (
+            analyzer.get_regular_player_stats(player.id) if analyzer else PlayerStats(name=player.pseudo)
+        )
 
         self._build_ui()
 
@@ -97,9 +89,9 @@ class PlayerStatsDialog(QDialog):
         podiums_layout.setSpacing(20)
 
         podiums_data = [
-            ("🥇", "1ère place", self._player.top_1),
-            ("🥈", "2ème place", self._player.top_2),
-            ("🥉", "3ème place", self._player.top_3),
+            ("🥇", "1ère place", self._stats.top_1),
+            ("🥈", "2ème place", self._stats.top_2),
+            ("🥉", "3ème place", self._stats.top_3),
         ]
 
         for emoji, label, count in podiums_data:
@@ -111,7 +103,7 @@ class PlayerStatsDialog(QDialog):
         total_layout = QHBoxLayout()
         total_label = QLabel("Total podiums")
         total_label.setObjectName("StatsTotalLabel")
-        total_value = QLabel(str(self._player.total_podiums))
+        total_value = QLabel(str(self._stats.total_podiums))
         total_value.setObjectName("StatsTotalValue")
 
         total_layout.addWidget(total_label)
@@ -165,8 +157,8 @@ class PlayerStatsDialog(QDialog):
         grid.setSpacing(8)
 
         stats = [
-            ("Tournois joués", str(self._player.tournaments_played)),
-            ("Points", str(self._player.points)),
+            ("Tournois joués", str(self._stats.tournaments_played)),
+            ("Points", str(self._stats.total_points)),
             ("Téléphone", self._format_phone(self._player.phone) if self._player.phone else "—"),
         ]
 

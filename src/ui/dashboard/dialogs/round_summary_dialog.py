@@ -12,7 +12,6 @@ from core.table import Table
 from core.bracket import BracketRoundName
 
 
-_POINTS_COMMANDER = {1: 3, 2: 2, 3: 1, 4: 1}
 _POSITIONS_FR     = {1: "1er", 2: "2ème", 3: "3ème", 4: "4ème"}
 
 _BRACKET_ROUND_LABEL = {

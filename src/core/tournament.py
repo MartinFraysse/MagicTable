@@ -7,6 +7,7 @@ from core.table import Table
 from core.swiss_pairing import generate_swiss_pairings, compute_recommended_rounds
 from core.standings import build_standings
 from core.bracket import Bracket, BracketType, create_bracket_matches
+from core.formats import is_multiplayer_format
 import random
 
 @dataclass
@@ -20,7 +21,6 @@ class Tournament:
     rounds: list[Round] = field(default_factory=list)
     max_rounds: int = 3
     archived: bool = False
-    podiums_recorded: bool = False
 
     # Swiss pairing system
     pairing_system: str = "standard"  # "standard" ou "swiss"
@@ -60,6 +60,7 @@ class Tournament:
                 existing.dropped = False
                 if regular_player_id is not None:
                     existing.regular_player_id = regular_player_id
+                self._invalidate_preparation_rounds()
                 return existing
             return None  # Déjà inscrit et actif → doublon
 
@@ -91,6 +92,22 @@ class Tournament:
             r for r in self.rounds
             if r.state != RoundState.PREPARATION
         ]
+        self.sync_byes()
+
+    def sync_byes(self) -> None:
+        """
+        Recalcule l'historique des byes à partir des rounds existants
+        (une table à un seul joueur = bye). Garantit qu'un round supprimé
+        ou modifié ne laisse pas un bye « consommé » à tort.
+        """
+        self.bye_history = {
+            table.players[0].id
+            for rnd in self.rounds
+            for table in rnd.tables
+            if len(table.players) == 1
+        }
+        for player in self.players:
+            player.had_bye = player.id in self.bye_history
 
     def rename_player(self, player_id: int, new_name: str) -> bool:
         new_name = new_name.strip()
@@ -109,6 +126,14 @@ class Tournament:
 
     ### ROUND
     def create_round(self) -> Round | None:
+        """
+        Crée le round suivant : Swiss pour les formats 1v1, tables 3-4 pour le Commander.
+        Clôture au passage le round précédent. Retourne None si l'effectif est insuffisant.
+        """
+        if self.is_swiss_format():
+            return self.create_round_swiss()
+
+        self.finish_last_round()
         round_number = len(self.rounds) + 1
         tables = self._generate_tables()
 
@@ -146,57 +171,9 @@ class Tournament:
             return tables
 
         opponents_map = self.get_opponents_map()
-
-        if self.is_1v1_format():
-            return self._generate_1v1_tables_anti_rematch(
-                ordered_players, opponents_map, table_sizes
-            )
-        else:
-            return self._generate_commander_tables_anti_rematch(
-                ordered_players, table_sizes, opponents_map
-            )
-
-    def _generate_1v1_tables_anti_rematch(
-        self,
-        ordered: list["Player"],
-        opponents_map: dict[int, set[int]],
-        table_sizes: list[int],
-    ) -> list[Table]:
-        """
-        Appariement 1v1 anti-rematch pour le format standard (non-Swiss).
-
-        Si nombre impair de joueurs : choisit le sit-out qui minimise les rematches
-        puis les écarts de score, en testant chaque candidat du moins bien classé
-        au mieux classé.
-
-        Utilise le même backtracking global que le système Swiss.
-        Aucune exception levée : le meilleur pairing possible est toujours retourné.
-        """
-        from core.swiss_pairing import _find_best_pairing  # noqa: PLC0415
-
-        n_play = sum(table_sizes)
-
-        if len(ordered) > n_play:
-            # Nombre impair : sit-out intelligent
-            sitout = ordered[-1]  # défaut : dernier du classement
-            best_rem, best_gap = float('inf'), float('inf')
-            for candidate in reversed(ordered):
-                remaining = [p for p in ordered if p.id != candidate.id][:n_play]
-                _, rem, gap = _find_best_pairing(remaining, opponents_map)
-                if (rem, gap) < (best_rem, best_gap):
-                    best_rem, best_gap = rem, gap
-                    sitout = candidate
-                    if rem == 0:
-                        break
-            to_pair = [p for p in ordered if p.id != sitout.id][:n_play]
-        else:
-            to_pair = ordered[:n_play]
-
-        pairings_idx, _, _ = _find_best_pairing(to_pair, opponents_map)
-        return [
-            Table(number=i + 1, players=[to_pair[a], to_pair[b]])
-            for i, (a, b) in enumerate(pairings_idx)
-        ]
+        return self._generate_commander_tables_anti_rematch(
+            ordered_players, table_sizes, opponents_map
+        )
 
     def _generate_commander_tables_anti_rematch(
         self,
@@ -223,7 +200,7 @@ class Tournament:
         Retourne une liste de tailles de tables (4 ou 3),
         ou None si impossible.
         """
-        if self.format == "👑 Commander":
+        if is_multiplayer_format(self.format):
             if player_count < 6:
                 return None
 
@@ -451,90 +428,68 @@ class Tournament:
     # Swiss Pairing System
     # =====================
 
-    def create_round_swiss(self) -> Round:
+    def create_round_swiss(self) -> Round | None:
         """
-        Crée un round avec appariement Swiss global anti-rematch.
-        Uniquement valide pour les formats 1v1.
-
-        Le pairing minimise les rematches automatiquement — aucune exception levée.
-        Le bye est attribué intelligemment pour favoriser les pairings sans rematch.
+        Crée un round Swiss (formats 1v1) : couplage optimal sur les joueurs actifs.
+        Voir core.swiss_pairing pour les priorités (bye, rematch, écarts de points).
+        Retourne None s'il n'y a aucun joueur actif.
         """
-        round_number = len(self.rounds) + 1
-        opponents_map = self.get_opponents_map()
-
-        # Ordre standings complet (match_points → OMW% → GW% → OGW%)
-        standings = build_standings(self)
-        standings_order = [e.player_id for e in standings]
-
         active_players = [p for p in self.players if not p.dropped]
+        if not active_players:
+            return None
+
+        self.finish_last_round()
+        self.sync_byes()
+        self.sync_match_points()
+
+        standings_order = [e.player_id for e in build_standings(self)]
         result = generate_swiss_pairings(
             active_players,
-            opponents_map,
+            self.get_opponents_map(),
             self.bye_history,
             standings_order=standings_order,
         )
 
-        tables: list[Table] = []
-        for i, (p1, p2) in enumerate(result.pairings, 1):
-            tables.append(Table(number=i, players=[p1, p2]))
-
-        # Gérer le bye
+        tables: list[Table] = [
+            Table(number=i, players=[p1, p2])
+            for i, (p1, p2) in enumerate(result.pairings, 1)
+        ]
         if result.bye_player:
-            self.bye_history.add(result.bye_player.id)
-            result.bye_player.had_bye = True
             tables.append(Table(
                 number=len(tables) + 1,
                 players=[result.bye_player],
                 finished=True,
-                results={result.bye_player.id: 1}
+                results={result.bye_player.id: 1},
             ))
 
-        new_round = Round(number=round_number, tables=tables)
+        new_round = Round(number=len(self.rounds) + 1, tables=tables)
         self.rounds.append(new_round)
+        self.sync_byes()
         return new_round
 
-    def calculate_swiss_tiebreakers(self) -> None:
-        """
-        Calcule les départages Swiss pour tous les joueurs.
-        - Buchholz: Somme des scores de tous les adversaires rencontrés
-        - SOS: Moyenne des scores des adversaires (Strength of Schedule)
+    def sync_match_points(self) -> None:
+        """Scores 1v1 = points de match (3/1/0) recalculés depuis les résultats bruts."""
+        points = {e.player_id: e.match_points for e in build_standings(self)}
+        for p in self.players:
+            p.score = points.get(p.id, 0)
 
-        Doit être appelé après chaque round terminé.
-        """
-        opponents_map = self.get_opponents_map()
-
-        for player in self.players:
-            opponent_ids = opponents_map.get(player.id, set())
-            opponent_scores = []
-
-            for opp_id in opponent_ids:
-                opp = next((p for p in self.players if p.id == opp_id), None)
-                if opp:
-                    opponent_scores.append(opp.score)
-
-            player.buchholz = float(sum(opponent_scores))
-            player.sos = sum(opponent_scores) / len(opponent_scores) if opponent_scores else 0.0
-
-    def sort_players_swiss(self) -> list[Player]:
-        """
-        Tri Swiss officiel:
-        1. Score (décroissant)
-        2. Buchholz (décroissant)
-        3. SOS (décroissant)
-        4. Nom (alphabétique)
-        """
-        return sorted(
-            self.players,
-            key=lambda p: (-p.score, -p.buchholz, -p.sos, p.name)
-        )
+    def finish_last_round(self) -> None:
+        """Marque le dernier round comme terminé si toutes ses tables le sont."""
+        if not self.rounds:
+            return
+        last = self.rounds[-1]
+        if last.tables and all(t.finished for t in last.tables):
+            if last.state == RoundState.PREPARATION:
+                last.start()
+            last.finish()
 
     def is_swiss_format(self) -> bool:
-        """Vérifie si le tournoi utilise l'appariement Swiss."""
-        return self.pairing_system == "swiss"
+        """Tous les formats 1v1 utilisent l'appariement Swiss ; le Commander multi non."""
+        return self.is_1v1_format()
 
     def is_1v1_format(self) -> bool:
         """True pour tous les formats sauf Commander multiplayer."""
-        return self.format != "👑 Commander"
+        return not is_multiplayer_format(self.format)
 
     def get_recommended_rounds(self) -> int:
         """Nombre de rounds recommandé pour Swiss: ceil(log2(n))."""
@@ -551,6 +506,7 @@ class Tournament:
         Les joueurs droppés sont exclus du seeding ; on recrute plus loin dans le classement
         pour toujours remplir le bracket.
         """
+        self.finish_last_round()
         standings = build_standings(self)
         dropped_ids = {p.id for p in self.players if p.dropped}
 
@@ -604,7 +560,6 @@ class Tournament:
         self.date = restored.date
         self.max_rounds = restored.max_rounds
         self.archived = restored.archived
-        self.podiums_recorded = restored.podiums_recorded
         self.pairing_system = restored.pairing_system
         self.players = restored.players
         self.rounds = restored.rounds
@@ -622,9 +577,6 @@ class Tournament:
         for player in self.players:
             player.score = 0
             player.robustness = 0
-            # Reset des champs Swiss
-            player.buchholz = 0.0
-            player.sos = 0.0
             player.had_bye = False
 
         # Supprimer tous les rounds (et donc les tables/résultats)
@@ -660,8 +612,7 @@ class Tournament:
             "date": self.date,
             "max_rounds": self.max_rounds,
             "archived": self.archived,
-            "podiums_recorded": self.podiums_recorded,
-            "pairing_system": self.pairing_system,
+            "pairing_system": "swiss" if self.is_swiss_format() else "standard",
             "bye_history": list(self.bye_history),
             "players": [
                 {
@@ -671,8 +622,6 @@ class Tournament:
                     "robustness": p.robustness,
                     "reward_claimed": p.reward_claimed,
                     "commander": p.commander,
-                    "buchholz": p.buchholz,
-                    "sos": p.sos,
                     "had_bye": p.had_bye,
                     "dropped": p.dropped,
                     "regular_player_id": p.regular_player_id,
@@ -692,7 +641,6 @@ class Tournament:
             date=data["date"],
             max_rounds=data.get("max_rounds", 3),
             archived=data.get("archived", False),
-            podiums_recorded=data.get("podiums_recorded", False),
             pairing_system=data.get("pairing_system", "standard"),
             players=[],
         )
@@ -709,8 +657,6 @@ class Tournament:
                 robustness=p.get("robustness", 0),
                 reward_claimed=p.get("reward_claimed", False),
                 commander=p.get("commander", ""),
-                buchholz=p.get("buchholz", 0.0),
-                sos=p.get("sos", 0.0),
                 had_bye=p.get("had_bye", False),
                 dropped=p.get("dropped", False),
                 regular_player_id=p.get("regular_player_id"),

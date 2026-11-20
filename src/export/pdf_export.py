@@ -5,6 +5,7 @@ Nécessite: pip install fpdf2
 
 import re
 from core.tournament import Tournament
+from core.ranking import final_ranking
 
 
 # Palette de couleurs harmonisée
@@ -39,7 +40,10 @@ def _clean_text_for_pdf(text: str) -> str:
         "\U0001F900-\U0001F9FF"
         "\U0001FA00-\U0001FA6F"
         "\U0001FA70-\U0001FAFF"
-        "\U00002702-\U000027B0"
+        "\U00002600-\U000027BF"   # symboles divers et dingbats (⚔ ⚡ ⭐…)
+        "\U00002B00-\U00002BFF"
+        "\U0000FE00-\U0000FE0F"   # sélecteurs de variante (emoji)
+        "\U0000200D"               # liant de séquences emoji
         "\U0001F1E0-\U0001F1FF"
         "]+",
         flags=re.UNICODE
@@ -87,6 +91,13 @@ def export_tournament_pdf(tournament: Tournament, filepath: str) -> bool:
 
             def get_font(self):
                 return self.unicode_font
+
+            def normalize_text(self, text):
+                # Police de repli (Helvetica, latin-1) : on retire ce qu'elle ne sait pas
+                # écrire (emojis, symboles) au lieu de faire échouer tout l'export.
+                if self.unicode_font == "Helvetica":
+                    text = _clean_text_for_pdf(text).encode("latin-1", "ignore").decode("latin-1")
+                return super().normalize_text(text)
 
             def header(self):
                 if self.page_no() == 1:
@@ -156,10 +167,8 @@ def export_tournament_pdf(tournament: Tournament, filepath: str) -> bool:
         # ========================================
         # PODIUM (Top 3)
         # ========================================
-        ranked_players = sorted(
-            tournament.players,
-            key=lambda p: (-p.score, -p.robustness, p.name)
-        )
+        # Même classement final que l'application (bracket prioritaire, standings MTG en 1v1)
+        ranked_players = final_ranking(tournament)
 
         if len(ranked_players) >= 3:
             pdf.set_font(font, 'B', 14)

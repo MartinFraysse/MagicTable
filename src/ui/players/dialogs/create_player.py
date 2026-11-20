@@ -89,13 +89,6 @@ class CreatePlayerDialog(QDialog):
         self.phone_input.returnPressed.connect(self._validate_and_accept)
         form.addRow("Téléphone", self.phone_input)
 
-        self.discord_input = QLineEdit()
-        self.discord_input.setPlaceholderText("ID Discord (ex: 123456789012345678)")
-        self.discord_input.setObjectName("DialogInput")
-        self.discord_input.textChanged.connect(self._format_discord_input)
-        self.discord_input.returnPressed.connect(self._validate_and_accept)
-        form.addRow("Discord ID", self.discord_input)
-
         layout.addLayout(form)
 
         # Boutons
@@ -127,7 +120,6 @@ class CreatePlayerDialog(QDialog):
         self.pseudo_input.setText(self._player.pseudo)
         self.full_name_input.setText(self._player.full_name)
         self.phone_input.setText(self._player.phone)
-        self.discord_input.setText(self._player.discord_id)
 
     def _clear_error(self):
         """Efface l'erreur quand l'utilisateur tape."""
@@ -135,14 +127,6 @@ class CreatePlayerDialog(QDialog):
         self.pseudo_input.setProperty("error", False)
         self.pseudo_input.style().unpolish(self.pseudo_input)
         self.pseudo_input.style().polish(self.pseudo_input)
-
-    def _format_discord_input(self, text: str):
-        """N'autorise que les chiffres dans le champ Discord ID."""
-        digits = ''.join(c for c in text if c.isdigit())
-        if digits != text:
-            self.discord_input.blockSignals(True)
-            self.discord_input.setText(digits)
-            self.discord_input.blockSignals(False)
 
     def _format_phone_input(self, text: str):
         """Formate le numéro de téléphone en temps réel (max 10 chiffres)."""
@@ -194,7 +178,6 @@ class CreatePlayerDialog(QDialog):
             "pseudo": self.pseudo_input.text().strip(),
             "full_name": self.full_name_input.text().strip(),
             "phone": self.phone_input.text().strip(),
-            "discord_id": self.discord_input.text().strip(),
         }
 
     def apply_changes(self):
@@ -206,4 +189,3 @@ class CreatePlayerDialog(QDialog):
         self._player.pseudo = data["pseudo"]
         self._player.full_name = data["full_name"]
         self._player.phone = data["phone"]
-        self._player.discord_id = data["discord_id"]

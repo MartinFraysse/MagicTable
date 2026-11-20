@@ -20,7 +20,6 @@ from ui.tournaments.dialogs.create_tournament import CreateTournamentDialog
 from storage.tournaments import TournamentStorage
 from storage.leagues import LeagueStorage
 from core.league import League
-from datetime import datetime
 
 
 class UpcomingView(QWidget):
@@ -143,13 +142,13 @@ class UpcomingView(QWidget):
 
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
-        self._save_all()
+        self.save_all()
 
         new_league_id = dialog.get_selected_league_id()
         if new_league_id is not None:
-            self._update_league_affiliation(tournament.id, None, new_league_id)
+            self.update_league_affiliation(tournament.id, None, new_league_id)
 
-    def _update_league_affiliation(
+    def update_league_affiliation(
         self, tournament_id: int, old_id: int | None, new_id: int | None
     ) -> None:
         if old_id == new_id:
@@ -197,9 +196,9 @@ class UpcomingView(QWidget):
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
         card._refresh()
-        self._save_all()
+        self.save_all()
 
-        self._update_league_affiliation(tournament.id, old_league_id, new_league_id)
+        self.update_league_affiliation(tournament.id, old_league_id, new_league_id)
 
     def _delete_tournament(self, card: TournamentCard, tournament: Tournament):
         reply = QMessageBox.question(
@@ -225,7 +224,7 @@ class UpcomingView(QWidget):
         if self._selected_card == card:
             self._selected_card = None
 
-        self._save_all()
+        self.save_all()
 
     # ======================================================
     # Launch
@@ -268,7 +267,7 @@ class UpcomingView(QWidget):
 
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
-        self._save_all()
+        self.save_all()
 
 
     def refresh_tournament(self, tournament: Tournament):
@@ -278,7 +277,7 @@ class UpcomingView(QWidget):
 
         self._tournaments = sort_tournaments_by_date(self._tournaments)
         self._rebuild_cards_layout()
-        self._save_all()
+        self.save_all()
 
     # ======================================================
     # Storage
@@ -311,7 +310,17 @@ class UpcomingView(QWidget):
         # Recharger
         self._load_tournaments_from_storage()
 
-    def _save_all(self):
+    @property
+    def tournaments(self) -> list[Tournament]:
+        """Tous les tournois chargés (à venir et archivés)."""
+        return self._tournaments
+
+    def remove_tournament(self, tournament_id: int) -> None:
+        """Retire un tournoi de la liste et sauvegarde."""
+        self._tournaments = [t for t in self._tournaments if t.id != tournament_id]
+        self.save_all()
+
+    def save_all(self):
         TournamentStorage.save([t.to_dict() for t in self._tournaments])
 
     # ======================================================
